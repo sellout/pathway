@@ -1,0 +1,11 @@
+program-options
+  ghc-options: -Werror
+
+tests: True
+
+packages:
+  ./internal/pathway-internal.cabal
+  ./path/pathway-path.cabal
+  ./pathway/pathway.cabal
+  ./quickcheck/pathway-quickcheck.cabal
+  ./system/pathway-system.cabal

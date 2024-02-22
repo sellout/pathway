@@ -1,0 +1,9 @@
+{ "project": {
+    "description": "Type-safe system-independent file path library.",
+    "name": "pathway",
+    "repo": "sellout/pathway",
+    "summary": "Type-safe system-independent file path library",
+    "version": "0.1.0.0"
+  },
+  "type": {"name": "haskell"}
+}
