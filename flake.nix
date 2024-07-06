@@ -30,9 +30,9 @@
   ### };
   ### checks.format = verify that code matches Ormolu expectations
   outputs = {
-    concat,
     flake-utils,
     flaky,
+    flaky-haskell,
     nixpkgs,
     self,
     yaya,
@@ -42,7 +42,7 @@
     supportedSystems = flaky.lib.defaultSystems;
 
     cabalPackages = pkgs: hpkgs:
-      concat.lib.cabalProject2nix
+      flaky-haskell.lib.cabalProject2nix
       ./cabal.project
       pkgs
       hpkgs
@@ -71,7 +71,7 @@
       # - https://discourse.nixos.org/t/nix-haskell-development-2020/6170
       overlays = {
         default =
-          concat.lib.overlayHaskellPackages
+          flaky-haskell.lib.overlayHaskellPackages
           (self.lib.supportedGhcVersions "")
           (final: prev:
             nixpkgs.lib.composeManyExtensions [
@@ -80,27 +80,66 @@
               ##       standard overlay.
               (flaky.overlays.haskell-dependencies final prev)
               (self.overlays.haskell final prev)
+              (self.overlays.haskellDependencies final prev)
               (yaya.overlays.haskell final prev)
             ]);
 
-        haskell = concat.lib.haskellOverlay cabalPackages;
+        haskell = flaky-haskell.lib.haskellOverlay cabalPackages;
+
+        haskellDependencies = final: prev: hfinal: hprev:
+          (
+            if nixpkgs.lib.versionAtLeast hprev.ghc.version "9.8.0"
+            then let
+              hspecVersion = "2_11_7";
+            in {
+              ## The default versions in Nixpkgs 23.11 don’t support GHC 9.8.
+              doctest = hfinal.doctest_0_22_2;
+              hedgehog = hfinal."hedgehog_1_4";
+              hspec = hfinal."hspec_${hspecVersion}";
+              hspec-core = hfinal."hspec-core_${hspecVersion}";
+              hspec-discover = hfinal."hspec-discover_${hspecVersion}";
+              hspec-meta = hfinal."hspec-meta_${hspecVersion}";
+              semigroupoids = hfinal.semigroupoids_6_0_0_1;
+              tagged = hfinal.tagged_0_8_8;
+            }
+            else if nixpkgs.lib.versionAtLeast hprev.ghc.version "8.10.0"
+            then {}
+            else
+              {
+                ## NB: Fails a single test case under GHC 8.8.4.
+                doctest = final.haskell.lib.dontCheck hprev.doctest;
+                ## NB: Tests fail to build under GHC 8.8.4.
+                vector = final.haskell.lib.dontCheck hprev.vector;
+              }
+              // (
+                if final.system == "i686-linux"
+                then {
+                  ## NB: Fails `prop_double_assoc` under GHC 8.8.4 on i686-linux.
+                  QuickCheck = final.haskell.lib.dontCheck hprev.QuickCheck;
+                }
+                else {}
+              )
+          )
+          // (
+            if final.system == "i686-linux"
+            then {
+              enummapset = final.haskell.lib.dontCheck hprev.enummapset;
+              sqlite-simple = final.haskell.lib.dontCheck hprev.sqlite-simple;
+            }
+            else {}
+          );
       };
 
       homeConfigurations =
         builtins.listToAttrs
         (builtins.map
-          (flaky.lib.homeConfigurations.example
-            pname
-            self
-            [
-              ({pkgs, ...}: {
-                home.packages = [
-                  (pkgs.haskellPackages.ghcWithPackages (hpkgs: [
-                    hpkgs.${pname}
-                  ]))
-                ];
-              })
-            ])
+          (flaky.lib.homeConfigurations.example self [
+            ({pkgs, ...}: {
+              home.packages = [
+                (pkgs.haskellPackages.ghcWithPackages (hpkgs: [hpkgs.${pname}]))
+              ];
+            })
+          ])
           supportedSystems);
 
       lib = {
@@ -182,24 +221,26 @@
     in {
       packages =
         {default = self.packages.${system}."${self.lib.defaultCompiler}_all";}
-        // concat.lib.mkPackages
+        // flaky-haskell.lib.mkPackages
         pkgs
         (self.lib.supportedGhcVersions system)
         cabalPackages;
 
       devShells =
         {default = self.devShells.${system}.${self.lib.defaultCompiler};}
-        // concat.lib.mkDevShells
+        // flaky-haskell.lib.mkDevShells
         pkgs
-        (self.lib.testedGhcVersions system)
+        (self.lib.supportedGhcVersions system)
         cabalPackages
         (hpkgs:
           [self.projectConfigurations.${system}.packages.path]
           ## NB: Haskell Language Server no longer supports GHC <9.
-          ## TODO: HLS also apparently broken on 9.8.1
+          ## TODO: HLS also apparently broken on 9.8.1.
+          ## NB: And there are some 32-bit issues on i686.
           ++ nixpkgs.lib.optional
           (nixpkgs.lib.versionAtLeast hpkgs.ghc.version "9"
-            && builtins.compareVersions hpkgs.ghc.version "9.8.1" != 0)
+            && builtins.compareVersions hpkgs.ghc.version "9.8.1" != 0
+            && system != "i686-linux")
           hpkgs.haskell-language-server);
 
       projectConfigurations =
@@ -210,18 +251,6 @@
     });
 
   inputs = {
-    # Currently contains our Haskell/Nix lib that should be extracted into its
-    # own flake.
-    concat = {
-      inputs = {
-        ## TODO: The version currently used by concat doesn’t support i686-linux.
-        bash-strict-mode.follows = "flaky/bash-strict-mode";
-        flake-utils.follows = "flake-utils";
-        nixpkgs.follows = "nixpkgs";
-      };
-      url = "github:compiling-to-categories/concat";
-    };
-
     flake-utils.url = "github:numtide/flake-utils";
 
     flaky = {
@@ -232,11 +261,19 @@
       url = "github:sellout/flaky";
     };
 
+    flaky-haskell = {
+      inputs = {
+        flake-utils.follows = "flake-utils";
+        flaky.follows = "flaky";
+        nixpkgs.follows = "nixpkgs";
+      };
+      url = "github:sellout/flaky-haskell";
+    };
+
     nixpkgs.url = "github:NixOS/nixpkgs/release-23.11";
 
     yaya = {
       inputs = {
-        concat.follows = "concat";
         flake-utils.follows = "flake-utils";
         flaky.follows = "flaky";
         nixpkgs.follows = "nixpkgs";
