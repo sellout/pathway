@@ -6,9 +6,14 @@
 
 Type-safe system-independent file path library
 
-Type-safe system-independent file path library.
-
 ## usage
+
+See the READMEs associated with the individual packages:
+
+- [pathway](./pathway/README.md) – core path operations
+- [pathway-quickcheck](./quickcheck/README.md) - utilities for testing Pathway usage using [QuickCheck](https://hackage.haskell.org/package/QuickCheck) (particularly useful for [doctest](https://hackage.haskell.org/package/doctest) usage)
+- [pathway-path](./path/README.md) - integration with the [path](https://hackage.haskell.org/package/path) library
+- [pathway-system](./system/README.md) - integration with the local filesystem (extremely similar to the [directory](https://hackage.haskell.org/package/directory) package, but with changes to take advantage of the type safety provided by Pathway).
 
 ## development environment
 
@@ -38,6 +43,8 @@ This project is built with [Cabal](https://cabal.readthedocs.io/en/stable/index.
 
 ## versioning
 
+[The Haskell Package Versioning Policy](https://pvp.haskell.org/) is a good starting point for versioning Haskell code, however, this project is generally more strictly versioned than described there.
+
 In the absolute, almost every change is a breaking change. This section describes how we mitigate that to provide minor updates and revisions.
 
 Here are some common changes that can have unintended effects:
@@ -56,28 +63,4 @@ To mitigate some of those issues for versioning, we assume the following usage:
 
 ## comparisons
 
-Other projects similar to this one, and how they differ.
-
-### [FilePath](https://hackage.haskell.org/package/filepath)
-
-The `filepath` package is included with GHC (and partially exposed via `base` and `Prelude`). It exposes two different path types in `System.FilePath` and `System.OsPath`. Neither one distinguishes between various path types and the behavior for applying operations to the wrong kinds of paths is often invisible.
-
-### [Path](https://hackage.haskell.org/package/path)
-
-This package provides a similar set of types as Pathway, but with a number of differences in representation and interface. See the module documentation for `pathway-path:Filesystem.Path.Path` for a more detailed comparison.
-
-This package is certainly the most similar to Pathway, and an inspiration for it.
-
-### [`posix-paths`](https://hackage.haskell.org/package/posix-paths)
-
-This provides a lot of `filepath` operations for `RawFilePath` from the `unix` package (described below). As such, it is POSIX-specifc, and has the other characteristics of that package.
-
-### [`rawfilepath`](https://hackage.haskell.org/package/rawfilepath)
-
-This library isn’t similar to Pathway (but it’s mentioned because it sounds like it is). It provides a number of `IO` operations (e.g., `readFile`, `doesPathExist`, etc.) using the `RawFilePath` type from the `unix` package (described below), so it is also POSIX-specific.
-
-Pathway will eventually support `IO` operations like this, but they will be in a separate package from `pathway` proper. For now, Pathway expects you to convert your paths to another representation before calling existing `IO` operations in other packages.
-
-### [`unix`](https://hackage.haskell.org/package/unix)
-
-Provides `System.Posix.ByteString.RawFilePath` and `System.Posix.PosixString.PosixPath`. Both are type synonyms over some text representation, and are intended to contain POSIX-specific paths.
+See [the Pathway package documentation](https://hackage.haskell.org/package/pathway#comparisons) for comparisons with a large number of other libraries.
