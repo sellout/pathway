@@ -76,8 +76,8 @@
       (map (ghc: "CI / build (${ghc}) (pull_request)") self.lib.nonNixTestedGhcVersions
       ++ lib.concatMap flaky.lib.garnixChecks (
         lib.concatMap (ghc: [
-          (sys: "devShell ghc${ghc} [${sys}]")
-          (sys: "package ghc${sys}_all [${sys}]")
+          (sys: "devShell ${ghc} [${sys}]")
+          (sys: "package ${ghc}_all [${sys}]")
         ])
         (self.lib.testedGhcVersions pkgs.system)
         ++ [
