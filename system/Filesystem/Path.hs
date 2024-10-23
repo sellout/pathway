@@ -4,6 +4,8 @@
 {-# LANGUAGE TypeApplications #-}
 -- __NB__: Because of the nested @`Show` (`MP.Token` rep)@ constraints.
 {-# LANGUAGE UndecidableInstances #-}
+-- __NB__: "System.Directory" isn’t safe from directory-1.3.8 (GHC 9.6).
+{-# OPTIONS_GHC -Wno-safe -Wno-trustworthy-safe #-}
 
 -- | This provides an API similar to "System.Directory", but for Pathway types.
 --

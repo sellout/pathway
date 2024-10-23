@@ -1,8 +1,10 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE Safe #-}
+{-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE TypeFamilyDependencies #-}
 -- __NB__: Because of the nested `Parents` and `Filename` constraints.
 {-# LANGUAGE UndecidableInstances #-}
+-- __NB__: "System.Directory" isn’t safe until base-4.15 (GHC 9.0).
+{-# OPTIONS_GHC -Wno-safe -Wno-trustworthy-safe #-}
 
 module Data.Path.Internal
   ( List (List),
@@ -16,34 +18,34 @@ module Data.Path.Internal
   )
 where
 
-import "base" Control.Category (Category ((.)))
-import "base" Data.Bool (Bool (False, True))
-import "base" Data.Eq (Eq)
-import "base" Data.Foldable (Foldable (foldr), sum)
-import "base" Data.Function (($))
-import "base" Data.Functor (Functor (fmap), (<$>))
-import "base" Data.Functor.Const (Const (Const))
-import "base" Data.Functor.Identity (Identity)
-import "base" Data.Monoid (Monoid (mempty))
-import "base" Data.Ord (Ord)
-import "base" Data.Proxy (Proxy (Proxy))
-import "base" Data.Semigroup (Semigroup ((<>)))
--- import "base" Data.Traversable (Traversable (traverse))
-import "base" GHC.Generics (Generic, Generic1)
+import safe "base" Control.Category (Category ((.)))
+import safe "base" Data.Bool (Bool (False, True))
+import safe "base" Data.Eq (Eq)
+import safe "base" Data.Foldable (Foldable (foldr), sum)
+import safe "base" Data.Function (($))
+import safe "base" Data.Functor (Functor (fmap), (<$>))
+import safe "base" Data.Functor.Const (Const (Const))
+import safe "base" Data.Functor.Identity (Identity)
+import safe "base" Data.Monoid (Monoid (mempty))
+import safe "base" Data.Ord (Ord)
+import safe "base" Data.Proxy (Proxy (Proxy))
+import safe "base" Data.Semigroup (Semigroup ((<>)))
+-- import safe "base" Data.Traversable (Traversable (traverse))
+import safe "base" GHC.Generics (Generic, Generic1)
 import "base" GHC.Natural (minusNaturalMaybe)
-import "base" Numeric.Natural (Natural)
-import "base" Text.Read (Read)
-import "base" Text.Show (Show)
-import "yaya" Yaya.Applied (drop, length)
-import "yaya" Yaya.Fold
+import safe "base" Numeric.Natural (Natural)
+import safe "base" Text.Read (Read)
+import safe "base" Text.Show (Show)
+import safe "yaya" Yaya.Applied (drop, length)
+import safe "yaya" Yaya.Fold
   ( Mu,
     Projectable (project),
     Recursive (cata),
     Steppable (embed),
   )
-import "yaya" Yaya.Functor (firstMap)
-import "yaya" Yaya.Pattern (Maybe, XNor (Neither), xnor)
-import "base" Prelude (Num ((+)))
+import safe "yaya" Yaya.Functor (firstMap)
+import safe "yaya" Yaya.Pattern (Maybe, XNor (Neither), xnor)
+import safe "base" Prelude (Num ((+)))
 
 -- |
 --
