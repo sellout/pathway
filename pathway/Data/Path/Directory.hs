@@ -1,4 +1,3 @@
-{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE Safe #-}
 
 module Data.Path.Directory

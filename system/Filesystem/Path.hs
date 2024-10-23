@@ -1,5 +1,4 @@
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE TypeApplications #-}
 -- __NB__: Because of the nested @`Show` (`MP.Token` rep)@ constraints.

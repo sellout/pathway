@@ -1,4 +1,3 @@
-{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE Unsafe #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 

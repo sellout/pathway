@@ -1,4 +1,3 @@
-{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -93,7 +92,6 @@ import safe "this" Data.Path.Format (Format (parent, root, separator, substituti
 import safe "base" Prelude (Num ((+)))
 
 -- $setup
--- >>> :seti -XDataKinds
 -- >>> :seti -XQuasiQuotes
 -- >>> :seti -XTypeApplications
 -- >>> import "QuickCheck" Test.QuickCheck

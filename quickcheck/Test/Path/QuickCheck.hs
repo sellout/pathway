@@ -1,4 +1,3 @@
-{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE Safe #-}
 -- __NB__: Because of the nested `Parents` and `Filename` constraints.
 {-# LANGUAGE UndecidableInstances #-}
