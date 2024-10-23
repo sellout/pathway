@@ -2,7 +2,7 @@
 
 # Dependency License Report
 
-Bold-faced **`package-name`**s denote standard libraries bundled with `ghc-9.8.1`.
+Bold-faced **`package-name`**s denote standard libraries bundled with `ghc-9.10.1`.
 
 ## Direct dependencies of `pathway:lib:pathway`
 
@@ -39,4 +39,3 @@ Bold-faced **`package-name`**s denote standard libraries bundled with `ghc-9.8.1
 | **`time`** | [`1.12.2`](http://hackage.haskell.org/package/time-1.12.2) | [`BSD-2-Clause`](http://hackage.haskell.org/package/time-1.12.2/src/LICENSE) | A time library | `directory`, `ghc`, `hpc`, `unix` |
 | **`transformers`** | [`0.6.1.0`](http://hackage.haskell.org/package/transformers-0.6.1.0) | [`BSD-3-Clause`](http://hackage.haskell.org/package/transformers-0.6.1.0/src/LICENSE) | Concrete functor and monad transformers | `exceptions`, `ghc`, `ghci`, `mtl` |
 | **`unix`** | [`2.8.3.0`](http://hackage.haskell.org/package/unix-2.8.3.0) | [`BSD-3-Clause`](http://hackage.haskell.org/package/unix-2.8.3.0/src/LICENSE) | POSIX functionality | `directory`, `ghc`, `ghc-boot`, `ghci`, `process`, `semaphore-compat` |
-

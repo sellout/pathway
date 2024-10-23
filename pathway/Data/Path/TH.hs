@@ -36,7 +36,6 @@ import qualified "this" Data.Path.Parser as Parser
 import "base" Prelude (fromIntegral)
 
 -- $setup
--- >>> :seti -XDataKinds
 -- >>> :seti -XQuasiQuotes
 -- >>> import "this" Data.Path (Relativity (Abs), Type (File))
 
