@@ -5,6 +5,20 @@ max-backjumps: -1
 minimize-conflict-set: true
 reorder-goals: true
 
+constraints:
+  -- path <0.9.6 is lacking a bound on aeson, but requires at least 1.0.0
+  aeson >= 1.0.0,
+  -- earlier versions don’t have `SomeBase` and other types
+  path >= 0.8.0,
+  -- earlier versions use -fpackage-trust, which causes no end of trouble
+  yaya >= 0.6.2.2,
+  -- earlier versions use -fpackage-trust, which causes no end of trouble
+  yaya-containers >= 0.1.2.1,
+  -- earlier versions use -fpackage-trust, which causes no end of trouble
+  yaya-quickcheck >= 0.2.0.2,
+  -- earlier versions use -fpackage-trust, which causes no end of trouble
+  yaya-unsafe >= 0.4.1.2,
+
 program-options
   ghc-options:
     -Werror

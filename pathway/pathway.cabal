@@ -123,13 +123,15 @@ common defaults
     -Weverything
     -- This one just reports unfixable things, AFAICT.
     -Wno-all-missed-specialisations
-    -Wno-inferred-safe-imports
     -- Type inference good.
     -Wno-missing-local-signatures
     -- Warns even when `Unsafe` is explicit, not inferred. See
     -- https://gitlab.haskell.org/ghc/ghc/-/issues/16689
     -Wno-unsafe
-  if impl(ghc < 8.8.1)
+  if impl(ghc >= 8.8.1)
+    ghc-options:
+      -Wno-inferred-safe-imports
+  else
     ghc-options:
       -- This used to warn even when `Safe` was explicit.
       -Wno-safe
@@ -185,7 +187,7 @@ library
     pathway-internal,
     template-haskell,
     text,
-    yaya >= 0.6.1.0,
+    yaya ^>= {0.6.2},
     yaya-containers,
     yaya-unsafe,
   exposed-modules:
