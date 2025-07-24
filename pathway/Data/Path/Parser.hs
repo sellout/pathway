@@ -4,7 +4,7 @@
 -- | Various parsers for paths.
 --
 --  __NB__: This doesn’t provide parsers for `Path`, only `AnyPath`. If you are
---          parsing at compile time, "Filesystsem.Quoter" has
+--          parsing at compile time, "Filesystem.Quoter" has
 --         `Language.Haskell.TH.Quote.QuasiQuoter`s that will will parse
 --          directly to the specific `Path` type that is needed. For runtime
 --          parsing, you are better off using @`anchor` `.` `parse` (`path`
