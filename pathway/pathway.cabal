@@ -168,7 +168,7 @@ library
     pathway-internal,
     template-haskell,
     text,
-    yaya >= 0.6.1.0,
+    yaya ^>= {0.6.2},
     yaya-containers,
     yaya-unsafe,
   exposed-modules:

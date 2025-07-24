@@ -165,7 +165,7 @@ library
     QuickCheck,
     pathway-internal,
     quickcheck-instances,
-    yaya >= 0.6.1.0,
+    yaya ^>= {0.6.2},
     yaya-quickcheck >= 0.1.0,
   exposed-modules:
     Test.Path.QuickCheck

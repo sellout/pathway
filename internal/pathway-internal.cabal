@@ -162,7 +162,7 @@ custom-setup
 library
   import: defaults
   build-depends:
-    yaya ^>= {0.6.1},
+    yaya ^>= {0.6.2},
   exposed-modules:
     Data.Path.Internal
 

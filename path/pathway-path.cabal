@@ -166,7 +166,7 @@ library
     path,
     pathway,
     pathway-internal,
-    yaya >= 0.6.1.0,
+    yaya ^>= {0.6.2},
     yaya-unsafe,
   exposed-modules:
     Data.Path.Integration.Path
