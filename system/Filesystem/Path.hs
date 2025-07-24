@@ -1,9 +1,11 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE Safe #-}
+{-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE TypeApplications #-}
 -- __NB__: Because of the nested @`Show` (`MP.Token` rep)@ constraints.
 {-# LANGUAGE UndecidableInstances #-}
+-- __NB__: "System.Directory" isn’t safe from directory-1.3.8 (GHC 9.6).
+{-# OPTIONS_GHC -Wno-safe -Wno-trustworthy-safe #-}
 
 -- | This provides an API similar to "System.Directory", but for Pathway types.
 --
@@ -74,27 +76,27 @@ module Filesystem.Path
   )
 where
 
-import "base" Control.Applicative (Applicative (pure))
-import "base" Control.Category (Category ((.)))
-import "base" Control.Exception (Exception, throwIO)
-import "base" Data.Bool (Bool (False, True))
-import "base" Data.Either (Either (Left), either, partitionEithers)
-import "base" Data.Eq (Eq)
-import "base" Data.Foldable (Foldable (toList))
-import "base" Data.Function (($))
-import "base" Data.Functor (Functor (fmap), (<$>))
-import "base" Data.Maybe (Maybe)
-import "base" Data.Ord (Ord)
-import "base" Data.String (String)
-import "base" Data.Traversable (Traversable (traverse))
-import "base" Data.Typeable (Typeable)
-import "base" GHC.Generics (Generic)
-import "base" System.IO (IO)
-import "base" Text.Show (Show)
+import safe "base" Control.Applicative (Applicative (pure))
+import safe "base" Control.Category (Category ((.)))
+import safe "base" Control.Exception (Exception, throwIO)
+import safe "base" Data.Bool (Bool (False, True))
+import safe "base" Data.Either (Either (Left), either, partitionEithers)
+import safe "base" Data.Eq (Eq)
+import safe "base" Data.Foldable (Foldable (toList))
+import safe "base" Data.Function (($))
+import safe "base" Data.Functor (Functor (fmap), (<$>))
+import safe "base" Data.Maybe (Maybe)
+import safe "base" Data.Ord (Ord)
+import safe "base" Data.String (String)
+import safe "base" Data.Traversable (Traversable (traverse))
+import safe "base" Data.Typeable (Typeable)
+import safe "base" GHC.Generics (Generic)
+import safe "base" System.IO (IO)
+import safe "base" Text.Show (Show)
 import qualified "directory" System.Directory as Dir
-import "filepath" System.FilePath (FilePath)
-import qualified "megaparsec" Text.Megaparsec as MP
-import "pathway" Data.Path
+import safe "filepath" System.FilePath (FilePath)
+import safe qualified "megaparsec" Text.Megaparsec as MP
+import safe "pathway" Data.Path
   ( Anchored (AbsDir, AbsFile, RelDir, RelFile, ReparentedDir, ReparentedFile),
     AnyPath,
     Path,
@@ -107,11 +109,11 @@ import "pathway" Data.Path
     toText,
     unanchor,
   )
-import qualified "pathway" Data.Path.Format as Format
-import qualified "pathway" Data.Path.Parser as Parser
-import "time" Data.Time.Clock (UTCTime)
-import "transformers" Control.Monad.Trans.Class (MonadTrans (lift))
-import "transformers" Control.Monad.Trans.Except (ExceptT (ExceptT))
+import safe qualified "pathway" Data.Path.Format as Format
+import safe qualified "pathway" Data.Path.Parser as Parser
+import safe "time" Data.Time.Clock (UTCTime)
+import safe "transformers" Control.Monad.Trans.Class (MonadTrans (lift))
+import safe "transformers" Control.Monad.Trans.Except (ExceptT (ExceptT))
 
 -- |
 --

@@ -1,8 +1,10 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE Safe #-}
+{-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ViewPatterns #-}
+-- __NB__: "System.Directory" isn’t safe until base-4.15 (GHC 9.0).
+{-# OPTIONS_GHC -Wno-safe -Wno-trustworthy-safe #-}
 
 -- | A representation-agnostic, structured, type-safe path library.
 --
@@ -40,22 +42,22 @@ module Data.Path
   )
 where
 
-import "base" Control.Applicative (Applicative (pure))
-import "base" Control.Category (Category (id, (.)))
-import "base" Data.Bool (Bool (False, True))
-import "base" Data.Eq (Eq ((==)))
-import "base" Data.Function (($))
-import "base" Data.Functor (Functor (fmap))
-import "base" Data.Functor.Const (Const (Const))
-import "base" Data.Functor.Identity (Identity (runIdentity))
-import qualified "base" Data.Maybe as Lazy
-import "base" Data.Proxy (Proxy (Proxy))
-import "base" Data.Semigroup (Semigroup ((<>)))
-import "base" Data.String (IsString, String)
+import safe "base" Control.Applicative (Applicative (pure))
+import safe "base" Control.Category (Category (id, (.)))
+import safe "base" Data.Bool (Bool (False, True))
+import safe "base" Data.Eq (Eq ((==)))
+import safe "base" Data.Function (($))
+import safe "base" Data.Functor (Functor (fmap))
+import safe "base" Data.Functor.Const (Const (Const))
+import safe "base" Data.Functor.Identity (Identity (runIdentity))
+import safe qualified "base" Data.Maybe as Lazy
+import safe "base" Data.Proxy (Proxy (Proxy))
+import safe "base" Data.Semigroup (Semigroup ((<>)))
+import safe "base" Data.String (IsString, String)
 import "base" GHC.Natural (minusNaturalMaybe)
-import "base" Numeric.Natural (Natural)
-import qualified "extra" Data.List.Extra as List
-import "pathway-internal" Data.Path.Internal
+import safe "base" Numeric.Natural (Natural)
+import safe qualified "extra" Data.List.Extra as List
+import safe "pathway-internal" Data.Path.Internal
   ( Filename,
     List,
     Parents,
@@ -65,18 +67,18 @@ import "pathway-internal" Data.Path.Internal
     current,
     (</>),
   )
-import "text" Data.Text (Text)
-import qualified "text" Data.Text as Text
-import "yaya" Yaya.Applied (append, length, reverse, tail)
-import "yaya" Yaya.Fold
+import safe "text" Data.Text (Text)
+import safe qualified "text" Data.Text as Text
+import safe "yaya" Yaya.Applied (append, length, reverse, tail)
+import safe "yaya" Yaya.Fold
   ( Projectable (project),
     Recursive (cata),
     Steppable (embed),
     distTuple,
     gcata,
   )
-import "yaya" Yaya.Fold.Native ()
-import "yaya" Yaya.Pattern
+import safe "yaya" Yaya.Fold.Native ()
+import safe "yaya" Yaya.Pattern
   ( Maybe (Nothing),
     Pair ((:!:)),
     XNor (Both, Neither),
@@ -86,9 +88,9 @@ import "yaya" Yaya.Pattern
     maybe,
     xnor,
   )
-import "yaya-containers" Yaya.Containers.Pattern.Map (MapF (BinF, TipF))
-import "this" Data.Path.Format (Format (parent, root, separator, substitutions))
-import "base" Prelude (Num ((+)))
+import safe "yaya-containers" Yaya.Containers.Pattern.Map (MapF (BinF, TipF))
+import safe "this" Data.Path.Format (Format (parent, root, separator, substitutions))
+import safe "base" Prelude (Num ((+)))
 
 -- $setup
 -- >>> :seti -XDataKinds
