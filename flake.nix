@@ -36,7 +36,6 @@
     nixpkgs,
     self,
     systems,
-    yaya,
   }: let
     pname = "pathway";
 
@@ -83,7 +82,6 @@
               (flaky.overlays.haskellDependencies final prev)
               (self.overlays.haskell final prev)
               (self.overlays.haskellDependencies final prev)
-              (yaya.overlays.haskell final prev)
             ])
           final
           prev;
@@ -222,11 +220,6 @@
     flaky-haskell = {
       inputs.flaky.follows = "flaky";
       url = "github:sellout/flaky-haskell";
-    };
-
-    yaya = {
-      inputs.flaky.follows = "flaky";
-      url = "github:sellout/yaya";
     };
   };
 }

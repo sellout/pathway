@@ -135,45 +135,6 @@
         "type": "github"
       }
     },
-    "flaky-haskell_2": {
-      "inputs": {
-        "flake-utils": [
-          "yaya",
-          "flaky-haskell",
-          "flaky",
-          "flake-utils"
-        ],
-        "flaky": [
-          "yaya",
-          "flaky"
-        ],
-        "nixpkgs": [
-          "yaya",
-          "flaky-haskell",
-          "flaky",
-          "nixpkgs"
-        ],
-        "systems": [
-          "yaya",
-          "flaky-haskell",
-          "flaky",
-          "systems"
-        ]
-      },
-      "locked": {
-        "lastModified": 1742194199,
-        "narHash": "sha256-AkusOvf0dwsYIrLpi6tlO9UAXD+nUQKV1eY1naaAhy8=",
-        "owner": "sellout",
-        "repo": "flaky-haskell",
-        "rev": "6b4125092ded5160853e1ab37c75e3819dcc410d",
-        "type": "github"
-      },
-      "original": {
-        "owner": "sellout",
-        "repo": "flaky-haskell",
-        "type": "github"
-      }
-    },
     "garnix-systems": {
       "locked": {
         "lastModified": 1723225755,
@@ -384,8 +345,7 @@
         "systems": [
           "flaky",
           "systems"
-        ],
-        "yaya": "yaya"
+        ]
       }
     },
     "shellcheck-nix-attributes": {
@@ -438,42 +398,6 @@
       "original": {
         "owner": "numtide",
         "repo": "treefmt-nix",
-        "type": "github"
-      }
-    },
-    "yaya": {
-      "inputs": {
-        "flake-utils": [
-          "yaya",
-          "flaky",
-          "flake-utils"
-        ],
-        "flaky": [
-          "flaky"
-        ],
-        "flaky-haskell": "flaky-haskell_2",
-        "nixpkgs": [
-          "yaya",
-          "flaky",
-          "nixpkgs"
-        ],
-        "systems": [
-          "yaya",
-          "flaky",
-          "systems"
-        ]
-      },
-      "locked": {
-        "lastModified": 1743362591,
-        "narHash": "sha256-h1dtLR4l/JfXgSWbk3pl3ddpHv92amdco/TJTZXGgLc=",
-        "owner": "sellout",
-        "repo": "yaya",
-        "rev": "949799c344ca6795e6fef5e377c07a520318203b",
-        "type": "github"
-      },
-      "original": {
-        "owner": "sellout",
-        "repo": "yaya",
         "type": "github"
       }
     }
