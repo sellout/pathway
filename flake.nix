@@ -30,6 +30,7 @@
   ### };
   ### checks.format = verify that code matches Ormolu expectations
   outputs = {
+    bash-strict-mode,
     flake-utils,
     flaky,
     flaky-haskell,
@@ -102,6 +103,10 @@
               home.packages = [
                 (pkgs.haskellPackages.ghcWithPackages (hpkgs: [hpkgs.${pname}]))
               ];
+              ## FIXME: This shouldn’t be necessary. Something upstream of us
+              ##        (flaky?) isn’t putting required things in scope
+              ##        properly.
+              nixpkgs.overlays = [bash-strict-mode.overlays.default];
             })
           ])
           supportedSystems);
@@ -213,6 +218,7 @@
     ## Flaky should generally be the source of truth for its inputs.
     flaky.url = "github:sellout/flaky";
 
+    bash-strict-mode.follows = "flaky/bash-strict-mode";
     flake-utils.follows = "flaky/flake-utils";
     nixpkgs.follows = "flaky/nixpkgs";
     systems.follows = "flaky/systems";
