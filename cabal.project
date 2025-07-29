@@ -7,6 +7,14 @@ program-options
 
 tests: True
 
+constraints:
+  -- path doesn’t properly constrain aeson until 0.9.6, but path 0.9.6 doesn’t
+  -- support GHC <9.6.
+  aeson >= 1.0.0.0,
+  -- free 5.1.5 isn’t `Safe`. Yaya should be updated with this constraint
+  -- properly
+  free >= 5.1.6,
+
 packages:
   ./internal/pathway-internal.cabal
   ./path/pathway-path.cabal
