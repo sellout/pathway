@@ -16,6 +16,9 @@ import "base" Data.String (IsString)
 import "containers" Data.Map (Map)
 import qualified "containers" Data.Map as Map
 import "yaya" Yaya.Pattern (Maybe, fromMaybe)
+#if defined(mingw32_HOST_OS)
+import "yaya" Yaya.Pattern (Maybe (Nothing))
+#endif
 
 data Format s = Format
   { root :: s,
