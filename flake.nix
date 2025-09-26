@@ -270,7 +270,7 @@
       url = "github:sellout/flaky-haskell";
     };
 
-    nixpkgs.url = "github:NixOS/nixpkgs/release-23.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/release-25.05";
 
     yaya = {
       inputs = {
