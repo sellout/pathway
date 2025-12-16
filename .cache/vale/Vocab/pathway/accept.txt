@@ -6,7 +6,13 @@ ShellCheck
 bugfix
 comonad
 conditionalize
+Dhall
+doctest
 functor
 GADT
+hostname
 Kleisli
 Kmett
+Pathy
+reparent
+trie

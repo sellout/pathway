@@ -20,8 +20,8 @@ Other projects similar to this one, and how they differ.
 
 These packages are both very similar to this one. They all roughly provide the same API, but taking the type of path provided by the library.
 
-One way in which Pathway differs is that it requires absolute paths for almost all operations. This is a philosophical point, in which it is much harder to apply operations in the wrong place if you must explicitly build the absolute path before passing it to the filesystem.
+One way in which Pathway differs is that it requires absolute paths for almost all operations. This is a philosophical point, in which it’s much harder to apply operations in the wrong place if you must explicitly build the absolute path before passing it to the filesystem.
 
-There are exceptions in that some operations return a relative path, if that path is relative to some argument of the operation[^1]. It is also allowable for an operation to take a relative path if, say, it is going to search the filesystem for absolute paths containing that suffix.
+There are exceptions in that some operations return a relative path, if that path is relative to some argument of the operation[^1]. It’s also allowable for an operation to take a relative path if, say, it’s going to search the filesystem for absolute paths containing that suffix.
 
-[^1]: This is because it is much easier (total) to prepend the argument to the relative result if you want to make the results absolute than is to strip the argument from the absolute result if you want to make it relative (partial).
+[^1]: This is because it’s much easier (total) to prepend the argument to the relative result if you want to make the results absolute than is to strip the argument from the absolute result if you want to make it relative (partial).

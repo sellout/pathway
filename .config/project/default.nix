@@ -68,16 +68,23 @@ in {
         "*.cabal"
         "*.hs"
         "*.lhs"
+        "*/docs/license-report.md"
         "./cabal.project"
       ];
       vocab.${config.project.name}.accept = [
         "bugfix"
         "comonad"
         "conditionalize"
+        "Dhall"
+        "doctest"
         "functor"
         "GADT"
+        "hostname"
         "Kleisli"
         "Kmett"
+        "Pathy"
+        "reparent"
+        "trie"
       ];
     };
   };

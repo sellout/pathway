@@ -8,7 +8,7 @@ Type-safe system-independent file path library
 
 ## usage
 
-See the READMEs associated with the individual packages:
+See the documentation for the individual packages:
 
 - [pathway](./pathway/README.md) – core path operations
 - [pathway-quickcheck](./quickcheck/README.md) - utilities for testing Pathway usage using [QuickCheck](https://hackage.haskell.org/package/QuickCheck) (particularly useful for [doctest](https://hackage.haskell.org/package/doctest) usage)
@@ -29,7 +29,7 @@ This will apply our repository-specific Git configuration to `git` commands run 
 
 ## building & development
 
-Especially if you are unfamiliar with the haskell ecosystem, there is a Nix build (both with and without a flake). If you are unfamiliar with Nix, [Nix adjacent](...) can help you get things working in the shortest time and least effort possible.
+Especially if you are unfamiliar with the Haskell ecosystem, there is a Nix build (both with and without a flake). If you are unfamiliar with Nix, [Nix adjacent](...) can help you get things working in the shortest time and least effort possible.
 
 ### if you have `nix` installed
 

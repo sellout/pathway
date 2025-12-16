@@ -6,7 +6,7 @@
 
 Implementation details for [Pathway](https://hackage.haskell.org/package/pathway) that generally shouldn’t need to be depended on directly.
 
-It is extracted into its own package to allow [Pathway QuickCheck integration](https://hackage.haskell.org/package/pathway-quickcheck) to not depend on Pathway itself (avoiding a dependency cycle on Pathway’s tests).
+It’s extracted into its own package to allow [Pathway QuickCheck integration](https://hackage.haskell.org/package/pathway-quickcheck) to not depend on Pathway itself (avoiding a dependency cycle on Pathway’s tests).
 
 ## licensing
 
