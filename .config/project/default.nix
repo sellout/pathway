@@ -1,153 +1,72 @@
+### All available options for this file are listed in
+### https://sellout.github.io/project-manager/options.xhtml
 {
   config,
-  flaky,
   lib,
-  pkgs,
   self,
-  supportedSystems,
   ...
-}: let
-  githubSystems = ["macos-13" "ubuntu-22.04" "windows-2022"];
-in {
+}: {
   project = {
     name = "pathway";
     summary = "Type-safe system-independent file path library";
-
-    devPackages = [
-      pkgs.cabal-install
-      pkgs.graphviz
-      ## So cabal-plan(-bounds) can be built in a devShell, since it doesn’t
-      ## work in Nix proper.
-      pkgs.zlib
-    ];
+    ## TODO: Move something like this to Flaky.
+    file = let
+      copyLicenses = dir: {
+        "${dir}/LICENSE".source = ../../LICENSE;
+        "${dir}/LICENSE.AGPL-3.0-only".source = ../../LICENSE.AGPL-3.0-only;
+        "${dir}/LICENSE.Universal-FOSS-exception-1.0".source =
+          ../../LICENSE.Universal-FOSS-exception-1.0;
+        "${dir}/LICENSE.commercial".source = ../../LICENSE.commercial;
+      };
+    in
+      copyLicenses "internal"
+      // copyLicenses "path"
+      // copyLicenses "pathway"
+      // copyLicenses "quickcheck"
+      // copyLicenses "system";
   };
 
-  imports = [
-    (import ./github-ci.nix githubSystems [
-      "pathway"
-      "pathway-internal"
-      "pathway-path"
-      "pathway-quickcheck"
-      "pathway-system"
-    ])
-    ./hackage-publish.nix
-    ./hlint.nix
+  imports = [./hlint.nix];
+
+  programs.vale.vocab.${config.project.name}.accept = [
+    "Dhall"
+    "doctest"
+    "hostname"
+    "Pathy"
+    "reparent"
+    "trie"
   ];
 
-  ## dependency management
-  services.renovate.enable = true;
-
-  ## development
-  programs = {
-    direnv.enable = true;
-    # This should default by whether there is a .git file/dir (and whether it’s
-    # a file (worktree) or dir determines other things – like where hooks
-    # are installed.
-    git = {
-      enable = true;
-      ignores = [
-        # Cabal build
-        "dist-newstyle"
-      ];
-    };
-  };
-
-  ## formatting
-  editorconfig.enable = true;
-
-  programs = {
-    treefmt = {
-      enable = true;
-      ## Haskell formatter
-      programs.ormolu.enable = true;
-      settings.formatter.prettier.excludes = ["*/docs/license-report.md"];
-    };
-    vale = {
-      enable = true;
-      excludes = [
-        "*.cabal"
-        "*.hs"
-        "*.lhs"
-        "*/docs/license-report.md"
-        "./cabal.project"
-      ];
-      vocab.${config.project.name}.accept = [
-        "bugfix"
-        "comonad"
-        "conditionalize"
-        "Dhall"
-        "doctest"
-        "functor"
-        "GADT"
-        "hostname"
-        "Kleisli"
-        "Kmett"
-        "Pathy"
-        "reparent"
-        "trie"
-      ];
-    };
-  };
-
   ## CI
-  services.garnix = {
-    enable = true;
-    builds = {
-      ## TODO: Remove once garnix-io/garnix#285 is fixed.
-      exclude = ["homeConfigurations.x86_64-darwin-example"];
-      include = lib.mkForce (
-        [
-          "homeConfigurations.*"
-          "nixosConfigurations.*"
-        ]
-        ++ flaky.lib.forGarnixSystems supportedSystems (
-          sys:
-            [
-              "checks.${sys}.*"
-              "devShells.${sys}.default"
-              "packages.${sys}.default"
-            ]
-            ++ lib.concatMap (ghc: [
-              "devShells.${sys}.${ghc}"
-              "packages.${sys}.${ghc}_all"
-            ])
-            (self.lib.testedGhcVersions sys)
-        )
-      );
-    };
-  };
   ## FIXME: Shouldn’t need `mkForce` here (or to duplicate the base contexts).
   ##        Need to improve module merging.
   services.github.settings.branches.main.protection.required_status_checks.contexts =
     lib.mkForce
-    (["check-bounds"]
+    ([
+        "All Garnix checks"
+        "check-bounds"
+        "check-licenses"
+      ]
       ++ lib.concatMap (sys:
         lib.concatMap (ghc: [
           "build (${ghc}, ${sys})"
           "build (--prefer-oldest, ${ghc}, ${sys})"
         ])
         self.lib.nonNixTestedGhcVersions)
-      githubSystems
-      ++ flaky.lib.forGarnixSystems supportedSystems (sys:
-        lib.concatMap (ghc: [
-          "devShell ${ghc} [${sys}]"
-          "package ${ghc}_all [${sys}]"
-        ])
-        (self.lib.testedGhcVersions sys)
-        ++ [
-          "homeConfig ${sys}-${config.project.name}-example"
-          "package default [${sys}]"
-          ## FIXME: These are duplicated from the base config
-          "check formatter [${sys}]"
-          "check project-manager-files [${sys}]"
-          "check vale [${sys}]"
-          "devShell default [${sys}]"
-        ]));
+      config.services.haskell-ci.systems);
+  services.haskell-ci = {
+    inherit (self.lib) defaultGhcVersion;
+    ghcVersions = self.lib.nonNixTestedGhcVersions;
+    cabalPackages = {
+      pathway-internal = "internal";
+      pathway-quickcheck = "quickcheck";
+      pathway = "pathway";
+      pathway-path = "path";
+      pathway-system = "system";
+    };
+    latestGhcVersion = "9.10.1";
+  };
 
   ## publishing
-  # NB: Can’t use IFD on FlakeHub (see DeterminateSystems/flakehub-push#69), so
-  #     this is disabled until we have a way to build Haskell without IFD.
-  services.flakehub.enable = false;
-  services.github.enable = true;
   services.github.settings.repository.topics = [];
 }

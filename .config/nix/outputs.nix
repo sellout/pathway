@@ -20,11 +20,11 @@
   flaky-haskell,
   nixpkgs,
   self,
-  yaya,
+  systems,
 }: let
   pname = "pathway";
 
-  supportedSystems = flaky.lib.defaultSystems;
+  supportedSystems = import systems;
 
   cabalPackages = pkgs: hpkgs:
     flaky-haskell.lib.cabalProject2nix
@@ -55,64 +55,33 @@ in
     # - NixOS/nixpkgs#26561
     # - https://discourse.nixos.org/t/nix-haskell-development-2020/6170
     overlays = {
-      default =
-        flaky-haskell.lib.overlayHaskellPackages
-        (self.lib.supportedGhcVersions "")
-        (final: prev:
-          nixpkgs.lib.composeManyExtensions [
-            ## TODO: I think this overlay is only needed by formatters,
-            ##       devShells, etc., so it shouldn’t be included in the
-            ##       standard overlay.
-            (flaky.overlays.haskell-dependencies final prev)
-            (self.overlays.haskell final prev)
-            (self.overlays.haskellDependencies final prev)
-            (yaya.overlays.haskell final prev)
-          ]);
+      default = final:
+        nixpkgs.lib.composeManyExtensions [
+          flaky.overlays.default
+          (flaky-haskell.lib.overlayHaskellPackages
+            (map self.lib.nixifyGhcVersion
+              (self.lib.supportedGhcVersions final.system))
+            (final: prev:
+              nixpkgs.lib.composeManyExtensions [
+                ## TODO: I think this overlay is only needed by formatters,
+                ##       devShells, etc., so it shouldn’t be included in the
+                ##       standard overlay.
+                (flaky.overlays.haskellDependencies final prev)
+                (self.overlays.haskell final prev)
+                (self.overlays.haskellDependencies final prev)
+              ]))
+        ]
+        final;
 
       haskell = flaky-haskell.lib.haskellOverlay cabalPackages;
 
-      haskellDependencies = final: prev: hfinal: hprev:
-        (
-          if nixpkgs.lib.versionAtLeast hprev.ghc.version "9.8.0"
-          then let
-            hspecVersion = "2_11_7";
-          in {
-            ## The default versions in Nixpkgs 23.11 don’t support GHC 9.8.
-            doctest = hfinal.doctest_0_22_2;
-            hedgehog = hfinal."hedgehog_1_4";
-            hspec = hfinal."hspec_${hspecVersion}";
-            hspec-core = hfinal."hspec-core_${hspecVersion}";
-            hspec-discover = hfinal."hspec-discover_${hspecVersion}";
-            hspec-meta = hfinal."hspec-meta_${hspecVersion}";
-            semigroupoids = hfinal.semigroupoids_6_0_0_1;
-            tagged = hfinal.tagged_0_8_8;
-          }
-          else if nixpkgs.lib.versionAtLeast hprev.ghc.version "8.10.0"
-          then {}
-          else
-            {
-              ## NB: Fails a single test case under GHC 8.8.4.
-              doctest = final.haskell.lib.dontCheck hprev.doctest;
-              ## NB: Tests fail to build under GHC 8.8.4.
-              vector = final.haskell.lib.dontCheck hprev.vector;
-            }
-            // (
-              if final.system == "i686-linux"
-              then {
-                ## NB: Fails `prop_double_assoc` under GHC 8.8.4 on i686-linux.
-                QuickCheck = final.haskell.lib.dontCheck hprev.QuickCheck;
-              }
-              else {}
-            )
-        )
-        // (
-          if final.system == "i686-linux"
-          then {
-            enummapset = final.haskell.lib.dontCheck hprev.enummapset;
-            sqlite-simple = final.haskell.lib.dontCheck hprev.sqlite-simple;
-          }
-          else {}
-        );
+      ## NB: Dependencies that are overridden because they are broken in
+      ##     Nixpkgs should be pushed upstream to Flaky. This is for
+      ##     dependencies that we override for reasons local to the project.
+      haskellDependencies = final: prev: hfinal: hprev: {
+        network = final.haskell.lib.dontCheck hprev.network;
+        warp = final.haskell.lib.dontCheck hprev.warp;
+      };
     };
 
     homeConfigurations =
@@ -128,27 +97,30 @@ in
         supportedSystems);
 
     lib = {
+      nixifyGhcVersion = version:
+        "ghc" + nixpkgs.lib.replaceStrings ["."] [""] version;
+
       ## TODO: Extract this automatically from `pkgs.haskellPackages`.
-      defaultCompiler = "ghc948";
+      defaultGhcVersion = "9.8.4";
 
       ## Test the oldest revision possible for each minor release. If it’s not
       ## available in nixpkgs, test the oldest available, then try an older
       ## one via GitHub workflow. Additionally, check any revisions that have
       ## explicit conditionalization. And check whatever version `pkgs.ghc`
       ## maps to in the nixpkgs we depend on.
-      testedGhcVersions = system:
-        [
-          self.lib.defaultCompiler
-          "ghc8107"
-          "ghc902"
-          "ghc924"
-          "ghc942"
-          "ghc962"
-          "ghc981"
-          # "ghcHEAD" # doctest doesn’t work on current HEAD
-        ]
-        ## dependency compiler-rt-libc-7.1.0 is broken in on aarch64-darwin.
-        ++ nixpkgs.lib.optional (system != "aarch64-darwin") "ghc884";
+      testedGhcVersions = system: [
+        self.lib.defaultGhcVersion
+        "8.10.7"
+        "9.0.2"
+        "9.2.8"
+        "9.4.7"
+        "9.6.3"
+        "9.8.1"
+        "9.10.1"
+        ## TODO: Yaya doesn’t yet support GHC 9.12 (sellout/yaya#71)
+        # "9.12.1"
+        # "ghcHEAD" # doctest doesn’t work on current HEAD
+      ];
 
       ## The versions that are older than those supported by Nix that we
       ## prefer to test against.
@@ -161,7 +133,11 @@ in
         "9.2.1"
         "9.4.1"
         "9.6.1"
-        "9.8.1" # since `cabal-plan-bounds` doesn’t work under Nix
+        ## since `cabal-plan-bounds` doesn’t work under Nix
+        "9.8.1"
+        "9.10.1"
+        ## TODO: Yaya doesn’t yet support GHC 9.12 (sellout/yaya#71)
+        # "9.12.1"
       ];
 
       ## However, provide packages in the default overlay for _every_
@@ -169,67 +145,53 @@ in
       supportedGhcVersions = system:
         self.lib.testedGhcVersions system
         ++ [
-          "ghc925"
-          "ghc926"
-          "ghc927"
-          "ghc928"
-          "ghc943"
-          "ghc944"
-          "ghc945"
-          "ghc946"
-          "ghc947"
-          "ghc948"
-          "ghc963"
+          "9.4.8"
+          "9.6.4"
+          "9.6.5"
+          "9.8.2"
+          "9.10.2"
+          ## TODO: Yaya doesn’t yet support GHC 9.12 (sellout/yaya#71)
+          # "9.12.2"
         ];
-
-      ## These are versions that we don’t build against, but that we want the
-      ## Haskell packages to support anyway. Mostly, this is for local
-      ## packages where `--perfer-oldest` and `--allow-newer` have no effect,
-      ## so reasonable bounds need to be managed manually.
-      ##
-      ## These also currently need to be restricted so that they work for all
-      ## packages that have them as dependencies.
-      extraDependencyVersions = [];
     };
   }
-  ## NB: This uses `eachSystem defaultSystems` instead of `eachDefaultSystem`
-  ##     because users often have to locally replace `defaultSystems` with
-  ##     their specific system to avoid issues with IFD.
   // flake-utils.lib.eachSystem supportedSystems
   (system: let
-    pkgs = import nixpkgs {
-      inherit system;
-      ## NB: This uses `self.overlays.default` because packages need to
-      ##     be able to find other packages in this flake as dependencies.
-      overlays = [self.overlays.default];
-    };
+    pkgs = nixpkgs.legacyPackages.${system}.appendOverlays [
+      ## NB: This uses `self.overlays.default` because packages need to be
+      ##     able to find other packages in this flake as dependencies.
+      self.overlays.default
+    ];
   in {
     packages =
-      {default = self.packages.${system}."${self.lib.defaultCompiler}_all";}
+      {
+        default =
+          self.packages.${system}."${self.lib.nixifyGhcVersion self.lib.defaultGhcVersion}_all";
+      }
       // flaky-haskell.lib.mkPackages
       pkgs
-      (self.lib.supportedGhcVersions system)
+      (map self.lib.nixifyGhcVersion (self.lib.supportedGhcVersions system))
       cabalPackages;
 
     devShells =
-      {default = self.devShells.${system}.${self.lib.defaultCompiler};}
+      {
+        default =
+          self.devShells.${system}.${self.lib.nixifyGhcVersion self.lib.defaultGhcVersion};
+      }
+      // self.projectConfigurations.${system}.devShells
       // flaky-haskell.lib.mkDevShells
       pkgs
-      (self.lib.supportedGhcVersions system)
+      (map self.lib.nixifyGhcVersion (self.lib.supportedGhcVersions system))
       cabalPackages
       (hpkgs:
         [self.projectConfigurations.${system}.packages.path]
-        ## NB: Haskell Language Server no longer supports GHC <9.
-        ## TODO: HLS also apparently broken on 9.8.1.
-        ## NB: And there are some 32-bit issues on i686.
+        ## NB: Haskell Language Server no longer supports GHC <9.4.
         ++ nixpkgs.lib.optional
-        (nixpkgs.lib.versionAtLeast hpkgs.ghc.version "9"
-          && builtins.compareVersions hpkgs.ghc.version "9.8.1" != 0
-          && system != "i686-linux")
+        (nixpkgs.lib.versionAtLeast hpkgs.ghc.version "9.4")
         hpkgs.haskell-language-server);
 
     projectConfigurations =
-      flaky.lib.projectConfigurations.default {inherit pkgs self;};
+      flaky.lib.projectConfigurations.haskell {inherit pkgs self;};
 
     checks = self.projectConfigurations.${system}.checks;
     formatter = self.projectConfigurations.${system}.formatter;
