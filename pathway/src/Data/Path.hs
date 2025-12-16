@@ -1,7 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE Safe #-}
+{-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ViewPatterns #-}
+-- "GHC.Natural" is ‘Unsafe’ before base 4.14.4. We can’t conditionalize the
+-- Safe Haskell extension (because it forces Safe Haskell-using consumers to
+-- conditionalize), so this silences the fact that this module is inferred
+-- ‘Safe’ in some configurations. We should be able to remove this (and this
+-- module made ‘Safe’) once base-4.14.4 is the oldest supported version.
+{-# OPTIONS_GHC -Wno-safe -Wno-trustworthy-safe #-}
 
 -- | A representation-agnostic, structured, type-safe path library.
 --
@@ -39,22 +45,23 @@ module Data.Path
   )
 where
 
-import "base" Control.Applicative (pure)
-import "base" Control.Category (id, (.))
-import "base" Data.Bool (Bool (False, True))
-import "base" Data.Eq (Eq, (==))
-import "base" Data.Function (($))
-import "base" Data.Functor (fmap)
-import "base" Data.Functor.Const (Const (Const))
-import "base" Data.Functor.Identity (runIdentity)
-import qualified "base" Data.Maybe as Lazy
-import "base" Data.Proxy (Proxy (Proxy))
-import "base" Data.Semigroup (Semigroup, (<>))
-import "base" Data.String (IsString, String)
+import safe "base" Control.Applicative (pure)
+import safe "base" Control.Category (id, (.))
+import safe "base" Data.Bool (Bool (False, True))
+import safe "base" Data.Eq (Eq, (==))
+import safe "base" Data.Function (($))
+import safe "base" Data.Functor (fmap)
+import safe "base" Data.Functor.Const (Const (Const))
+import safe "base" Data.Functor.Identity (runIdentity)
+import safe qualified "base" Data.Maybe as Lazy
+import safe "base" Data.Proxy (Proxy (Proxy))
+import safe "base" Data.Semigroup (Semigroup, (<>))
+import safe "base" Data.String (IsString, String)
+-- TODO: `minusNaturalMaybe` is exported from Numeric.Natural starting with base-4.18 (GHC 9.6).
 import "base" GHC.Natural (minusNaturalMaybe)
-import "base" Numeric.Natural (Natural)
-import qualified "extra" Data.List.Extra as List
-import "pathway-internal" Data.Path.Internal
+import safe "base" Numeric.Natural (Natural)
+import safe qualified "extra" Data.List.Extra as List
+import safe "pathway-internal" Data.Path.Internal
   ( Filename,
     List,
     Parents,
@@ -67,10 +74,10 @@ import "pathway-internal" Data.Path.Internal
     parents,
     (</>),
   )
-import "text" Data.Text (Text)
-import qualified "text" Data.Text as Text
-import "yaya" Yaya.Applied (append, length, reverse, tail)
-import "yaya" Yaya.Fold
+import safe "text" Data.Text (Text)
+import safe qualified "text" Data.Text as Text
+import safe "yaya" Yaya.Applied (append, length, reverse, tail)
+import safe "yaya" Yaya.Fold
   ( Projectable,
     Recursive,
     Steppable,
@@ -80,8 +87,8 @@ import "yaya" Yaya.Fold
     gcata,
     project,
   )
-import "yaya" Yaya.Fold.Native ()
-import "yaya" Yaya.Pattern
+import safe "yaya" Yaya.Fold.Native ()
+import safe "yaya" Yaya.Pattern
   ( Maybe (Nothing),
     Pair ((:!:)),
     XNor (Both, Neither),
@@ -91,9 +98,9 @@ import "yaya" Yaya.Pattern
     maybe,
     xnor,
   )
-import "yaya-containers" Yaya.Containers.Pattern.Map (MapF (BinF, TipF))
-import "this" Data.Path.Format (Format, parent, root, separator, substitutions)
-import "base" Prelude ((+))
+import safe "yaya-containers" Yaya.Containers.Pattern.Map (MapF (BinF, TipF))
+import safe "this" Data.Path.Format (Format, parent, root, separator, substitutions)
+import safe "base" Prelude ((+))
 
 -- $setup
 -- >>> :seti -XQuasiQuotes
