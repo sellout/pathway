@@ -11,7 +11,7 @@ module Data.Path.Format
 where
 
 import "base" Data.Ord (Ord)
-import "base" Data.Semigroup (Semigroup ((<>)))
+import "base" Data.Semigroup (Semigroup, (<>))
 import "base" Data.String (IsString)
 import "containers" Data.Map (Map)
 import qualified "containers" Data.Map as Map

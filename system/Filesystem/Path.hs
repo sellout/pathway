@@ -72,29 +72,22 @@ module Filesystem.Path
   )
 where
 
-import "base" Control.Applicative (Applicative (pure))
-import "base" Control.Category (Category ((.)))
+import "base" Control.Applicative (pure)
+import "base" Control.Category ((.))
 import "base" Control.Exception (Exception, throwIO)
 import "base" Data.Bool (Bool (False, True))
 import "base" Data.Either (Either (Left), either, partitionEithers)
 import "base" Data.Eq (Eq)
-import "base" Data.Foldable (Foldable (toList))
+import "base" Data.Foldable (toList)
 import "base" Data.Function (($))
-import "base" Data.Functor (Functor (fmap), (<$>))
+import "base" Data.Functor (fmap, (<$>))
 import "base" Data.Maybe (Maybe)
 import "base" Data.Ord (Ord)
-import "base" Data.Traversable (Traversable (traverse))
+import "base" Data.Traversable (traverse)
 import "base" Data.Typeable (Typeable)
 import "base" GHC.Generics (Generic)
 import "base" System.IO (IO)
 import "base" Text.Show (Show)
-#if MIN_VERSION_filepath(1, 4, 101)
-import qualified "directory" System.Directory.OsPath as Dir
-import "filepath" System.OsPath (OsPath)
-#else
-import qualified "directory" System.Directory as Dir
-import "filepath" System.FilePath (FilePath)
-#endif
 import qualified "megaparsec" Text.Megaparsec as MP
 import "pathway" Data.Path
   ( Anchored (AbsDir, AbsFile, RelDir, RelFile, ReparentedDir, ReparentedFile),
@@ -112,8 +105,15 @@ import "pathway" Data.Path
 import qualified "pathway" Data.Path.Format as Format
 import qualified "pathway" Data.Path.Parser as Parser
 import "time" Data.Time.Clock (UTCTime)
-import "transformers" Control.Monad.Trans.Class (MonadTrans (lift))
+import "transformers" Control.Monad.Trans.Class (lift)
 import "transformers" Control.Monad.Trans.Except (ExceptT (ExceptT))
+#if MIN_VERSION_filepath(1, 4, 101)
+import qualified "directory" System.Directory.OsPath as Dir
+import "filepath" System.OsPath (OsPath)
+#else
+import qualified "directory" System.Directory as Dir
+import "filepath" System.FilePath (FilePath)
+#endif
 
 #if MIN_VERSION_filepath(1, 4, 101)
 type PathRep = OsPath

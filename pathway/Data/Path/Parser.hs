@@ -5,7 +5,7 @@
 -- | Various parsers for paths.
 --
 --  __NB__: This doesn’t provide parsers for `Path`, only `AnyPath`. If you are
---          parsing at compile time, "Filesystsem.Quoter" has
+--          parsing at compile time, "Data.Path.TH" has
 --         `Language.Haskell.TH.Quote.QuasiQuoter`s that will will parse
 --          directly to the specific `Path` type that is needed. For runtime
 --          parsing, you are better off using @`anchor` `.` `parse` (`path`
@@ -18,43 +18,47 @@ module Data.Path.Parser
   )
 where
 
-import "base" Control.Applicative
-  ( Alternative ((<|>)),
-    Applicative (pure, (<*>)),
-    (<*),
-  )
-import "base" Control.Category (Category ((.)))
-import "base" Control.Monad.Fail (MonadFail (fail))
+import "base" Control.Applicative (pure, (<*), (<*>), (<|>))
+import "base" Control.Category ((.))
+import "base" Control.Monad.Fail (fail)
 import "base" Data.Bool ((&&))
 import "base" Data.Char (Char, isPrint)
-import "base" Data.Eq (Eq ((/=)))
-import "base" Data.Foldable (Foldable (foldr), fold)
+import "base" Data.Eq ((/=))
+import "base" Data.Foldable (fold, foldr)
 import "base" Data.Function (flip, ($))
-import "base" Data.Functor (Functor (fmap), void, (<$), (<$>))
+import "base" Data.Functor (fmap, void, (<$), (<$>))
 import "base" Data.Functor.Const (Const (Const))
 import "base" Data.List (length)
 import "base" Data.Monoid (Monoid)
 import "base" Data.Ord (Ord)
 import "base" Data.Proxy (Proxy (Proxy))
-#if MIN_VERSION_base(4, 17, 0)
-import "base" Data.Type.Equality (type (~))
-#endif
 import "base" Numeric.Natural (Natural)
 import qualified "megaparsec" Text.Megaparsec as MP
 import "pathway-internal" Data.Path.Internal
   ( List (List),
-    Path (Path, directories, filename, parents),
+    Path (Path),
+    directories,
+    filename,
+    parents,
   )
 import "yaya" Yaya.Applied (reverse')
-import "yaya" Yaya.Fold (Mu, Projectable, Recursive (cata), Steppable (embed))
+import "yaya" Yaya.Fold (Mu, Projectable, Steppable, cata, embed)
 import "yaya" Yaya.Pattern (Maybe (Nothing), XNor (Both, Neither))
 import "yaya-containers" Yaya.Containers.Pattern.Map (MapF (BinF, TipF))
 import "yaya-unsafe" Yaya.Unsafe.Fold (unsafeCata)
 import "this" Data.Path (AnyPath, Relativity (Any), Type (Dir))
 import "this" Data.Path.Format
-  ( Format (current, parent, root, separator, substitutions),
+  ( Format,
+    current,
+    parent,
+    root,
+    separator,
+    substitutions,
   )
 import "base" Prelude (fromIntegral)
+#if MIN_VERSION_base(4, 17, 0)
+import "base" Data.Type.Equality (type (~))
+#endif
 
 -- $setup
 -- >>> :seti -XOverloadedStrings

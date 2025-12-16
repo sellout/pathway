@@ -15,23 +15,26 @@ module Data.Path.Directory
   )
 where
 
-import "base" Control.Applicative (Applicative (pure))
-import "base" Control.Category (Category ((.)))
+import "base" Control.Applicative (pure)
+import "base" Control.Category ((.))
 import "base" Data.Bool (Bool (False, True))
 import "base" Data.Function (($))
 import "base" Data.Functor.Const (Const (Const))
-import "base" Data.Ord (Ord ((<=)))
-import "base" Data.Semigroup (Semigroup ((<>)))
+import "base" Data.Ord ((<=))
+import "base" Data.Semigroup ((<>))
 import "pathway-internal" Data.Path.Internal
   ( List,
-    Path (Path, directories, filename, parents),
+    Path (Path),
     Relativity (Abs, Rel),
     Type (Dir, File),
     current,
+    directories,
+    filename,
+    parents,
     (</>),
   )
 import "yaya" Yaya.Applied (drop, length, reverse, tail)
-import "yaya" Yaya.Fold (Recursive (cata), Steppable (embed))
+import "yaya" Yaya.Fold (cata, embed)
 import "yaya" Yaya.Pattern (Maybe (Nothing), XNor (Both, Neither), xnor)
 
 -- $setup

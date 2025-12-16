@@ -12,10 +12,10 @@ module Test.Path.QuickCheck
 where
 
 import qualified "QuickCheck" Test.QuickCheck as QC
-import "base" Control.Applicative (Applicative ((<*>)))
-import "base" Control.Category (Category ((.)))
+import "base" Control.Applicative ((<*>))
+import "base" Control.Category ((.))
 import "base" Data.Functor ((<$>))
-import "base" Data.String (IsString (fromString))
+import "base" Data.String (IsString, fromString)
 import "base" Numeric.Natural (Natural)
 import "pathway-internal" Data.Path.Internal
   ( Filename,

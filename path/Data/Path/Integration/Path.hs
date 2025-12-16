@@ -18,10 +18,10 @@
 --  (as it is common to have to deal with paths where that is unclear).
 module Data.Path.Integration.Path () where
 
-import safe "base" Control.Applicative (Applicative (pure))
-import safe "base" Control.Category (Category ((.)))
+import safe "base" Control.Applicative (pure)
+import safe "base" Control.Category ((.))
 import safe "base" Data.Bool (Bool (False))
-import safe "base" Data.Eq (Eq ((==)))
+import safe "base" Data.Eq ((==))
 import safe "base" Data.Function (($))
 import safe "base" Data.Functor.Const (Const (Const))
 import safe "base" Data.Proxy (Proxy (Proxy))
@@ -29,12 +29,16 @@ import safe "filepath" System.FilePath (FilePath)
 import safe qualified "filepath" System.FilePath as FilePath
 import qualified "path" Path
 import safe "pathway" Data.Path
-  ( Pathish (specializePath),
+  ( Pathish,
     Relativity (Abs, Any, Rel),
     Type (Dir, File),
+    specializePath,
   )
 import safe "pathway-internal" Data.Path.Internal
-  ( Path (Path, directories, filename, parents),
+  ( Path (Path),
+    directories,
+    filename,
+    parents,
   )
 import safe "yaya" Yaya.Fold (Steppable)
 import safe "yaya" Yaya.Pattern (Maybe (Nothing), XNor (Both, Neither))

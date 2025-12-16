@@ -16,19 +16,19 @@ module Data.Path.Internal
   )
 where
 
-import "base" Control.Category (Category ((.)))
+import "base" Control.Category ((.))
 import "base" Data.Bool (Bool (False, True))
 import "base" Data.Eq (Eq)
-import "base" Data.Foldable (Foldable (foldr), sum)
+import "base" Data.Foldable (Foldable, foldr, sum)
 import "base" Data.Function (($))
-import "base" Data.Functor (Functor (fmap), (<$>))
+import "base" Data.Functor (Functor, fmap, (<$>))
 import "base" Data.Functor.Const (Const (Const))
 import "base" Data.Functor.Identity (Identity)
-import "base" Data.Monoid (Monoid (mempty))
+import "base" Data.Monoid (Monoid, mempty)
 import "base" Data.Ord (Ord)
 import "base" Data.Proxy (Proxy (Proxy))
-import "base" Data.Semigroup (Semigroup ((<>)))
--- import "base" Data.Traversable (Traversable (traverse))
+import "base" Data.Semigroup (Semigroup, (<>))
+-- import "base" Data.Traversable (Traversable, traverse)
 import "base" GHC.Generics (Generic, Generic1)
 import "base" GHC.Natural (minusNaturalMaybe)
 import "base" Numeric.Natural (Natural)
@@ -37,13 +37,16 @@ import "base" Text.Show (Show)
 import "yaya" Yaya.Applied (drop, length)
 import "yaya" Yaya.Fold
   ( Mu,
-    Projectable (project),
-    Recursive (cata),
-    Steppable (embed),
+    Projectable,
+    Recursive,
+    Steppable,
+    cata,
+    embed,
+    project,
   )
 import "yaya" Yaya.Functor (firstMap)
 import "yaya" Yaya.Pattern (Maybe, XNor (Neither), xnor)
-import "base" Prelude (Num ((+)))
+import "base" Prelude ((+))
 
 -- |
 --
@@ -137,17 +140,25 @@ data Path rel typ rep = Path
   }
   deriving stock (Generic, Generic1)
 
-deriving stock instance (Eq (Parents rel), Eq (Filename typ rep), Eq rep) => Eq (Path rel typ rep)
+deriving stock instance
+  (Eq (Parents rel), Eq (Filename typ rep), Eq rep) => Eq (Path rel typ rep)
 
-deriving stock instance (Ord (Parents rel), Ord (Filename typ rep), Ord rep) => Ord (Path rel typ rep)
+deriving stock instance
+  (Ord (Parents rel), Ord (Filename typ rep), Ord rep) => Ord (Path rel typ rep)
 
-deriving stock instance (Read (Parents rel), Read (Filename typ rep), Read rep) => Read (Path rel typ rep)
+deriving stock instance
+  (Read (Parents rel), Read (Filename typ rep), Read rep) =>
+  Read (Path rel typ rep)
 
-deriving stock instance (Show (Parents rel), Show (Filename typ rep), Show rep) => Show (Path rel typ rep)
+deriving stock instance
+  (Show (Parents rel), Show (Filename typ rep), Show rep) =>
+  Show (Path rel typ rep)
 
-deriving stock instance (Foldable (Filename typ)) => Foldable (Path rel typ)
+deriving stock instance
+  (Foldable (Filename typ)) => Foldable (Path rel typ)
 
-deriving stock instance (Functor (Filename typ)) => Functor (Path rel typ)
+deriving stock instance
+  (Functor (Filename typ)) => Functor (Path rel typ)
 
 -- deriving stock instance Traversable (Path rel 'Dir)
 

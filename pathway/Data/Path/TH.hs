@@ -9,25 +9,28 @@ module Data.Path.TH
   )
 where
 
-import "base" Control.Applicative (Applicative (pure))
-import "base" Control.Category (Category (id, (.)))
-import "base" Control.Monad.Fail (MonadFail (fail))
+import "base" Control.Applicative (pure)
+import "base" Control.Category (id, (.))
+import "base" Control.Monad.Fail (fail)
 import "base" Data.Either (either)
 import "base" Data.Function (const, ($))
 import "base" Data.Functor.Const (Const (Const))
 import "base" Data.Functor.Identity (Identity (Identity))
 import "base" Data.Proxy (Proxy (Proxy))
-import "base" Data.String (IsString (fromString), String)
+import "base" Data.String (String, fromString)
 import "base" Data.Void (Void)
 import "base" Numeric.Natural (Natural)
-import "base" Text.Show (Show (show))
+import "base" Text.Show (show)
 import qualified "megaparsec" Text.Megaparsec as MP
 import "pathway-internal" Data.Path.Internal
-  ( Path (Path, directories, filename, parents),
+  ( Path (Path),
+    directories,
+    filename,
+    parents,
   )
 import qualified "template-haskell" Language.Haskell.TH.Quote as TH
 import qualified "template-haskell" Language.Haskell.TH.Syntax as TH
-import "yaya" Yaya.Fold (Recursive (cata), Steppable (embed))
+import "yaya" Yaya.Fold (Recursive, cata, embed)
 import "yaya" Yaya.Pattern (Maybe (Nothing), XNor (Both, Neither), maybe, xnor)
 import "this" Data.Path (AnyPath)
 import "this" Data.Path.Format (Format)

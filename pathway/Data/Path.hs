@@ -40,17 +40,17 @@ module Data.Path
   )
 where
 
-import "base" Control.Applicative (Applicative (pure))
-import "base" Control.Category (Category (id, (.)))
+import "base" Control.Applicative (pure)
+import "base" Control.Category (id, (.))
 import "base" Data.Bool (Bool (False, True))
-import "base" Data.Eq (Eq ((==)))
+import "base" Data.Eq (Eq, (==))
 import "base" Data.Function (($))
-import "base" Data.Functor (Functor (fmap))
+import "base" Data.Functor (fmap)
 import "base" Data.Functor.Const (Const (Const))
-import "base" Data.Functor.Identity (Identity (runIdentity))
+import "base" Data.Functor.Identity (runIdentity)
 import qualified "base" Data.Maybe as Lazy
 import "base" Data.Proxy (Proxy (Proxy))
-import "base" Data.Semigroup (Semigroup ((<>)))
+import "base" Data.Semigroup (Semigroup, (<>))
 import "base" Data.String (IsString, String)
 import "base" GHC.Natural (minusNaturalMaybe)
 import "base" Numeric.Natural (Natural)
@@ -59,21 +59,27 @@ import "pathway-internal" Data.Path.Internal
   ( Filename,
     List,
     Parents,
-    Path (Path, directories, filename, parents),
+    Path (Path),
     Relativity (Abs, Any, Rel),
     Type (Dir, File, Pathic),
     current,
+    directories,
+    filename,
+    parents,
     (</>),
   )
 import "text" Data.Text (Text)
 import qualified "text" Data.Text as Text
 import "yaya" Yaya.Applied (append, length, reverse, tail)
 import "yaya" Yaya.Fold
-  ( Projectable (project),
-    Recursive (cata),
-    Steppable (embed),
+  ( Projectable,
+    Recursive,
+    Steppable,
+    cata,
     distTuple,
+    embed,
     gcata,
+    project,
   )
 import "yaya" Yaya.Fold.Native ()
 import "yaya" Yaya.Pattern
@@ -87,8 +93,8 @@ import "yaya" Yaya.Pattern
     xnor,
   )
 import "yaya-containers" Yaya.Containers.Pattern.Map (MapF (BinF, TipF))
-import "this" Data.Path.Format (Format (parent, root, separator, substitutions))
-import "base" Prelude (Num ((+)))
+import "this" Data.Path.Format (Format, parent, root, separator, substitutions)
+import "base" Prelude ((+))
 
 -- $setup
 -- >>> :seti -XDataKinds
