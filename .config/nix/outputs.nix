@@ -110,9 +110,6 @@ in
       ## maps to in the nixpkgs we depend on.
       testedGhcVersions = system: [
         self.lib.defaultGhcVersion
-        "8.10.7"
-        "9.0.2"
-        "9.2.8"
         "9.4.7"
         "9.6.3"
         "9.8.1"
