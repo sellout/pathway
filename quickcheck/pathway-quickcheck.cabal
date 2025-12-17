@@ -51,7 +51,7 @@ custom-setup
     --       requires it to have _some_ upper bound. (Since there’s no direct
     --       dependency, it doesn’t use PVP bounds.)
     Cabal >= 3.0 && < 99,
-    base,
+    base ^>= {4.17.1, 4.18.0, 4.19.0, 4.20.0},
     cabal-doctest ^>= {1.0.0},
 
 flag noisy-deprecations
@@ -118,7 +118,7 @@ common GHC2024
 common defaults
   import: GHC2024
   build-depends:
-    base,
+    base ^>= {4.17.1, 4.18.0, 4.19.0, 4.20.0},
   ghc-options:
     -Weverything
     -- This one just reports unfixable things, AFAICT.
@@ -181,11 +181,11 @@ library
   hs-source-dirs:
     src
   build-depends:
-    QuickCheck,
-    pathway-internal,
-    quickcheck-instances,
+    QuickCheck ^>= {2.14.3, 2.15.0},
+    pathway-internal ^>= {0.0.1},
+    quickcheck-instances ^>= {0.3.29},
     yaya ^>= {0.6.2},
-    yaya-quickcheck >= 0.1.0,
+    yaya-quickcheck ^>= {0.2.0},
   exposed-modules:
     Test.Path.QuickCheck
 
@@ -195,8 +195,8 @@ test-suite doctests
   hs-source-dirs: tests
   main-is: doctests.hs
   build-depends:
-    QuickCheck,
-    doctest ^>= {0.16.0, 0.17.0, 0.18.0, 0.19.0, 0.20.0, 0.21.0, 0.22.0},
+    QuickCheck ^>= {2.14.3, 2.15.0},
+    doctest ^>= {0.20.1, 0.21.1, 0.22.2, 0.24.2},
     pathway-quickcheck,
   if impl(ghc >= 8.10.1)
     ghc-options:
