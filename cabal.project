@@ -19,6 +19,9 @@ constraints:
   -- earlier versions use -fpackage-trust, which causes no end of trouble
   yaya-unsafe >= 0.4.1.2,
 
+flags:
+  +lint
+
 program-options
   ghc-options:
     -Werror

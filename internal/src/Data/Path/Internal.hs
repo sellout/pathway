@@ -8,6 +8,7 @@
 -- ‘Safe’ in some configurations. We should be able to remove this (and this
 -- module made ‘Safe’) once base-4.14.4 is the oldest supported version.
 {-# OPTIONS_GHC -Wno-safe -Wno-trustworthy-safe #-}
+{-# OPTIONS_GHC -fplugin-opt=NoRecursion:ignore-methods:sconcat #-}
 
 module Data.Path.Internal
   ( List (List),
@@ -33,7 +34,7 @@ import safe "base" Data.Kind qualified as Kind
 import safe "base" Data.Monoid (Monoid, mempty)
 import safe "base" Data.Ord (Ord)
 import safe "base" Data.Proxy (Proxy (Proxy))
-import safe "base" Data.Semigroup (Semigroup, (<>))
+import safe "base" Data.Semigroup (Semigroup, stimes, stimesMonoid, (<>))
 -- import safe "base" Data.Traversable (Traversable, traverse)
 import safe "base" GHC.Generics (Generic, Generic1)
 -- TODO: `minusNaturalMaybe` is exported from Numeric.Natural starting with base-4.18 (GHC 9.6).
@@ -104,6 +105,7 @@ instance Steppable (->) (List a) (XNor a) where
 
 instance Semigroup (List a) where
   List mu <> List mu' = List $ mu <> mu'
+  stimes = stimesMonoid
 
 instance Monoid (List a) where
   mempty = List mempty
@@ -269,10 +271,12 @@ weaken path = path {parents = 0}
 -- | Only relative directories form a semigroup under `</>`.
 instance Semigroup (Path ('Rel 'False) 'Dir rep) where
   (<>) = (</>)
+  stimes = stimesMonoid
 
 -- | Only relative directories form a semigroup under `</>`.
 instance Semigroup (Path ('Rel 'True) 'Dir rep) where
   (<>) = (</>)
+  stimes = stimesMonoid
 
 -- | Only relative directories form a monoid under concatenation.
 instance Monoid (Path ('Rel 'False) 'Dir rep) where

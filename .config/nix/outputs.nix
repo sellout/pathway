@@ -26,14 +26,21 @@
 
   supportedSystems = import systems;
 
+  ## FIXME: Make `flaky-haskell.lib.cabalProject2Nix` more flexible (or switch
+  ##        to UpDo).
   cabalPackages = pkgs: hpkgs:
-    flaky-haskell.lib.cabalProject2nix
-    ../../cabal.project
-    pkgs
-    hpkgs
-    (old: {
-      configureFlags = old.configureFlags ++ ["--ghc-options=-Werror"];
-    });
+    builtins.mapAttrs (name: path:
+      ## FIXME: This is failing on some downstream packages when we use
+      ##       `checkedDrv` (which adds `-u`, among other things).
+        pkgs.checkedDrv ((hpkgs.callCabal2nixWithOptions name ../../${path}
+          "--flag lint --maintainer sellout" {})
+          .overrideAttrs (old: {
+          ## FIXME: There’s a bug in cabal2nix when `checkFlags` is undefined.
+          ##        It’s caught by the containing `pkgs.checkedDrv`.
+          checkFlags = old.checkFlags or [];
+          configureFlags = old.configureFlags ++ ["--ghc-options=-Werror"];
+        })))
+    (flaky-haskell.lib.parseCabalProject ../../cabal.project);
 in
   {
     schemas = {
@@ -78,10 +85,35 @@ in
       ## NB: Dependencies that are overridden because they are broken in
       ##     Nixpkgs should be pushed upstream to Flaky. This is for
       ##     dependencies that we override for reasons local to the project.
-      haskellDependencies = final: prev: hfinal: hprev: {
-        network = final.haskell.lib.dontCheck hprev.network;
-        warp = final.haskell.lib.dontCheck hprev.warp;
-      };
+      haskellDependencies = final: prev: hfinal: hprev:
+        {
+          network = final.haskell.lib.dontCheck hprev.network;
+          no-recursion = hfinal.callHackageDirect {
+            pkg = "no-recursion";
+            ver = "0.3.0.0";
+            sha256 = "qgwGWCyLMLxU80522Wtz+pwg8WtWCZFs8X86WAogE/o=";
+          } {};
+          warp = final.haskell.lib.dontCheck hprev.warp;
+        }
+        ## To work around haskell/cabal#9375. Constrained as much as possible,
+        ## because this causes most (all?) Haskell packages to be rebuilt.
+        // (
+          if
+            final.lib.versionOlder "9.6.0" hprev.ghc.version
+            && final.lib.versionOlder hprev.ghc.version "9.8.3"
+          then {
+            Cabal = hfinal.Cabal_3_10_3_0;
+            Cabal-syntax = hfinal.Cabal-syntax_3_10_3_0;
+            ## This package really wants to use Cabal 3.10.2.0, so just re- pull
+            ## it from Hackage.
+            extensions = final.haskell.lib.doJailbreak (hfinal.callHackageDirect {
+              pkg = "extensions";
+              ver = "0.1.0.1";
+              sha256 = "Sqo09Y6Uqc6SHVxyBPD22inhNPU0porSrfCx/fxRwMY=";
+            } {});
+          }
+          else {}
+        );
     };
 
     homeConfigurations =
