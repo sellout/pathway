@@ -45,9 +45,22 @@ custom-setup
     --       as high as `cabal-version` at the top of this file, and Hackage
     --       requires it to have _some_ upper bound. (Since there’s no direct
     --       dependency, it doesn’t use PVP bounds.)
-    Cabal >= 3.0 && < 99,
+    --
+    -- TODO: Due to haskell/cabal#9375, 3.10.3 is required in order to load
+    --       plugins from a `ghc-options` field. Unfortunately, GHCs prior to
+    --       9.8.3 include an older Cabal, so a newer one may need to be
+    --       manually installed.
+    Cabal >= 3.10.3 && < 99,
     base ^>= {4.17.1, 4.18.0, 4.19.0, 4.20.0},
     cabal-doctest ^>= {1.0.0},
+
+flag lint
+  description:
+    Compile with linting plugins enabled. This is intended for developers of
+    this package.
+  default: False
+  -- Because disabling this flag won’t help the solver.
+  manual: True
 
 flag noisy-deprecations
   description:
@@ -58,7 +71,8 @@ flag noisy-deprecations
     there’s a name collision and the namespace you’re referencing is the one
     that’s deprecated.
   default: True
-  manual: False
+  -- Because disabling this flag won’t help the solver.
+  manual: True
 
 -- This mimics the GHC2024 extension
 -- (https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/control.html?highlight=doandifthenelse#extension-GHC2024),
@@ -118,6 +132,11 @@ common defaults
     NoPatternGuards
     NoStarIsType
     NoTypeApplications
+  if flag(lint) && impl(ghc >= 9.6.1)
+    build-depends:
+      no-recursion ^>= {0.2.0, 0.3.0},
+    ghc-options:
+      -fplugin=NoRecursion
   if flag(noisy-deprecations)
     cpp-options: -DSELLOUT_NOISY_DEPRECATIONS
 
