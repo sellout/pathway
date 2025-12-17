@@ -70,10 +70,8 @@ module Filesystem.Path
     removeDirectoryRecursive,
     removePathForcibly,
     setAccessTime,
-    setCurrentDirectory,
     setModificationTime,
     setPermissions,
-    withCurrentDirectory,
   )
 where
 
@@ -89,26 +87,22 @@ import safe "base" Data.Functor (fmap, (<$>))
 import safe "base" Data.Kind qualified as Kind
 import safe "base" Data.Maybe (Maybe)
 import safe "base" Data.Ord (Ord)
-import safe "base" Data.String (String)
 import safe "base" Data.Traversable (traverse)
 import safe "base" Data.Typeable (Typeable)
 import safe "base" GHC.Generics (Generic)
 import safe "base" System.IO (IO)
 import safe "base" Text.Show (Show)
 import "directory" System.Directory qualified as Dir
-import safe "filepath" System.FilePath (FilePath)
 import safe "megaparsec" Text.Megaparsec qualified as MP
 import safe "pathway" Data.Path
   ( Anchored (AbsDir, AbsFile, RelDir, RelFile, ReparentedDir, ReparentedFile),
     AnyPath,
     Path,
-    Pathy,
     Relative,
     Relativity (Abs, Any, Rel),
     Type (Dir, File, Pathic),
     Typey,
     anchor,
-    toText,
     unanchor,
   )
 import safe "pathway" Data.Path.Format qualified as Format
@@ -116,22 +110,7 @@ import safe "pathway" Data.Path.Parser qualified as Parser
 import safe "time" Data.Time.Clock (UTCTime)
 import safe "transformers" Control.Monad.Trans.Class (lift)
 import safe "transformers" Control.Monad.Trans.Except (ExceptT (ExceptT))
-
--- |
---
---  __NB__: This is currently an alias for `FilePath`, but it is intended to
---          switch to `OsPath` in future (for GHCs recent enough to have it),
---          once there is code in place to avoid converting back and forth for
---          parsing, etc.
-type PathRep :: Kind.Type
-type PathRep = FilePath
-
--- | In both the `FilePath` and `OsPath` versions, this represents the same type
---   as `PathRep`, but the distinction indicates whether a path (where, for
---   example, literal backslashes need to be escaped for POSIX) or a single
---   component (where no characters are escaped) is held.
-type PathComponent :: Kind.Type
-type PathComponent = String
+import safe "this" Filesystem.Path.Internal (PathComponent, PathRep, toPathRep)
 
 fromPathRep ::
   (Ord e) =>
@@ -246,9 +225,6 @@ relPathFromPathRep =
         RelFile path -> pure $ pure path
         ReparentedDir path -> badType (Rel True) Dir $ unanchor path
         ReparentedFile path -> badType (Rel True) File $ unanchor path
-
-toPathRep :: (Pathy rel typ) => Path rel typ PathComponent -> PathRep
-toPathRep = toText Format.local
 
 type InternalFailure :: Kind.Type -> Kind.Type -> Kind.Type
 data InternalFailure rep e
@@ -430,21 +406,17 @@ getDirectoryContents =
     . Dir.getDirectoryContents
     . toPathRep
 
--- GetFailure
+-- | This returns what the system understands as the “current” directory. This
+--   is generally the directory from which the program was executed, but it
+--   possible for it to have been mutated (this library doesn’t provide an API
+--   to arbitrarily mutate it, but see
+--   `Filesystem.Path.Compat.withCurrentDirectory` for what we _do_ offer).
+--
+--  __TODO__: This should include `GetFailure`.
 getCurrentDirectory ::
   (Ord e) =>
   ExceptT (InternalFailure PathRep e) IO (Path 'Abs 'Dir PathComponent)
 getCurrentDirectory = ExceptT $ fmap absDirFromPathRep Dir.getCurrentDirectory
-
-setCurrentDirectory :: Path 'Abs 'Dir PathComponent -> ExceptT SetFailure IO ()
-setCurrentDirectory = lift . Dir.setCurrentDirectory . toPathRep
-
-withCurrentDirectory ::
-  Path 'Abs 'Dir PathComponent ->
-  IO a ->
-  ExceptT (Either GetFailure SetFailure) IO a
-withCurrentDirectory newCurDir =
-  lift . Dir.withCurrentDirectory (toPathRep newCurDir)
 
 -- __TODO__: Fill in a lot of stuff
 
