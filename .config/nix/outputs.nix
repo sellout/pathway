@@ -122,13 +122,7 @@ in
       ## The versions that are older than those supported by Nix that we
       ## prefer to test against.
       nonNixTestedGhcVersions = [
-        # Yaya requires GHC 8.6+
-        "8.6.1"
-        "8.8.1"
-        "8.10.1"
-        "9.0.1"
-        "9.2.1"
-        "9.4.1"
+        "9.4.5" # aarch64-darwin support is spotty before this
         "9.6.1"
         ## since `cabal-plan-bounds` doesn’t work under Nix
         "9.8.1"
@@ -180,12 +174,10 @@ in
       pkgs
       (map self.lib.nixifyGhcVersion (self.lib.supportedGhcVersions system))
       cabalPackages
-      (hpkgs:
-        [self.projectConfigurations.${system}.packages.path]
-        ## NB: Haskell Language Server no longer supports GHC <9.4.
-        ++ nixpkgs.lib.optional
-        (nixpkgs.lib.versionAtLeast hpkgs.ghc.version "9.4")
-        hpkgs.haskell-language-server);
+      (hpkgs: [
+        hpkgs.haskell-language-server
+        self.projectConfigurations.${system}.packages.path
+      ]);
 
     projectConfigurations =
       flaky.lib.projectConfigurations.haskell {inherit pkgs self;};

@@ -10,7 +10,7 @@ module Test.Path.QuickCheck
   )
 where
 
-import qualified "QuickCheck" Test.QuickCheck as QC
+import "QuickCheck" Test.QuickCheck qualified as QC
 import "base" Control.Applicative ((<*>))
 import "base" Control.Category ((.))
 import "base" Data.Functor ((<$>))

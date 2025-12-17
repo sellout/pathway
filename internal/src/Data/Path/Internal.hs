@@ -29,6 +29,7 @@ import safe "base" Data.Function (($))
 import safe "base" Data.Functor (Functor, fmap, (<$>))
 import safe "base" Data.Functor.Const (Const (Const))
 import safe "base" Data.Functor.Identity (Identity)
+import safe "base" Data.Kind qualified as Kind
 import safe "base" Data.Monoid (Monoid, mempty)
 import safe "base" Data.Ord (Ord)
 import safe "base" Data.Proxy (Proxy (Proxy))
@@ -64,19 +65,23 @@ import safe "base" Prelude ((+))
 --            indicates an unknown number of reparentings). That could later
 --            allow for more total operations, if we add some way to track the
 --            number of components in an absolute path.
+type Relativity :: Kind.Type
 data Relativity = Abs | Rel Bool | Any
   deriving stock (Eq, Generic, Ord, Read, Show)
 
-type family Parents (rel :: Relativity) = result | result -> rel where
+type Parents :: Relativity -> Kind.Type
+type family Parents rel = result | result -> rel where
   Parents 'Abs = ()
   Parents ('Rel 'False) = Proxy Natural
   Parents ('Rel 'True) = Natural
   Parents 'Any = Maybe Natural
 
+type Type :: Kind.Type
 data Type = File | Dir | Pathic
   deriving stock (Eq, Generic, Ord, Read, Show)
 
-type family Filename (typ :: Type) = result | result -> typ where
+type Filename :: Type -> Kind.Type -> Kind.Type
+type family Filename typ = result | result -> typ where
   Filename 'Dir = Const ()
   Filename 'File = Identity
   Filename 'Pathic = Maybe
@@ -84,6 +89,7 @@ type family Filename (typ :: Type) = result | result -> typ where
 -- | A strict sequence.
 --
 --  __TODO__: Move this upstream to Yaya.
+type List :: Kind.Type -> Kind.Type
 newtype List a = List (Mu (XNor a))
   deriving stock (Eq, Generic, Ord, Read, Show)
 
@@ -139,6 +145,7 @@ instance Functor List where
 --   these paths are ambiguous in any way – it‘s only a matter of which
 --   information is visible at the type level. E.g., `AnyPath` can be inspected
 --   to determine if it’s absolute or relative, file or directory.
+type Path :: Relativity -> Type -> Kind.Type -> Kind.Type
 data Path rel typ rep = Path
   { parents :: Parents rel,
     directories :: List rep,
@@ -170,6 +177,7 @@ deriving stock instance
 
 -- deriving stock instance Traversable (Path rel 'File)
 
+type TotalOps :: Relativity -> Bool -> Relativity -> Kind.Constraint
 class TotalOps rel par rel' | rel par -> rel' where
   -- | Concatenate two paths.
   --

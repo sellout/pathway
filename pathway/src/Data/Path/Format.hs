@@ -10,16 +10,18 @@ module Data.Path.Format
   )
 where
 
+import "base" Data.Kind qualified as Kind
 import "base" Data.Ord (Ord)
 import "base" Data.Semigroup (Semigroup, (<>))
 import "base" Data.String (IsString)
 import "containers" Data.Map (Map)
-import qualified "containers" Data.Map as Map
+import "containers" Data.Map qualified as Map
 import "yaya" Yaya.Pattern (Maybe, fromMaybe)
 #if defined(mingw32_HOST_OS)
 import "yaya" Yaya.Pattern (Maybe (Nothing))
 #endif
 
+type Format :: Kind.Type -> Kind.Type
 data Format s = Format
   { root :: s,
     current :: s,

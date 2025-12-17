@@ -57,6 +57,9 @@
   services.haskell-ci = {
     inherit (self.lib) defaultGhcVersion;
     ghcVersions = self.lib.nonNixTestedGhcVersions;
+    extraDependencyVersions = [
+      "megaparsec-9.6.1"
+    ];
     cabalPackages = {
       pathway-internal = "internal";
       pathway-quickcheck = "quickcheck";

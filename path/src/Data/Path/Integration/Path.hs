@@ -25,8 +25,8 @@ import safe "base" Data.Function (($))
 import safe "base" Data.Functor.Const (Const (Const))
 import safe "base" Data.Proxy (Proxy (Proxy))
 import safe "filepath" System.FilePath (FilePath)
-import safe qualified "filepath" System.FilePath as FilePath
-import qualified "path" Path
+import safe "filepath" System.FilePath qualified as FilePath
+import "path" Path qualified
 import safe "pathway" Data.Path
   ( Pathish,
     Relativity (Abs, Any, Rel),

@@ -32,7 +32,7 @@ import "base" Data.Monoid (Monoid)
 import "base" Data.Ord (Ord)
 import "base" Data.Proxy (Proxy (Proxy))
 import "base" Numeric.Natural (Natural)
-import qualified "megaparsec" Text.Megaparsec as MP
+import "megaparsec" Text.Megaparsec qualified as MP
 import "pathway-internal" Data.Path.Internal
   ( List (List),
     Path (Path),

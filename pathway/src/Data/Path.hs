@@ -53,14 +53,15 @@ import safe "base" Data.Function (($))
 import safe "base" Data.Functor (fmap)
 import safe "base" Data.Functor.Const (Const (Const))
 import safe "base" Data.Functor.Identity (runIdentity)
-import safe qualified "base" Data.Maybe as Lazy
+import safe "base" Data.Kind qualified as Kind
+import safe "base" Data.Maybe qualified as Lazy
 import safe "base" Data.Proxy (Proxy (Proxy))
 import safe "base" Data.Semigroup (Semigroup, (<>))
 import safe "base" Data.String (IsString, String)
 -- TODO: `minusNaturalMaybe` is exported from Numeric.Natural starting with base-4.18 (GHC 9.6).
 import "base" GHC.Natural (minusNaturalMaybe)
 import safe "base" Numeric.Natural (Natural)
-import safe qualified "extra" Data.List.Extra as List
+import safe "extra" Data.List.Extra qualified as List
 import safe "pathway-internal" Data.Path.Internal
   ( Filename,
     List,
@@ -75,7 +76,7 @@ import safe "pathway-internal" Data.Path.Internal
     (</>),
   )
 import safe "text" Data.Text (Text)
-import safe qualified "text" Data.Text as Text
+import safe "text" Data.Text qualified as Text
 import safe "yaya" Yaya.Applied (append, length, reverse, tail)
 import safe "yaya" Yaya.Fold
   ( Projectable,
@@ -122,6 +123,7 @@ null :: (Projectable (->) t (XNor a)) => t -> Bool
 null = isNeither . project
 
 -- | Convert an arbitrary path value to a specific path type.
+type Pathish :: Kind.Type -> Relativity -> Type -> Kind.Type -> Kind.Constraint
 class Pathish path (rel :: Relativity) (typ :: Type) rep where
   specializePath :: path -> Path rel typ rep
 
@@ -143,6 +145,7 @@ instance Pathish (Path rel typ rep) rel typ rep where
 --   There are not many operations on this type, but it is the type used for
 --   generic operations like parsing and printing, with separate functions (like
 --  `anchor`) to lift the contained information to the type level.
+type AnyPath :: Kind.Type -> Kind.Type
 type AnyPath = Path 'Any 'Pathic
 
 -- -- | Convert an arbitrary value representing a path to `AnyPath`.
@@ -153,6 +156,7 @@ type AnyPath = Path 'Any 'Pathic
 -- class Pathy path rep where
 --   generalizePath :: path -> AnyPath rep
 
+type Relative :: Relativity -> Kind.Constraint
 class Relative rel where
   generalizeRelativity :: Parents rel -> Parents 'Any
 
@@ -168,6 +172,7 @@ instance Relative ('Rel 'False) where
 instance Relative ('Rel 'True) where
   generalizeRelativity = pure
 
+type Typey :: Type -> Kind.Constraint
 class Typey typ where
   generalizeType :: Filename typ rep -> Filename 'Pathic rep
 
@@ -180,6 +185,7 @@ instance Typey 'File where
 instance Typey 'Pathic where
   generalizeType = id
 
+type Pathy :: Relativity -> Type -> Kind.Constraint
 type Pathy rel typ = (Relative rel, Typey typ)
 
 -- -- | This is the only instance needed by Pathway itself, but the class exists as
@@ -203,6 +209,7 @@ type Pathy rel typ = (Relative rel, Typey typ)
 -- defaultGeneralizePath Proxy Proxy =
 --   generalizePath @(Path rel typ rep) . specializePath
 
+type RelOps :: Relativity -> Kind.Constraint
 class RelOps rel where
   ascendRelative :: Path rel 'Dir rep -> Path ('Rel 'True) 'Dir rep
   reparentBy :: Natural -> Path rel typ rep -> Path ('Rel 'True) typ rep
@@ -376,6 +383,7 @@ partitionCommonPrefix ::
 partitionCommonPrefix =
   gcata (distTuple embed) partitionCommonPrefix'
 
+type Routable :: Relativity -> Relativity -> Kind.Constraint
 class Routable from to where
   -- | Creates a path relative to the first argument that that points to the
   --   same location as the second argument.
@@ -475,6 +483,7 @@ instance Routable ('Rel 'False) ('Rel 'False) where
 --   of the first argument.
 --
 -- -- prop> isNothing (maybeMinimalRoute a b) ==> isNothing (routePrefix a b)
+type Prefixed :: Relativity -> Relativity -> Kind.Constraint
 class Prefixed rel rel' | rel -> rel' where
   -- | Returns `False` exactly when `routePrefix` would return `Nothing`.
   --
@@ -559,6 +568,7 @@ instance Prefixed ('Rel 'True) ('Rel 'True) where
               else Nothing
       else Nothing
 
+type Substible :: Kind.Type -> Kind.Constraint
 class Substible a where
   replace :: a -> a -> a -> a
 
@@ -603,6 +613,7 @@ strengthen :: Path ('Rel 'True) typ rep -> Maybe (Path ('Rel 'False) typ rep)
 strengthen path =
   if parents path == 0 then pure path {parents = Proxy} else Nothing
 
+type Anchored :: Kind.Type -> Kind.Type
 data Anchored rep
   = AbsDir (Path 'Abs 'Dir rep)
   | AbsFile (Path 'Abs 'File rep)

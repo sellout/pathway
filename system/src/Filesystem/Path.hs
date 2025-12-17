@@ -86,6 +86,7 @@ import safe "base" Data.Eq (Eq)
 import safe "base" Data.Foldable (toList)
 import safe "base" Data.Function (($))
 import safe "base" Data.Functor (fmap, (<$>))
+import safe "base" Data.Kind qualified as Kind
 import safe "base" Data.Maybe (Maybe)
 import safe "base" Data.Ord (Ord)
 import safe "base" Data.String (String)
@@ -94,9 +95,9 @@ import safe "base" Data.Typeable (Typeable)
 import safe "base" GHC.Generics (Generic)
 import safe "base" System.IO (IO)
 import safe "base" Text.Show (Show)
-import qualified "directory" System.Directory as Dir
+import "directory" System.Directory qualified as Dir
 import safe "filepath" System.FilePath (FilePath)
-import safe qualified "megaparsec" Text.Megaparsec as MP
+import safe "megaparsec" Text.Megaparsec qualified as MP
 import safe "pathway" Data.Path
   ( Anchored (AbsDir, AbsFile, RelDir, RelFile, ReparentedDir, ReparentedFile),
     AnyPath,
@@ -110,8 +111,8 @@ import safe "pathway" Data.Path
     toText,
     unanchor,
   )
-import safe qualified "pathway" Data.Path.Format as Format
-import safe qualified "pathway" Data.Path.Parser as Parser
+import safe "pathway" Data.Path.Format qualified as Format
+import safe "pathway" Data.Path.Parser qualified as Parser
 import safe "time" Data.Time.Clock (UTCTime)
 import safe "transformers" Control.Monad.Trans.Class (lift)
 import safe "transformers" Control.Monad.Trans.Except (ExceptT (ExceptT))
@@ -122,12 +123,14 @@ import safe "transformers" Control.Monad.Trans.Except (ExceptT (ExceptT))
 --          switch to `OsPath` in future (for GHCs recent enough to have it),
 --          once there is code in place to avoid converting back and forth for
 --          parsing, etc.
+type PathRep :: Kind.Type
 type PathRep = FilePath
 
 -- | In both the `FilePath` and `OsPath` versions, this represents the same type
 --   as `PathRep`, but the distinction indicates whether a path (where, for
 --   example, literal backslashes need to be escaped for POSIX) or a single
 --   component (where no characters are escaped) is held.
+type PathComponent :: Kind.Type
 type PathComponent = String
 
 fromPathRep ::
@@ -247,6 +250,7 @@ relPathFromPathRep =
 toPathRep :: (Pathy rel typ) => Path rel typ PathComponent -> PathRep
 toPathRep = toText Format.local
 
+type InternalFailure :: Kind.Type -> Kind.Type -> Kind.Type
 data InternalFailure rep e
   = ParseFailure (MP.ParseErrorBundle rep e)
   | IncorrectResultType Relativity Type Relativity Type (AnyPath rep)
@@ -264,6 +268,7 @@ instance
   (Show rep, Typeable rep, Show (MP.Token rep), Show e, Typeable e) =>
   Exception (InternalFailure rep e)
 
+type FundamentalFailure :: Kind.Type
 data FundamentalFailure
   = -- | The process has insufficient privileges to perform the operation.
     --  [EROFS, EACCES]
@@ -271,6 +276,7 @@ data FundamentalFailure
   | -- | A physical I/O error has occurred. [EIO]
     HardwareFault
 
+type ArgumentFailure :: Kind.Type
 data ArgumentFailure
   = -- | The operand is not a valid directory name. [ENAMETOOLONG, ELOOP]
     --   THIS IS AN INTERNAL ERROR IN Pathway
@@ -279,16 +285,19 @@ data ArgumentFailure
     InappropriateType
   | AFFF FundamentalFailure
 
+type CreationFailure :: Kind.Type
 data CreationFailure
   = -- | The operand refers to a directory that already exists. [EEXIST]
     AlreadyExistsError
   | MCF MaybeCreationFailure
 
+type MaybeCreationFailure :: Kind.Type
 data MaybeCreationFailure
   = -- | There is no path to the directory. [ENOENT, ENOTDIR]
     DoesNotExistError
   | MPCF MaybeParentCreationFailure
 
+type MaybeParentCreationFailure :: Kind.Type
 data MaybeParentCreationFailure
   = -- | Insufficient resources (virtual memory, process file descriptors,
     --   physical disk space, etc.) are available to perform the operation.
@@ -296,11 +305,13 @@ data MaybeParentCreationFailure
     FullError
   | MPCFAF ArgumentFailure
 
+type DirRemovalFailure :: Kind.Type
 data DirRemovalFailure
   = -- | The implementation does not support removal in this situation. [EINVAL]
     DRmFUnsupportedOperation
   | RF RemovalFailure
 
+type RemovalFailure :: Kind.Type
 data RemovalFailure
   = -- | The directory does not exist. [ENOENT, ENOTDIR]
     RmFDoesNotExistError
@@ -309,6 +320,7 @@ data RemovalFailure
     RmFUnsatisfiedConstraints
   | RmFAF ArgumentFailure
 
+type RenameFailure :: Kind.Type
 data RenameFailure
   = -- | The original directory does not exist, or there is no path to the
     --   target. [ENOENT, ENOTDIR]
@@ -324,6 +336,7 @@ data RenameFailure
     RnFFullError
   | DRFAF ArgumentFailure
 
+type GetFailure :: Kind.Type
 data GetFailure
   = -- | The directory does not exist. [ENOENT, ENOTDIR]
     GFDoesNotExistError
@@ -334,6 +347,7 @@ data GetFailure
     GFFullError
   | GFFF FundamentalFailure
 
+type SetFailure :: Kind.Type
 data SetFailure
   = -- | The directory does not exist. [ENOENT, ENOTDIR]
     SFDoesNotExistError
@@ -342,6 +356,7 @@ data SetFailure
     SFUnsupportedOperation
   | SFAF ArgumentFailure
 
+type ListFailure :: Kind.Type
 data ListFailure
   = -- | The directory does not exist. [ENOENT, ENOTDIR]
     LFDoesNotExistError
@@ -524,6 +539,7 @@ setModificationTime = Dir.setModificationTime . toPathRep
 
 -- | Filesystem operations with corresponding versions for each of `'Dir` and
 --  `'File`.
+type FsOperations :: Type -> Kind.Constraint
 class FsOperations typ where
   canonicalizePath ::
     (Ord e) =>

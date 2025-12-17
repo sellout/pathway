@@ -21,21 +21,21 @@ import "base" Data.String (String, fromString)
 import "base" Data.Void (Void)
 import "base" Numeric.Natural (Natural)
 import "base" Text.Show (show)
-import qualified "megaparsec" Text.Megaparsec as MP
+import "megaparsec" Text.Megaparsec qualified as MP
 import "pathway-internal" Data.Path.Internal
   ( Path (Path),
     directories,
     filename,
     parents,
   )
-import qualified "template-haskell" Language.Haskell.TH.Quote as TH
-import qualified "template-haskell" Language.Haskell.TH.Syntax as TH
+import "template-haskell" Language.Haskell.TH.Quote qualified as TH
+import "template-haskell" Language.Haskell.TH.Syntax qualified as TH
 import "yaya" Yaya.Fold (Recursive, cata, embed)
 import "yaya" Yaya.Pattern (Maybe (Nothing), XNor (Both, Neither), maybe, xnor)
 import "this" Data.Path (AnyPath)
 import "this" Data.Path.Format (Format)
-import qualified "this" Data.Path.Format as Format
-import qualified "this" Data.Path.Parser as Parser
+import "this" Data.Path.Format qualified as Format
+import "this" Data.Path.Parser qualified as Parser
 import "base" Prelude (fromIntegral)
 
 -- $setup
