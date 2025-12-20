@@ -61,25 +61,44 @@ The last case is a bit complicated, but needs to exist that way because 1. some 
 
 #### concatenation
 
-There are various ways to concatenate paths.
+There are various ways to concatenate paths. The general restriction is that the parent path must be a directory, and the child path must be relative.
 
-- `Semigroup`/`Monoid` – `<>` only concatenates `Path Rel Dir rep`
+- `Semigroup`/`Monoid` – `<>` only concatenates `Path ('Rel reparented) 'Dir rep` (because the types have to be consistent, and these are the only types that satisfy both being a directory and being relative)
 - `</>` concatenates _most_ paths:
-  - `Path relativity Dir rep </> Path (Rel False) typ rep -> Path relativity typ rep`
-  - `Path (Rel reparented) Dir rep </> Path (Rel reparented') typ rep -> Path (Rel True) typ rep`
-  - `Path relativity Dir rep </> AmbiguousPath (Rel False) rep -> AmbiguousPath relativity rep`
-  - `Path (Rel reparented) Dir rep </> AmbiguousPath (Rel reparented') rep -> AmbiguousPath (Rel True) rep`
+  - `Path relativity 'Dir rep </> Path ('Rel 'False) typ rep -> Path relativity typ rep`
+  - `Path ('Rel reparented) 'Dir rep </> Path ('Rel reparented') typ rep -> Path ('Rel 'True) typ rep`
+  - `Path relativity 'Dir rep </> AmbiguousPath ('Rel 'False) rep -> AmbiguousPath relativity rep`
+  - `Path ('Rel reparented) 'Dir rep </> AmbiguousPath ('Rel reparented') rep -> AmbiguousPath ('Rel 'True) rep`
 - `</?>` attempts to concatenate a reparented path onto an absolute path (which can fail when there are more `..` in the reparented path then there are components in the absolute path)
-  - `Path Abs Dir rep </?> Path (Rel True) typ rep -> Maybe (Path Abs typ rep)`
-  - `Path Abs Dir rep </?> AmbiguousPath (Rel True) rep -> Maybe (AmbiguousPath Abs rep)`
+  - `Path 'Abs 'Dir rep </?> Path ('Rel 'True) typ rep -> Maybe (Path Abs typ rep)`
+  - `Path 'Abs 'Dir rep </?> AmbiguousPath ('Rel 'True) rep -> Maybe (AmbiguousPath Abs rep)`
 - And then there are paths that are just impossible to concatenate:
-  - `Path relativity File rep >< Path relativity' typ rep`
-  - `Path relativity typ rep >< Path Abs typ rep`
-  - `AmbiguousPath relativity rep >< Path relativity' typ rep`
+  - `Path relativity File rep >< Path relativity' typ rep` – because the parent path isn’t a directory
+  - `Path relativity typ rep >< Path Abs typ rep` – because the child path isn’t a file
+  - `AmbiguousPath relativity rep >< Path relativity' typ rep` – because we don’t know if the parent path is a file or directory (but you can use `disambiguate` to remove the ambiguity, and _then_ concatenate)
+
+__TODO__: Add a “sometimes concat” operator (should it be `</?>`, and then a new one for the `Maybe` case) that’s
+``` haskell
+(</?>) :: Path 'Abs 'Dir rep -> AnchoredPath typ rep -> Path 'Abs typ rep
+```
+there is a problem that this is total for `Abs` and `Rel False`, but partial for `Rel True`, which crops up in some other places as well. I think we need to restructure `Relativity` to separate out reparented. Like
+``` haskell
+data SafeRelativity = Abs | Rel
+data Relativity = Safe SafeRelativity | Rep
+```
+However … there are some cases that are different – for example, you can safely `</>` both types of `Rel` on both sides, but not `Abs` on the right. Although this is covered by classes, so you don’t need to specialize the type per se. It should only be places where we want a type like `AnchoredPath` …
 
 #### routing
 
 “Routing” one path to another results in a relative path that tells how to get to the second path starting from the first. There are various ways to accomplish this, according to the type. Routing is restricted to types with “compatible” relativity. That is, you can route `Abs` to `Abs`, or `Rel a` to `Rel b`. The `Rel a` to `Rel True` case is partial, because if the destination has more `..` than the origin, we don’t have enough context to build the route.
+
+## related packages
+
+- [Pathway System](https://hackage.haskell.org/package/pathway-system) – the library that ties this into an actual filesystem.
+- [Pathway QuickCheck](https://hackage.haskell.org/package/pathway-quickcheck) – a library to ease testing of code that uses Pathway.
+- [Pathway–Path](https://hackage.haskell.org/package/pathway-path) – integration between Pathway and the similar [Path](https://hackage.haskell.org/package/path) library (see the documentation of Pathway–Path for a comparison between Pathway and Path).
+- [XDG Base Directory](https://hackage.haskell.org/package/xdg-base-directory) – a library for accessing XDG base directories, like `XDG_CONFIG_HOME`, etc.
+- [XDG User Dirs]() – a library for accessing XDG user directories, like `DOCUMENTS` and `DOWNLOADS`.
 
 ## internals
 

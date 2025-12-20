@@ -1,3 +1,4 @@
+{-# LANGUAGE QuantifiedConstraints #-}
 {-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE TypeFamilyDependencies #-}
 -- __NB__: Because of the nested `Parents` and `Filename` constraints.
@@ -16,8 +17,20 @@ module Data.Path.Internal
     Path (..),
     Relativity (..),
     Type (..),
+    AmbiguousPath (..),
     current,
     (</>),
+    -- meh
+    Flip (..),
+    Flip1 (..),
+    Anchored (..),
+    AnchoredPath,
+    NonReparented (..),
+    NonReparentedPath,
+    Unambiguous (..),
+    UnambiguousPath,
+    AncUnambPath,
+    DFunctor (..),
   )
 where
 
@@ -27,6 +40,7 @@ import safe "base" Data.Eq (Eq)
 import safe "base" Data.Foldable (Foldable, foldr, sum)
 import safe "base" Data.Function (($))
 import safe "base" Data.Functor (Functor, fmap, (<$>))
+import safe "base" Data.Functor.Compose (Compose)
 import safe "base" Data.Functor.Const (Const (Const))
 import safe "base" Data.Functor.Identity (Identity)
 import safe "base" Data.Kind qualified as Kind
@@ -54,6 +68,15 @@ import safe "yaya" Yaya.Fold
 import safe "yaya" Yaya.Functor (firstMap)
 import safe "yaya" Yaya.Pattern (Maybe, XNor (Neither), xnor)
 import safe "base" Prelude ((+))
+
+-- | __FIXME__: I think this is in base already
+type Flip :: (a -> b -> Kind.Type) -> b -> a -> Kind.Type
+newtype Flip f b a = Flip {unflip :: f a b}
+  deriving stock (Eq, Generic, Ord, Read, Show)
+
+type Flip1 :: (a -> b -> c -> Kind.Type) -> b -> a -> c -> Kind.Type
+newtype Flip1 f b a c = Flip1 {unflip1 :: f a b c}
+  deriving stock (Eq, Generic, Ord, Read, Show)
 
 -- |
 --
@@ -176,6 +199,135 @@ deriving stock instance
 -- deriving stock instance Traversable (Path rel 'Dir)
 
 -- deriving stock instance Traversable (Path rel 'File)
+
+type AmbiguousPath :: Relativity -> Kind.Type -> Kind.Type
+data AmbiguousPath rel rep = AmbiguousPath
+  { ambParents :: Parents rel,
+    ambDirectories :: List rep,
+    ambiguousComponent :: rep
+  }
+  deriving stock (Generic, Generic1)
+
+-- Tradeoffs between `Path `Any 'Pathic rep` and `Anchored (UnambiguousPath rep)`:
+-- - `Anchored` involves a bunch of synonyms
+-- - `Anchored` keeps `Path` disjoint
+-- - `Pathic` makes parameterized types match more broadly (is there any case where we want to allow `Abs` and `Rel`, but not `Any`?)
+-- - `Anchored` mokes some code more complicated (parsers)
+-- - need `Anchored` and `Unambiguous` anyway, for other cases
+
+-- | Disjunction of a type parameterized over `Relativity`.
+--
+--  __NB__: This type may be awkward to use directly, so see `AnchoredPath` for
+--          the common case.
+type Anchored :: (Relativity -> Kind.Type) -> Kind.Type
+data Anchored f
+  = Absolute (f 'Abs)
+  | Relative (f ('Rel 'False))
+  | Reparented (f ('Rel 'True))
+  deriving stock (Generic)
+
+deriving stock instance (Eq (f 'Abs), Eq (f ('Rel 'False)), Eq (f ('Rel 'True))) => Eq (Anchored f)
+
+deriving stock instance (Ord (f 'Abs), Ord (f ('Rel 'False)), Ord (f ('Rel 'True))) => Ord (Anchored f)
+
+deriving stock instance (Read (f 'Abs), Read (f ('Rel 'False)), Read (f ('Rel 'True))) => Read (Anchored f)
+
+deriving stock instance (Show (f 'Abs), Show (f ('Rel 'False)), Show (f ('Rel 'True))) => Show (Anchored f)
+
+-- |
+--
+--  __TODO__: Generalize the type of the one in Yaya.
+type DFunctor ::
+  (j -> j -> Kind.Type) ->
+  (k -> k -> Kind.Type) ->
+  ((i -> j) -> k) ->
+  Kind.Constraint
+class DFunctor jCat kCat d where
+  dmap :: (forall a. f a `jCat` g a) -> d f `kCat` d g
+
+instance DFunctor (->) (->) Anchored where
+  dmap f = \case
+    Absolute abs -> Absolute $ f abs
+    Relative rel -> Relative $ f rel
+    Reparented rep -> Reparented $ f rep
+
+-- type Path'' :: Type -> Kind.Type -> Relativity -> Kind.Type
+-- type Path'' typ rep rel = Path rel typ rep
+
+-- | A path where the `Relativity` is not tracked in the type (but can be
+--   checked at runtime).
+type AnchoredPath :: Type -> Kind.Type -> Kind.Type
+type AnchoredPath typ rep = Anchored (Flip (Flip1 Path typ) rep)
+
+-- -- | `AnchoredPath` with the parameters swapped.
+-- type AnchoredPath' :: Kind.Type -> Type -> Kind.Type
+-- type AnchoredPath' rep typ = AnchoredPath typ rep
+
+-- |
+--
+--  __TODO__: Should this be a substructure of `Anchored`?
+type NonReparented :: (Relativity -> Kind.Type) -> Kind.Type
+data NonReparented f
+  = Absolute' (f 'Abs)
+  | Relative' (f ('Rel 'False))
+  deriving stock (Generic)
+
+deriving stock instance (Eq (f 'Abs), Eq (f ('Rel 'False)), Eq (f ('Rel 'True))) => Eq (NonReparented f)
+
+deriving stock instance (Ord (f 'Abs), Ord (f ('Rel 'False)), Ord (f ('Rel 'True))) => Ord (NonReparented f)
+
+deriving stock instance (Read (f 'Abs), Read (f ('Rel 'False)), Read (f ('Rel 'True))) => Read (NonReparented f)
+
+deriving stock instance (Show (f 'Abs), Show (f ('Rel 'False)), Show (f ('Rel 'True))) => Show (NonReparented f)
+
+instance DFunctor (->) (->) NonReparented where
+  dmap f = \case
+    Absolute' abs -> Absolute' $ f abs
+    Relative' rel -> Relative' $ f rel
+
+-- | A path where the `Relativity` is not tracked in the type (but can be
+--   checked at runtime).
+type NonReparentedPath :: Type -> Kind.Type -> Kind.Type
+type NonReparentedPath typ rep = NonReparented (Flip (Flip1 Path typ) rep)
+
+-- | Disjunction of a type parameterized over `Type`.
+--
+--  __NB__: This type may be awkward to use directly, so see `UnambiguousPath`
+--          for the common case.
+type Unambiguous :: (Type -> Kind.Type) -> Kind.Type
+data Unambiguous f
+  = Directory (f 'Dir)
+  | File' (f 'File)
+  deriving stock (Generic)
+
+deriving stock instance (Eq (f 'Dir), Eq (f 'File)) => Eq (Unambiguous f)
+
+deriving stock instance (Ord (f 'Dir), Ord (f 'File)) => Ord (Unambiguous f)
+
+deriving stock instance (Read (f 'Dir), Read (f 'File)) => Read (Unambiguous f)
+
+deriving stock instance (Show (f 'Dir), Show (f 'File)) => Show (Unambiguous f)
+
+instance DFunctor (->) (->) Unambiguous where
+  dmap f = \case
+    Directory dir -> Directory $ f dir
+    File' file -> File' $ f file
+
+-- type Path' :: Relativity -> Kind.Type -> Type -> Kind.Type
+-- type Path' rel rep typ = Path rel typ rep
+
+-- | A path where the `Type` is not tracked in the type (but can be checked at
+--   runtime).
+type UnambiguousPath :: Relativity -> Kind.Type -> Kind.Type
+type UnambiguousPath rel rep = Unambiguous (Flip (Path rel) rep)
+
+-- | A path where neither the `Relativity` nor `Type` is tracked in the type
+--   (but can be checked at runtime).
+type AncUnambPath :: Kind.Type -> Kind.Type
+type AncUnambPath rep = Anchored (Compose (Compose Unambiguous (Flip1 Flip rep)) Path)
+
+-- type RelativePath :: Bool -> Type -> Kind.Type -> (Bool -> Relativity) -> Kind.Type
+-- type RelativePath reparented typ rep f = Path (f reparented) typ rep
 
 type TotalOps :: Relativity -> Bool -> Relativity -> Kind.Constraint
 class TotalOps rel par rel' | rel par -> rel' where

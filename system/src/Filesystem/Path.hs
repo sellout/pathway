@@ -26,6 +26,9 @@
 -- - Similarly, there’s no `Dir.makeRelativeToCurrentDirectory`.
 -- - This includes some exception handlers for dealing with filesystem-specific
 --   meanings of different `IOError`s.
+-- - XDG base directories are managed via the
+--   [XDG Base Directory](https://hackage.haskell.org/package/xdg-base-directory)
+--   package, which is much richer than the XDG operations offered by "Dir".
 --
 --   One reason for enforcing the absoluteness of paths, is that paths are often
 --   reported to users, and often without enough context. This tries to ensure
@@ -72,20 +75,24 @@ module Filesystem.Path
     setAccessTime,
     setModificationTime,
     setPermissions,
+    disambiguate,
   )
 where
 
 import safe "base" Control.Applicative (pure)
 import safe "base" Control.Category ((.))
-import safe "base" Control.Exception (Exception, throwIO)
-import safe "base" Data.Bool (Bool (False, True))
+import safe "base" Control.Exception (Exception, throwIO, try)
+import safe "base" Control.Monad ((<=<), (=<<))
+import safe "base" Data.Bifunctor (first)
+import safe "base" Data.Bool (Bool (False, True), bool)
 import safe "base" Data.Either (Either (Left), either, partitionEithers)
 import safe "base" Data.Eq (Eq)
 import safe "base" Data.Foldable (toList)
 import safe "base" Data.Function (($))
 import safe "base" Data.Functor (fmap, (<$>))
+import safe "base" Data.Functor.Compose (Compose (Compose))
 import safe "base" Data.Kind qualified as Kind
-import safe "base" Data.Maybe (Maybe)
+import safe "base" Data.Maybe (Maybe (Nothing))
 import safe "base" Data.Ord (Ord)
 import safe "base" Data.Traversable (traverse)
 import safe "base" Data.Typeable (Typeable)
@@ -95,16 +102,21 @@ import safe "base" Text.Show (Show)
 import "directory" System.Directory qualified as Dir
 import safe "megaparsec" Text.Megaparsec qualified as MP
 import safe "pathway" Data.Path
-  ( Anchored (AbsDir, AbsFile, RelDir, RelFile, ReparentedDir, ReparentedFile),
-    AnyPath,
+  ( AmbiguousPath,
+    AncUnambPath,
+    Anchored (Absolute, Relative, Reparented),
+    Flip (Flip),
+    Flip1 (Flip1),
     Path,
     Relative,
     Relativity (Abs, Any, Rel),
     Type (Dir, File, Pathic),
     Typey,
+    Unambiguous (Directory, File'),
+    UnambiguousPath,
     anchor,
-    unanchor,
   )
+import safe "pathway" Data.Path qualified as Path
 import safe "pathway" Data.Path.Format qualified as Format
 import safe "pathway" Data.Path.Parser qualified as Parser
 import safe "time" Data.Time.Clock (UTCTime)
@@ -115,12 +127,12 @@ import safe "this" Filesystem.Path.Internal (PathComponent, PathRep, toPathRep)
 fromPathRep ::
   (Ord e) =>
   PathRep ->
-  Either (MP.ParseErrorBundle PathRep e) (Anchored PathComponent)
+  Either (MP.ParseErrorBundle PathRep e) (AncUnambPath PathComponent)
 fromPathRep = fmap anchor . MP.parse (Parser.path Format.local) ""
 
 handleAnchoredPath ::
   (Ord e) =>
-  (Anchored PathComponent -> Either (InternalFailure PathRep e) a) ->
+  (AncUnambPath PathComponent -> Either (InternalFailure PathRep e) a) ->
   PathRep ->
   Either (InternalFailure PathRep e) a
 handleAnchoredPath handler = either (Left . ParseFailure) handler . fromPathRep
@@ -130,14 +142,15 @@ absDirFromPathRep ::
   PathRep ->
   Either (InternalFailure PathRep e) (Path 'Abs 'Dir PathComponent)
 absDirFromPathRep =
-  let badType rel typ = Left . IncorrectResultType Abs Dir rel typ
-   in handleAnchoredPath \case
-        AbsDir path -> pure path
-        AbsFile path -> badType Abs File $ unanchor path
-        RelDir path -> badType (Rel False) Dir $ unanchor path
-        RelFile path -> badType (Rel False) File $ unanchor path
-        ReparentedDir path -> badType (Rel True) Dir $ unanchor path
-        ReparentedFile path -> badType (Rel True) File $ unanchor path
+  handleAnchoredPath \path ->
+    let badType rel typ = Left $ IncorrectResultType Abs Dir rel typ path
+     in case path of
+          Absolute (Compose (Compose (Directory (Flip1 (Flip path'))))) -> pure path'
+          Absolute (Compose (Compose (File' _))) -> badType Abs File
+          Relative (Compose (Compose (Directory _))) -> badType (Rel False) Dir
+          Relative (Compose (Compose (File' _))) -> badType (Rel False) File
+          Reparented (Compose (Compose (Directory _))) -> badType (Rel True) Dir
+          Reparented (Compose (Compose (File' _))) -> badType (Rel True) File
 
 dirFromPathRep ::
   (Ord e) =>
@@ -149,47 +162,53 @@ dirFromPathRep ::
         (Path ('Rel 'False) 'Dir PathComponent)
     )
 dirFromPathRep =
-  let badType rel typ = Left . IncorrectResultType Any Dir rel typ
-   in handleAnchoredPath \case
-        AbsDir path -> pure $ Left path
-        AbsFile path -> badType Abs File $ unanchor path
-        RelDir path -> pure $ pure path
-        RelFile path -> badType (Rel False) File $ unanchor path
-        ReparentedDir path -> badType (Rel True) Dir $ unanchor path
-        ReparentedFile path -> badType (Rel True) File $ unanchor path
+  handleAnchoredPath \path ->
+    let badType rel typ = Left $ IncorrectResultType Any Dir rel typ path
+     in case path of
+          Absolute (Compose (Compose (Directory (Flip1 (Flip path'))))) -> pure $ Left path'
+          Absolute (Compose (Compose (File' _))) -> badType Abs File
+          Relative (Compose (Compose (Directory (Flip1 (Flip path'))))) -> pure $ pure path'
+          Relative (Compose (Compose (File' _))) -> badType (Rel False) File
+          Reparented (Compose (Compose (Directory _))) -> badType (Rel True) Dir
+          Reparented (Compose (Compose (File' _))) -> badType (Rel True) File
 
 absFileFromPathRep ::
   (Ord e) =>
   PathRep ->
   Either (InternalFailure PathRep e) (Path 'Abs 'File PathComponent)
 absFileFromPathRep =
-  let badType rel typ = Left . IncorrectResultType Abs File rel typ
-   in handleAnchoredPath \case
-        AbsDir path -> badType Abs Dir $ unanchor path
-        AbsFile path -> pure path
-        RelDir path -> badType (Rel False) Dir $ unanchor path
-        RelFile path -> badType (Rel False) File $ unanchor path
-        ReparentedDir path -> badType (Rel True) Dir $ unanchor path
-        ReparentedFile path -> badType (Rel True) File $ unanchor path
+  handleAnchoredPath \path ->
+    let badType rel typ = Left $ IncorrectResultType Abs File rel typ path
+     in case path of
+          Absolute (Compose (Compose (Directory _))) -> badType Abs Dir
+          Absolute (Compose (Compose (File' (Flip1 (Flip path'))))) -> pure path'
+          Relative (Compose (Compose (Directory _))) -> badType (Rel False) Dir
+          Relative (Compose (Compose (File' _))) -> badType (Rel False) File
+          Reparented (Compose (Compose (Directory _))) -> badType (Rel True) Dir
+          Reparented (Compose (Compose (File' _))) -> badType (Rel True) File
 
 fileFromPathRep ::
   (Ord e) =>
   PathRep ->
   Either
     (InternalFailure PathRep e)
+    -- TODO: Should we return `AnchoredPath` here? If so, need partitioning, but
+    -- also we don’t allow reparented paths, so think about how we guarantee
+    -- that – should we represent them differently somehow?
     ( Either
         (Path 'Abs 'File PathComponent)
         (Path ('Rel 'False) 'File PathComponent)
     )
 fileFromPathRep =
-  let badType rel typ = Left . IncorrectResultType Abs File rel typ
-   in handleAnchoredPath \case
-        AbsDir path -> badType Abs Dir $ unanchor path
-        AbsFile path -> pure $ Left path
-        RelDir path -> badType (Rel False) Dir $ unanchor path
-        RelFile path -> pure $ pure path
-        ReparentedDir path -> badType (Rel True) Dir $ unanchor path
-        ReparentedFile path -> badType (Rel True) File $ unanchor path
+  handleAnchoredPath \path ->
+    let badType rel typ = Left $ IncorrectResultType Abs File rel typ path
+     in case path of
+          Absolute (Compose (Compose (Directory _))) -> badType Abs Dir
+          Absolute (Compose (Compose (File' (Flip1 (Flip path'))))) -> pure $ Left path'
+          Relative (Compose (Compose (Directory _))) -> badType (Rel False) Dir
+          Relative (Compose (Compose (File' (Flip1 (Flip path'))))) -> pure $ pure path'
+          Reparented (Compose (Compose (Directory _))) -> badType (Rel True) Dir
+          Reparented (Compose (Compose (File' _))) -> badType (Rel True) File
 
 -- absPathFromPathRep ::
 --   (Ord e) =>
@@ -212,24 +231,26 @@ relPathFromPathRep ::
   PathRep ->
   Either
     (InternalFailure PathRep e)
+    -- TODO: Return `UnambiguousPath` here. But need partitioning function first.
     ( Either
         (Path ('Rel 'False) 'Dir PathComponent)
         (Path ('Rel 'False) 'File PathComponent)
     )
 relPathFromPathRep =
-  let badType rel typ = Left . IncorrectResultType Abs Pathic rel typ
-   in handleAnchoredPath \case
-        AbsDir path -> badType Abs Dir $ unanchor path
-        AbsFile path -> badType Abs File $ unanchor path
-        RelDir path -> pure $ Left path
-        RelFile path -> pure $ pure path
-        ReparentedDir path -> badType (Rel True) Dir $ unanchor path
-        ReparentedFile path -> badType (Rel True) File $ unanchor path
+  handleAnchoredPath \path ->
+    let badType rel typ = Left $ IncorrectResultType Abs Pathic rel typ path
+     in case path of
+          Absolute (Compose (Compose (Directory _))) -> badType Abs Dir
+          Absolute (Compose (Compose (File' _))) -> badType Abs File
+          Relative (Compose (Compose (Directory (Flip1 (Flip path'))))) -> pure $ Left path'
+          Relative (Compose (Compose (File' (Flip1 (Flip path'))))) -> pure $ pure path'
+          Reparented (Compose (Compose (Directory _))) -> badType (Rel True) Dir
+          Reparented (Compose (Compose (File' _))) -> badType (Rel True) File
 
 type InternalFailure :: Kind.Type -> Kind.Type -> Kind.Type
 data InternalFailure rep e
   = ParseFailure (MP.ParseErrorBundle rep e)
-  | IncorrectResultType Relativity Type Relativity Type (AnyPath rep)
+  | IncorrectResultType Relativity Type Relativity Type (AncUnambPath rep)
   deriving stock (Generic)
 
 deriving stock instance
@@ -238,11 +259,13 @@ deriving stock instance
 deriving stock instance
   (Show rep, Show (MP.Token rep), Show e) => Show (InternalFailure rep e)
 
+type FakeException :: Kind.Type -> Kind.Type
+newtype FakeException a = FakeException {realFailure :: a}
+  deriving stock (Show)
+
 -- | This instance is needed for @*With@ operations, that expect a function to
 --   return in `IO`, without any failure type.
-instance
-  (Show rep, Typeable rep, Show (MP.Token rep), Show e, Typeable e) =>
-  Exception (InternalFailure rep e)
+instance (Show a, Typeable a) => Exception (FakeException a)
 
 type FundamentalFailure :: Kind.Type
 data FundamentalFailure
@@ -468,9 +491,11 @@ findFilesWith pred dirs =
         )
           . partitionEithers
           . fmap absFileFromPathRep
+          <=< first realFailure
       )
+    . try
     . Dir.findFilesWith
-      (either throwIO pred . absFileFromPathRep @e)
+      (either (throwIO . FakeException) pred . absFileFromPathRep @e)
       (toList $ toPathRep <$> dirs)
     . toPathRep
 
@@ -502,12 +527,23 @@ setModificationTime ::
   (Typey typ) => Path 'Abs typ PathComponent -> UTCTime -> IO ()
 setModificationTime = Dir.setModificationTime . toPathRep
 
--- -- | Checks the filesystem for an object at the provided path and returns it
--- --   specialized to the correct type. Returns `Nothing` if no such object
--- --   exists.
--- disambiguate ::
---   AmbiguousPath 'Abs PathComponent -> IO (Maybe (Path 'Abs _ PathComponent))
--- disambiguate = _
+-- | Checks the filesystem for an object at the provided path and returns it
+--   specialized to the correct type. Returns `Nothing` if no such object
+--   exists.
+--
+--  __TODO__: Add support for filesystems that allow a single name to represent
+--            both a file _and_ a directory. Currently, this simply returns the
+--            directory in that case.
+disambiguate ::
+  AmbiguousPath 'Abs PathComponent -> IO (Maybe (UnambiguousPath 'Abs PathComponent))
+disambiguate path =
+  let tentativeDir = Path.disambiguate path
+   in bool
+        ( let tentativeFile = Path.disambiguate path
+           in bool (pure Nothing) (pure . pure . File' $ Flip tentativeFile) =<< doesExist tentativeFile
+        )
+        (pure . pure . Directory $ Flip tentativeDir)
+        =<< doesExist tentativeDir
 
 -- | Filesystem operations with corresponding versions for each of `'Dir` and
 --  `'File`.
@@ -529,6 +565,9 @@ class FsOperations typ where
     ExceptT
       (InternalFailure PathRep e)
       IO
+      -- TODO: Should this always return `Abs`? What does it mean when a
+      -- symbolic link has a relative target? Is it relative to the link? If so,
+      -- we can resolve it before returning. But what if you move the file? it stays relative to the link? Then maybe the distinction is useful … and this probably actually needs to return @'`Rel` '`True`@ also.
       ( Either
           (Path 'Abs typ PathComponent)
           (Path ('Rel 'False) typ PathComponent)
