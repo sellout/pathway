@@ -79,12 +79,12 @@ module Filesystem.Path
   )
 where
 
-import safe "base" Control.Applicative (pure)
+import safe "base" Control.Applicative (pure, (<*>))
 import safe "base" Control.Category ((.))
 import safe "base" Control.Exception (Exception, throwIO, try)
-import safe "base" Control.Monad ((<=<), (=<<))
+import safe "base" Control.Monad ((<=<))
 import safe "base" Data.Bifunctor (first)
-import safe "base" Data.Bool (Bool (False, True), bool)
+import safe "base" Data.Bool (Bool (False, True))
 import safe "base" Data.Either (Either (Left), either, partitionEithers)
 import safe "base" Data.Eq (Eq)
 import safe "base" Data.Foldable (toList)
@@ -95,6 +95,7 @@ import safe "base" Data.Kind qualified as Kind
 import safe "base" Data.Maybe (Maybe (Nothing))
 import safe "base" Data.Ord (Ord)
 import safe "base" Data.Traversable (traverse)
+import safe "base" Data.Tuple (curry)
 import safe "base" Data.Typeable (Typeable)
 import safe "base" GHC.Generics (Generic)
 import safe "base" System.IO (IO)
@@ -102,23 +103,28 @@ import safe "base" Text.Show (Show)
 import "directory" System.Directory qualified as Dir
 import safe "megaparsec" Text.Megaparsec qualified as MP
 import safe "pathway" Data.Path
-  ( AmbiguousPath,
-    AncUnambPath,
-    Anchored (Absolute, Relative, Reparented),
-    Flip (Flip),
-    Flip1 (Flip1),
-    Path,
+  ( Path,
     Relative,
     Relativity (Abs, Any, Rel),
     Type (Dir, File, Pathic),
     Typey,
-    Unambiguous (Directory, File'),
-    UnambiguousPath,
     anchor,
   )
 import safe "pathway" Data.Path qualified as Path
+import safe "pathway" Data.Path.Ambiguous qualified as Ambiguous
+import safe "pathway" Data.Path.Anchored qualified as Anchored
+import safe "pathway" Data.Path.Anchored qualified as NonReparented
+import safe "pathway" Data.Path.Any qualified as AncUnamb
 import safe "pathway" Data.Path.Format qualified as Format
+import safe "pathway" Data.Path.Functor
+  ( Flip (Flip),
+    Flip1 (Flip1),
+    dmap,
+    unflip1,
+  )
 import safe "pathway" Data.Path.Parser qualified as Parser
+import safe "pathway" Data.Path.Unambiguous qualified as Unambiguous
+import safe "these" Data.These (These (That, These, This))
 import safe "time" Data.Time.Clock (UTCTime)
 import safe "transformers" Control.Monad.Trans.Class (lift)
 import safe "transformers" Control.Monad.Trans.Except (ExceptT (ExceptT))
@@ -127,12 +133,12 @@ import safe "this" Filesystem.Path.Internal (PathComponent, PathRep, toPathRep)
 fromPathRep ::
   (Ord e) =>
   PathRep ->
-  Either (MP.ParseErrorBundle PathRep e) (AncUnambPath PathComponent)
+  Either (MP.ParseErrorBundle PathRep e) (AncUnamb.Path PathComponent)
 fromPathRep = fmap anchor . MP.parse (Parser.path Format.local) ""
 
 handleAnchoredPath ::
   (Ord e) =>
-  (AncUnambPath PathComponent -> Either (InternalFailure PathRep e) a) ->
+  (AncUnamb.Path PathComponent -> Either (InternalFailure PathRep e) a) ->
   PathRep ->
   Either (InternalFailure PathRep e) a
 handleAnchoredPath handler = either (Left . ParseFailure) handler . fromPathRep
@@ -145,32 +151,29 @@ absDirFromPathRep =
   handleAnchoredPath \path ->
     let badType rel typ = Left $ IncorrectResultType Abs Dir rel typ path
      in case path of
-          Absolute (Compose (Compose (Directory (Flip1 (Flip path'))))) -> pure path'
-          Absolute (Compose (Compose (File' _))) -> badType Abs File
-          Relative (Compose (Compose (Directory _))) -> badType (Rel False) Dir
-          Relative (Compose (Compose (File' _))) -> badType (Rel False) File
-          Reparented (Compose (Compose (Directory _))) -> badType (Rel True) Dir
-          Reparented (Compose (Compose (File' _))) -> badType (Rel True) File
+          Anchored.Absolute (Compose (Compose (Unambiguous.Directory (Flip1 (Flip path'))))) -> pure path'
+          Anchored.Absolute (Compose (Compose (Unambiguous.File _))) -> badType Abs File
+          Anchored.Relative (Compose (Compose (Unambiguous.Directory _))) -> badType (Rel False) Dir
+          Anchored.Relative (Compose (Compose (Unambiguous.File _))) -> badType (Rel False) File
+          Anchored.Reparented (Compose (Compose (Unambiguous.Directory _))) -> badType (Rel True) Dir
+          Anchored.Reparented (Compose (Compose (Unambiguous.File _))) -> badType (Rel True) File
 
 dirFromPathRep ::
   (Ord e) =>
   PathRep ->
   Either
     (InternalFailure PathRep e)
-    ( Either
-        (Path 'Abs 'Dir PathComponent)
-        (Path ('Rel 'False) 'Dir PathComponent)
-    )
+    (NonReparented.Path 'Dir PathComponent)
 dirFromPathRep =
   handleAnchoredPath \path ->
     let badType rel typ = Left $ IncorrectResultType Any Dir rel typ path
      in case path of
-          Absolute (Compose (Compose (Directory (Flip1 (Flip path'))))) -> pure $ Left path'
-          Absolute (Compose (Compose (File' _))) -> badType Abs File
-          Relative (Compose (Compose (Directory (Flip1 (Flip path'))))) -> pure $ pure path'
-          Relative (Compose (Compose (File' _))) -> badType (Rel False) File
-          Reparented (Compose (Compose (Directory _))) -> badType (Rel True) Dir
-          Reparented (Compose (Compose (File' _))) -> badType (Rel True) File
+          Anchored.Absolute (Compose (Compose (Unambiguous.Directory (Flip1 (Flip path'))))) -> pure . NonReparented.Absolute . Flip $ Flip1 path'
+          Anchored.Absolute (Compose (Compose (Unambiguous.File _))) -> badType Abs File
+          Anchored.Relative (Compose (Compose (Unambiguous.Directory (Flip1 (Flip path'))))) -> pure . NonReparented.Relative . Flip $ Flip1 path'
+          Anchored.Relative (Compose (Compose (Unambiguous.File _))) -> badType (Rel False) File
+          Anchored.Reparented (Compose (Compose (Unambiguous.Directory _))) -> badType (Rel True) Dir
+          Anchored.Reparented (Compose (Compose (Unambiguous.File _))) -> badType (Rel True) File
 
 absFileFromPathRep ::
   (Ord e) =>
@@ -180,35 +183,27 @@ absFileFromPathRep =
   handleAnchoredPath \path ->
     let badType rel typ = Left $ IncorrectResultType Abs File rel typ path
      in case path of
-          Absolute (Compose (Compose (Directory _))) -> badType Abs Dir
-          Absolute (Compose (Compose (File' (Flip1 (Flip path'))))) -> pure path'
-          Relative (Compose (Compose (Directory _))) -> badType (Rel False) Dir
-          Relative (Compose (Compose (File' _))) -> badType (Rel False) File
-          Reparented (Compose (Compose (Directory _))) -> badType (Rel True) Dir
-          Reparented (Compose (Compose (File' _))) -> badType (Rel True) File
+          Anchored.Absolute (Compose (Compose (Unambiguous.Directory _))) -> badType Abs Dir
+          Anchored.Absolute (Compose (Compose (Unambiguous.File (Flip1 (Flip path'))))) -> pure path'
+          Anchored.Relative (Compose (Compose (Unambiguous.Directory _))) -> badType (Rel False) Dir
+          Anchored.Relative (Compose (Compose (Unambiguous.File _))) -> badType (Rel False) File
+          Anchored.Reparented (Compose (Compose (Unambiguous.Directory _))) -> badType (Rel True) Dir
+          Anchored.Reparented (Compose (Compose (Unambiguous.File _))) -> badType (Rel True) File
 
 fileFromPathRep ::
   (Ord e) =>
   PathRep ->
-  Either
-    (InternalFailure PathRep e)
-    -- TODO: Should we return `AnchoredPath` here? If so, need partitioning, but
-    -- also we don’t allow reparented paths, so think about how we guarantee
-    -- that – should we represent them differently somehow?
-    ( Either
-        (Path 'Abs 'File PathComponent)
-        (Path ('Rel 'False) 'File PathComponent)
-    )
+  Either (InternalFailure PathRep e) (NonReparented.Path 'File PathComponent)
 fileFromPathRep =
   handleAnchoredPath \path ->
     let badType rel typ = Left $ IncorrectResultType Abs File rel typ path
      in case path of
-          Absolute (Compose (Compose (Directory _))) -> badType Abs Dir
-          Absolute (Compose (Compose (File' (Flip1 (Flip path'))))) -> pure $ Left path'
-          Relative (Compose (Compose (Directory _))) -> badType (Rel False) Dir
-          Relative (Compose (Compose (File' (Flip1 (Flip path'))))) -> pure $ pure path'
-          Reparented (Compose (Compose (Directory _))) -> badType (Rel True) Dir
-          Reparented (Compose (Compose (File' _))) -> badType (Rel True) File
+          Anchored.Absolute (Compose (Compose (Unambiguous.Directory _))) -> badType Abs Dir
+          Anchored.Absolute (Compose (Compose (Unambiguous.File (Flip1 (Flip path'))))) -> pure . NonReparented.Absolute . Flip $ Flip1 path'
+          Anchored.Relative (Compose (Compose (Unambiguous.Directory _))) -> badType (Rel False) Dir
+          Anchored.Relative (Compose (Compose (Unambiguous.File (Flip1 (Flip path'))))) -> pure . NonReparented.Relative . Flip $ Flip1 path'
+          Anchored.Reparented (Compose (Compose (Unambiguous.Directory _))) -> badType (Rel True) Dir
+          Anchored.Reparented (Compose (Compose (Unambiguous.File _))) -> badType (Rel True) File
 
 -- absPathFromPathRep ::
 --   (Ord e) =>
@@ -231,26 +226,21 @@ relPathFromPathRep ::
   PathRep ->
   Either
     (InternalFailure PathRep e)
-    -- TODO: Return `UnambiguousPath` here. But need partitioning function first.
-    ( Either
-        (Path ('Rel 'False) 'Dir PathComponent)
-        (Path ('Rel 'False) 'File PathComponent)
-    )
+    (Unambiguous.Path ('Rel 'False) PathComponent)
 relPathFromPathRep =
   handleAnchoredPath \path ->
     let badType rel typ = Left $ IncorrectResultType Abs Pathic rel typ path
      in case path of
-          Absolute (Compose (Compose (Directory _))) -> badType Abs Dir
-          Absolute (Compose (Compose (File' _))) -> badType Abs File
-          Relative (Compose (Compose (Directory (Flip1 (Flip path'))))) -> pure $ Left path'
-          Relative (Compose (Compose (File' (Flip1 (Flip path'))))) -> pure $ pure path'
-          Reparented (Compose (Compose (Directory _))) -> badType (Rel True) Dir
-          Reparented (Compose (Compose (File' _))) -> badType (Rel True) File
+          Anchored.Absolute (Compose (Compose (Unambiguous.Directory _))) -> badType Abs Dir
+          Anchored.Absolute (Compose (Compose (Unambiguous.File _))) -> badType Abs File
+          Anchored.Relative (Compose (Compose path')) -> pure $ dmap unflip1 path'
+          Anchored.Reparented (Compose (Compose (Unambiguous.Directory _))) -> badType (Rel True) Dir
+          Anchored.Reparented (Compose (Compose (Unambiguous.File _))) -> badType (Rel True) File
 
 type InternalFailure :: Kind.Type -> Kind.Type -> Kind.Type
 data InternalFailure rep e
   = ParseFailure (MP.ParseErrorBundle rep e)
-  | IncorrectResultType Relativity Type Relativity Type (AncUnambPath rep)
+  | IncorrectResultType Relativity Type Relativity Type (AncUnamb.Path rep)
   deriving stock (Generic)
 
 deriving stock instance
@@ -397,7 +387,11 @@ listDirectory ::
     )
 listDirectory =
   lift
-    . fmap (fmap partitionEithers . partitionEithers . fmap relPathFromPathRep)
+    . fmap
+      ( fmap Unambiguous.partitionPaths
+          . partitionEithers
+          . fmap relPathFromPathRep
+      )
     . Dir.listDirectory
     . toPathRep
 
@@ -425,7 +419,11 @@ getDirectoryContents ::
     )
 getDirectoryContents =
   lift
-    . fmap (fmap partitionEithers . partitionEithers . fmap relPathFromPathRep)
+    . fmap
+      ( fmap Unambiguous.partitionPaths
+          . partitionEithers
+          . fmap relPathFromPathRep
+      )
     . Dir.getDirectoryContents
     . toPathRep
 
@@ -535,15 +533,19 @@ setModificationTime = Dir.setModificationTime . toPathRep
 --            both a file _and_ a directory. Currently, this simply returns the
 --            directory in that case.
 disambiguate ::
-  AmbiguousPath 'Abs PathComponent -> IO (Maybe (UnambiguousPath 'Abs PathComponent))
+  Ambiguous.Path 'Abs PathComponent -> IO (Maybe (These (Path 'Abs 'Dir PathComponent) (Path 'Abs 'File PathComponent)))
 disambiguate path =
   let tentativeDir = Path.disambiguate path
-   in bool
-        ( let tentativeFile = Path.disambiguate path
-           in bool (pure Nothing) (pure . pure . File' $ Flip tentativeFile) =<< doesExist tentativeFile
+      tentativeFile = Path.disambiguate path
+   in curry
+        ( \case
+            (False, False) -> Nothing
+            (False, True) -> pure $ That tentativeFile
+            (True, False) -> pure $ This tentativeDir
+            (True, True) -> pure $ These tentativeDir tentativeFile
         )
-        (pure . pure . Directory $ Flip tentativeDir)
-        =<< doesExist tentativeDir
+        <$> doesExist tentativeDir
+        <*> doesExist tentativeFile
 
 -- | Filesystem operations with corresponding versions for each of `'Dir` and
 --  `'File`.
@@ -568,10 +570,7 @@ class FsOperations typ where
       -- TODO: Should this always return `Abs`? What does it mean when a
       -- symbolic link has a relative target? Is it relative to the link? If so,
       -- we can resolve it before returning. But what if you move the file? it stays relative to the link? Then maybe the distinction is useful … and this probably actually needs to return @'`Rel` '`True`@ also.
-      ( Either
-          (Path 'Abs typ PathComponent)
-          (Path ('Rel 'False) typ PathComponent)
-      )
+      (NonReparented.Path typ PathComponent)
   remove :: Path 'Abs typ PathComponent -> ExceptT DirRemovalFailure IO ()
   removeLink :: Path 'Abs typ PathComponent -> IO ()
   rename ::

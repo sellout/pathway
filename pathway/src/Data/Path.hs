@@ -26,8 +26,7 @@
 --          would result in /a/c (because the `../` is normalized before we see
 --          that `/a/b/` is a symlink).
 module Data.Path
-  ( Anchored (..),
-    AnyPath,
+  ( AnyPath,
     Path,
     Pathish (..),
     Pathy,
@@ -35,15 +34,11 @@ module Data.Path
     RelOps (..),
     Relative,
     Relativity (..),
-    AmbiguousPath (..),
     Type (..),
     Typey,
     Filename,
     Flip (..),
     Flip1 (..),
-    AncUnambPath,
-    Unambiguous (..),
-    UnambiguousPath,
     anchor,
     current,
     forgetRelativity,
@@ -82,27 +77,16 @@ import "base" GHC.Natural (minusNaturalMaybe)
 import safe "base" Numeric.Natural (Natural)
 import safe "extra" Data.List.Extra qualified as List
 import safe "pathway-internal" Data.Path.Internal
-  ( AmbiguousPath (AmbiguousPath),
-    AncUnambPath,
-    Anchored (Absolute, Relative, Reparented),
-    AnchoredPath,
-    Filename,
-    Flip (Flip),
-    Flip1 (Flip1),
+  ( Filename,
     List,
     Parents,
     Path (Path),
     Relativity (Abs, Any, Rel),
     Type (Dir, File, Pathic),
-    Unambiguous (Directory, File'),
-    UnambiguousPath,
     current,
     directories,
-    dmap,
     filename,
     parents,
-    unflip,
-    unflip1,
     (</>),
   )
 import safe "text" Data.Text (Text)
@@ -130,7 +114,18 @@ import safe "yaya" Yaya.Pattern
     xnor,
   )
 import safe "yaya-containers" Yaya.Containers.Pattern.Map (MapF (BinF, TipF))
+import safe "this" Data.Path.Ambiguous qualified as Ambiguous
+import safe "this" Data.Path.Anchored qualified as Anchored
+import safe "this" Data.Path.Any qualified as AncUnamb
 import safe "this" Data.Path.Format (Format, parent, root, separator, substitutions)
+import safe "this" Data.Path.Functor
+  ( Flip (Flip),
+    Flip1 (Flip1),
+    dmap,
+    unflip,
+    unflip1,
+  )
+import safe "this" Data.Path.Unambiguous qualified as Unambiguous
 import safe "base" Prelude ((+))
 
 -- $setup
@@ -189,58 +184,58 @@ type AnyPath = Path 'Any 'Pathic
 type Relative :: Relativity -> Kind.Constraint
 class Relative rel where
   generalizeRelativity :: Parents rel -> Parents 'Any
-  forgetRelativity' :: Path rel typ rep -> AnchoredPath typ rep
+  forgetRelativity' :: Path rel typ rep -> Anchored.Path typ rep
 
 instance Relative 'Abs where
   generalizeRelativity () = Nothing
-  forgetRelativity' = Absolute . Flip . Flip1
+  forgetRelativity' = Anchored.Absolute . Flip . Flip1
 
 instance Relative 'Any where
   generalizeRelativity = id
   forgetRelativity' Path {parents, directories, filename} =
     maybe
-      (Absolute . Flip $ Flip1 Path {parents = (), directories, filename})
+      (Anchored.Absolute . Flip $ Flip1 Path {parents = (), directories, filename})
       ( \case
-          0 -> Relative . Flip $ Flip1 Path {parents = Proxy, directories, filename}
-          parnts -> Reparented . Flip $ Flip1 Path {parents = parnts, directories, filename}
+          0 -> Anchored.Relative . Flip $ Flip1 Path {parents = Proxy, directories, filename}
+          parnts -> Anchored.Reparented . Flip $ Flip1 Path {parents = parnts, directories, filename}
       )
       parents
 
 instance Relative ('Rel 'False) where
   generalizeRelativity Proxy = pure 0
-  forgetRelativity' = Relative . Flip . Flip1
+  forgetRelativity' = Anchored.Relative . Flip . Flip1
 
 instance Relative ('Rel 'True) where
   generalizeRelativity = pure
-  forgetRelativity' = Reparented . Flip . Flip1
+  forgetRelativity' = Anchored.Reparented . Flip . Flip1
 
 type Typey :: Type -> Kind.Constraint
 class Typey typ where
-  disambiguate :: AmbiguousPath rel rep -> Path rel typ rep
+  disambiguate :: Ambiguous.Path rel rep -> Path rel typ rep
   generalizeType :: Filename typ rep -> Filename 'Pathic rep
-  forgetType' :: Path rel typ rep -> UnambiguousPath rel rep
+  forgetType' :: Path rel typ rep -> Unambiguous.Path rel rep
 
 instance Typey 'Dir where
-  disambiguate (AmbiguousPath parents directories component) =
+  disambiguate (Ambiguous.Path parents directories component) =
     Path {parents, directories = embed $ Both component directories, filename = Const ()}
   generalizeType (Const ()) = Nothing
-  forgetType' = Directory . Flip
+  forgetType' = Unambiguous.Directory . Flip
 
 instance Typey 'File where
-  disambiguate (AmbiguousPath parents directories component) =
+  disambiguate (Ambiguous.Path parents directories component) =
     Path {parents, directories, filename = Identity component}
   generalizeType = pure . runIdentity
-  forgetType' = File' . Flip
+  forgetType' = Unambiguous.File . Flip
 
 instance Typey 'Pathic where
   -- FIXME: This is not good. We should get rid of `Pathic`
-  disambiguate (AmbiguousPath parents directories component) =
+  disambiguate (Ambiguous.Path parents directories component) =
     Path {parents, directories, filename = pure component}
   generalizeType = id
   forgetType' Path {parents, directories, filename} =
     maybe
-      (Directory $ Flip Path {parents, directories, filename = Const ()})
-      (\filenm -> File' $ Flip Path {parents, directories, filename = pure filenm})
+      (Unambiguous.Directory $ Flip Path {parents, directories, filename = Const ()})
+      (\filenm -> Unambiguous.File $ Flip Path {parents, directories, filename = pure filenm})
       filename
 
 type Pathy :: Relativity -> Type -> Kind.Constraint
@@ -672,29 +667,29 @@ strengthen path =
   if parents path == 0 then pure path {parents = Proxy} else Nothing
 
 -- | Discover the specific type of a `Path`.
-anchor :: AnyPath rep -> AncUnambPath rep
+anchor :: AnyPath rep -> AncUnamb.Path rep
 anchor Path {parents, directories, filename} =
   maybe
-    ( Absolute . Compose . Compose $
+    ( Anchored.Absolute . Compose . Compose $
         maybe
-          ( Directory . Flip1 $
+          ( Unambiguous.Directory . Flip1 $
               Flip Path {parents = (), directories, filename = Const ()}
           )
           ( \filenm ->
-              File' . Flip1 $
+              Unambiguous.File . Flip1 $
                 Flip Path {parents = (), directories, filename = pure filenm}
           )
           filename
     )
     ( \case
         0 ->
-          Relative . Compose . Compose $
+          Anchored.Relative . Compose . Compose $
             maybe
-              ( Directory . Flip1 $
+              ( Unambiguous.Directory . Flip1 $
                   Flip Path {parents = Proxy, directories, filename = Const ()}
               )
               ( \filenm ->
-                  File' . Flip1 $
+                  Unambiguous.File . Flip1 $
                     Flip
                       Path
                         { parents = Proxy,
@@ -704,13 +699,13 @@ anchor Path {parents, directories, filename} =
               )
               filename
         parnts ->
-          Reparented . Compose . Compose $
+          Anchored.Reparented . Compose . Compose $
             maybe
-              ( Directory . Flip1 $
+              ( Unambiguous.Directory . Flip1 $
                   Flip Path {parents = parnts, directories, filename = Const ()}
               )
               ( \filenm ->
-                  File' . Flip1 $
+                  Unambiguous.File . Flip1 $
                     Flip
                       Path
                         { parents = parnts,
@@ -733,7 +728,7 @@ forgetType path = path {filename = generalizeType $ filename path}
 unanchor :: (Pathy rel typ) => Path rel typ rep -> AnyPath rep
 unanchor = forgetRelativity . forgetType
 
-unanchor' :: (Pathy rel typ) => Path rel typ rep -> AncUnambPath rep
+unanchor' :: (Pathy rel typ) => Path rel typ rep -> AncUnamb.Path rep
 unanchor' =
   dmap (Compose . Compose . dmap Flip1 . forgetType' . unflip1 . unflip)
     . forgetRelativity'
