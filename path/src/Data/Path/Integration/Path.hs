@@ -29,7 +29,7 @@ import safe "filepath" System.FilePath qualified as FilePath
 import "path" Path qualified
 import safe "pathway" Data.Path
   ( Pathish,
-    Relativity (Abs, Any, Rel),
+    Relativity (Abs, Rel),
     Type (Dir, File),
     specializePath,
   )
@@ -40,11 +40,11 @@ import safe "pathway-internal" Data.Path.Internal
     parents,
   )
 import safe "yaya" Yaya.Fold (Steppable)
-import safe "yaya" Yaya.Pattern (Maybe (Nothing), XNor (Both, Neither))
+import safe "yaya" Yaya.Pattern (XNor (Both, Neither))
 import safe "yaya-unsafe" Yaya.Unsafe.Fold (unsafeAna)
 
-toText :: Path.Path rel typ -> FilePath
-toText = FilePath.dropTrailingPathSeparator . Path.toFilePath
+serialize :: Path.Path rel typ -> FilePath
+serialize = FilePath.dropTrailingPathSeparator . Path.toFilePath
 
 extractDirectory ::
   Path.Path rel Path.Dir -> XNor FilePath (Path.Path rel Path.Dir)
@@ -52,7 +52,7 @@ extractDirectory path =
   let parent = Path.parent path
    in if parent == path
         then Neither
-        else Both (toText $ Path.dirname path) parent
+        else Both (serialize $ Path.dirname path) parent
 
 -- FIXME: This is currently corecursive, and it seems like that’s just the way
 --        it is for this operation, because of the way `Path.Path` is
@@ -76,7 +76,7 @@ instance Pathish (Path.Path Path.Abs Path.File) 'Abs 'File FilePath where
     Path
       { parents = (),
         directories = extractDirectories $ Path.parent path,
-        filename = pure . toText $ Path.filename path
+        filename = pure . serialize $ Path.filename path
       }
 
 instance Pathish (Path.Path Path.Rel Path.Dir) ('Rel 'False) 'Dir FilePath where
@@ -92,35 +92,37 @@ instance Pathish (Path.Path Path.Rel Path.File) ('Rel 'False) 'File FilePath whe
     Path
       { parents = Proxy,
         directories = extractDirectories $ Path.parent path,
-        filename = pure . toText $ Path.filename path
+        filename = pure . serialize $ Path.filename path
       }
 
-instance Pathish (Path.SomeBase Path.Dir) 'Any 'Dir FilePath where
-  specializePath = \case
-    Path.Abs path ->
-      Path
-        { parents = Nothing,
-          directories = extractDirectories path,
-          filename = Const ()
-        }
-    Path.Rel path ->
-      Path
-        { parents = pure 0,
-          directories = extractDirectories path,
-          filename = Const ()
-        }
+-- TODO: Restore these once `Pathish` can produce `Anchored.Path`.
 
-instance Pathish (Path.SomeBase Path.File) 'Any 'File FilePath where
-  specializePath = \case
-    Path.Abs path ->
-      Path
-        { parents = Nothing,
-          directories = extractDirectories $ Path.parent path,
-          filename = pure . toText $ Path.filename path
-        }
-    Path.Rel path ->
-      Path
-        { parents = pure 0,
-          directories = extractDirectories $ Path.parent path,
-          filename = pure . toText $ Path.filename path
-        }
+-- instance Pathish (Path.SomeBase Path.Dir) 'Any 'Dir FilePath where
+--   specializePath = \case
+--     Path.Abs path ->
+--       Path
+--         { parents = Nothing,
+--           directories = extractDirectories path,
+--           filename = Const ()
+--         }
+--     Path.Rel path ->
+--       Path
+--         { parents = pure 0,
+--           directories = extractDirectories path,
+--           filename = Const ()
+--         }
+
+-- instance Pathish (Path.SomeBase Path.File) 'Any 'File FilePath where
+--   specializePath = \case
+--     Path.Abs path ->
+--       Path
+--         { parents = Nothing,
+--           directories = extractDirectories $ Path.parent path,
+--           filename = pure . serialize $ Path.filename path
+--         }
+--     Path.Rel path ->
+--       Path
+--         { parents = pure 0,
+--           directories = extractDirectories $ Path.parent path,
+--           filename = pure . serialize $ Path.filename path
+--         }

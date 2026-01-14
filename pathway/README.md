@@ -11,7 +11,7 @@ A path library for Haskell, with various type-level guarantees.
 
 ```haskell
 let emacsDir = [posix|/usr/share/emacs/|]
- in Path.toText (Format.Windows "C") emacsDir == "C:\\\\usr\\share\\emacs\\"
+ in Path.serialize (Format.Windows "C") emacsDir == "C:\\\\usr\\share\\emacs\\"
 ```
 
 This library offers two primary path types

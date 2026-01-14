@@ -3,6 +3,8 @@
 {-# LANGUAGE TypeFamilyDependencies #-}
 -- __NB__: Because of the nested `Parents` and `Filename` constraints.
 {-# LANGUAGE UndecidableInstances #-}
+-- __TODO__: This is only for instances that should be moved upstream to Yaya.
+{-# OPTIONS_GHC -Wno-orphans #-}
 -- "GHC.Natural" is ‘Unsafe’ before base 4.14.4. We can’t conditionalize the
 -- Safe Haskell extension (because it forces Safe Haskell-using consumers to
 -- conditionalize), so this silences the fact that this module is inferred
@@ -14,15 +16,21 @@ module Data.Path.Internal
   ( List (List),
     Parents,
     Filename,
+    PartialOps,
     Path (..),
     Relativity (..),
+    TotalOps,
     Type (..),
     current,
     (</>),
+    (</?>),
   )
 where
 
+import "base" Control.Applicative (Applicative, liftA2, pure)
 import safe "base" Control.Category ((.))
+import safe "base" Data.Bifoldable (Bifoldable, bifoldr)
+import safe "base" Data.Bitraversable (Bitraversable, bisequenceA, bitraverse)
 import safe "base" Data.Bool (Bool (False, True))
 import safe "base" Data.Eq (Eq)
 import safe "base" Data.Foldable (Foldable, foldr, sum)
@@ -32,10 +40,10 @@ import safe "base" Data.Functor.Const (Const (Const))
 import safe "base" Data.Functor.Identity (Identity)
 import safe "base" Data.Kind qualified as Kind
 import safe "base" Data.Monoid (Monoid, mempty)
-import safe "base" Data.Ord (Ord)
+import safe "base" Data.Ord (Ord, (<=))
 import safe "base" Data.Proxy (Proxy (Proxy))
 import safe "base" Data.Semigroup (Semigroup, (<>))
--- import safe "base" Data.Traversable (Traversable, traverse)
+import safe "base" Data.Traversable (Traversable, traverse)
 import safe "base" GHC.Generics (Generic, Generic1)
 -- TODO: `minusNaturalMaybe` is exported from Numeric.Natural starting with base-4.18 (GHC 9.6).
 import "base" GHC.Natural (minusNaturalMaybe)
@@ -52,8 +60,8 @@ import safe "yaya" Yaya.Fold
     embed,
     project,
   )
-import safe "yaya" Yaya.Functor (firstMap)
-import safe "yaya" Yaya.Pattern (Maybe, XNor (Neither), xnor)
+import safe "yaya" Yaya.Functor (DFunctor, firstMap)
+import safe "yaya" Yaya.Pattern (Maybe (Nothing), XNor (Both, Neither), xnor)
 import safe "base" Prelude ((+))
 
 -- |
@@ -67,7 +75,7 @@ import safe "base" Prelude ((+))
 --            allow for more total operations, if we add some way to track the
 --            number of components in an absolute path.
 type Relativity :: Kind.Type
-data Relativity = Abs | Rel Bool | Any
+data Relativity = Abs | Rel Bool
   deriving stock (Eq, Generic, Ord, Read, Show)
 
 type Parents :: Relativity -> Kind.Type
@@ -75,17 +83,15 @@ type family Parents rel = result | result -> rel where
   Parents 'Abs = ()
   Parents ('Rel 'False) = Proxy Natural
   Parents ('Rel 'True) = Natural
-  Parents 'Any = Maybe Natural
 
 type Type :: Kind.Type
-data Type = File | Dir | Pathic
+data Type = File | Dir
   deriving stock (Eq, Generic, Ord, Read, Show)
 
 type Filename :: Type -> Kind.Type -> Kind.Type
 type family Filename typ = result | result -> typ where
   Filename 'Dir = Const ()
   Filename 'File = Identity
-  Filename 'Pathic = Maybe
 
 -- | A strict sequence.
 --
@@ -113,7 +119,30 @@ instance Foldable List where
   foldr f z (List mu) = cata (xnor z f) mu
 
 instance Functor List where
-  fmap f (List mu) = List (firstMap f mu)
+  fmap f (List mu) = List $ firstMap f mu
+
+instance Bifoldable XNor where
+  bifoldr f g z = \case
+    Neither -> z
+    Both x y -> f x (g y z)
+
+instance Bitraversable XNor where
+  bitraverse f g = \case
+    Neither -> pure Neither
+    Both x y -> liftA2 Both (f x) (g y)
+
+firstTraverse ::
+  ( DFunctor d,
+    Recursive (->) (d (f (m b))) (f (m b)),
+    Steppable (->) (d (f b)) (f b),
+    Bitraversable f,
+    Applicative m
+  ) =>
+  (a -> m b) -> d (f a) -> m (d (f b))
+firstTraverse f = cata (fmap embed . bisequenceA) . firstMap f
+
+instance Traversable List where
+  traverse f (List mu) = List <$> firstTraverse f mu
 
 -- | This provides a dozen variants of a filesystem path type, split into four
 --   categories:
@@ -174,9 +203,8 @@ deriving stock instance
 deriving stock instance
   (Functor (Filename typ)) => Functor (Path rel typ)
 
--- deriving stock instance Traversable (Path rel 'Dir)
-
--- deriving stock instance Traversable (Path rel 'File)
+deriving stock instance
+  (Traversable (Filename typ)) => Traversable (Path rel typ)
 
 -- Tradeoffs between `Path `Any 'Pathic rep` and `Anchored (UnambiguousPath rep)`:
 -- - `Anchored` involves a bunch of synonyms
@@ -184,32 +212,45 @@ deriving stock instance
 -- - `Pathic` makes parameterized types match more broadly (is there any case where we want to allow `Abs` and `Rel`, but not `Any`?)
 -- - `Anchored` mokes some code more complicated (parsers)
 -- - need `Anchored` and `Unambiguous` anyway, for other cases
+--
+-- Other thoughts:
+-- - maybe `Anchored`, etc. doesn’t need all the operations, we do need a type to get us from a parameter to the disjunction of types, but that disjunction maybe doesn’t need a type … except for `NonReparented`, because it’s a subset of the available types. But, since we can’t always give the alternatives the same implementation, that requires a type class, and there’s no way to declare that a class covers a kind completely. Maybe we can do that with an @overlappable@ instance that dispatches to the two overlapping instances?
 
-type TotalOps :: Relativity -> Bool -> Relativity -> Kind.Constraint
-class TotalOps rel par rel' | rel par -> rel' where
+type TotalOps :: Kind.Type -> Kind.Type -> Kind.Type -> Kind.Constraint
+class TotalOps dir relPath result | dir relPath -> result where
   -- | Concatenate two paths.
+  --
+  --   The general restriction is that the first argument must be a directory
+  --   and the second must be relative. If either is reparented, the result will
+  --   be reparented. If the first argument is absolute, it can’t be
+  --   concatenated with a reparented path – see `</?>` for handling that case.
   --
   --  __NB__: The precedence is one higher than `System.FilePath.</>` and
   --         `Path.</>` so that cases like the one below can be written without
   --          parentheses.
   --
-  --        > toText Format.posix
+  --        > serialize Format.posix
   --        >   <$> [posix|/|] </?> [posix|usr/|] </> [posix|bin/|] </> [posix|env|]
   --
   --          The precedence is tricky, because `<>` also has the same precedence,
   --          but only applies to relative paths, so you can’t mix `<>` and `</>`.
-  --          E.g., ideally you’d be able to write @`toText` `<$>` abs `</?>` rel1
+  --          E.g., ideally you’d be able to write @`serialize` `<$>` abs `</?>` rel1
   --         `<>` rel2 `</>` file@ without parens, but if you could, then
-  --          @`toText` `<$>` abs `</?>` rel1 `</>` rel2 `</>` file@ would need
-  --          parens either @`toText` `<$>` (abs `</?>` rel1 `</>` rel2 `</>`
-  --          file)@ or @`toText` `<$>` abs `</?>` (rel1 `</>` rel2 `</>` file)@.
+  --          @`serialize` `<$>` abs `</?>` rel1 `</>` rel2 `</>` file@ would need
+  --          parens either @`serialize` `<$>` (abs `</?>` rel1 `</>` rel2 `</>`
+  --          file)@ or @`serialize` `<$>` abs `</?>` (rel1 `</>` rel2 `</>` file)@.
   --          Unless you can mix an associative and non-associative operator of
   --          the same precedence …
-  (</>) :: Path rel 'Dir rep -> Path ('Rel par) typ rep -> Path rel' typ rep
+  (</>) :: dir -> relPath -> result
 
 infixr 5 </>
 
-instance TotalOps 'Any 'False 'Any where
+instance
+  TotalOps
+    (Path rel 'Dir rep)
+    (Path ('Rel 'False) typ rep)
+    (Path rel typ rep)
+  where
   parent </> child =
     Path
       { parents = parents parent,
@@ -217,7 +258,12 @@ instance TotalOps 'Any 'False 'Any where
         filename = filename child
       }
 
-instance TotalOps ('Rel 'True) 'True ('Rel 'True) where
+instance
+  TotalOps
+    (Path ('Rel 'True) 'Dir rep)
+    (Path ('Rel 'True) typ rep)
+    (Path ('Rel 'True) typ rep)
+  where
   parent </> child =
     Path
       { parents =
@@ -230,15 +276,12 @@ instance TotalOps ('Rel 'True) 'True ('Rel 'True) where
         filename = filename child
       }
 
-instance TotalOps ('Rel 'True) 'False ('Rel 'True) where
-  parent </> child =
-    Path
-      { parents = parents parent,
-        directories = directories child <> directories parent,
-        filename = filename child
-      }
-
-instance TotalOps ('Rel 'False) 'True ('Rel 'True) where
+instance
+  TotalOps
+    (Path ('Rel 'False) 'Dir rep)
+    (Path ('Rel 'True) typ rep)
+    (Path ('Rel 'True) typ rep)
+  where
   parent </> child =
     Path
       { parents =
@@ -248,21 +291,41 @@ instance TotalOps ('Rel 'False) 'True ('Rel 'True) where
         filename = filename child
       }
 
-instance TotalOps ('Rel 'False) 'False ('Rel 'False) where
-  parent </> child =
-    Path
-      { parents = Proxy,
-        directories = directories child <> directories parent,
-        filename = filename child
-      }
+type PartialOps :: Kind.Type -> Kind.Type -> Kind.Type -> Kind.Constraint
+class PartialOps dir relPath result | dir relPath -> result where
+  -- | Concatenate a possibly-reparented path onto an absolute directory.
+  --
+  --  __NB__: The precedence is carefully set so that cases like the one below can
+  --          be written without parentheses.
+  --
+  -- > :{
+  --   serialize @_ @_ @Text Format.posix
+  --     <$> [posix|/|] </?> [posix|user/|] </> [posix|../usr/bine/|] <> [posix|../bin/|] </> [posix|env|]
+  -- :}
+  -- Just "/usr/bin/env"
+  --
+  --          Note the four operators used: `<$>`, `</?>`, `</>`, and `<>`. Any
+  --          change to fixity would cause this to collapse.
+  (</?>) ::
+    dir ->
+    relPath ->
+    -- | `Nothing` when the child path is reparented above the root directory.
+    Maybe result
 
-instance TotalOps 'Abs 'False 'Abs where
-  parent </> child =
-    Path
-      { parents = (),
-        directories = directories child <> directories parent,
-        filename = filename child
-      }
+infixr 5 </?>
+
+instance PartialOps (Path 'Abs 'Dir rep) (Path ('Rel 'True) typ rep) (Path 'Abs typ rep) where
+  parent </?> child =
+    if parents child <= length (directories parent)
+      then
+        pure
+          Path
+            { parents = (),
+              directories =
+                directories child <> drop (parents child) (directories parent),
+              filename = filename child
+            }
+      else Nothing
 
 -- | This does /not/ represent the “current directory” as in the absolute path
 --   from which the program was run or something, but rather the path “./”.

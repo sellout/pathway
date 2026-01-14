@@ -17,6 +17,7 @@ import "base" Data.Function (const, ($))
 import "base" Data.Functor.Const (Const (Const))
 import "base" Data.Functor.Identity (Identity (Identity))
 import "base" Data.Proxy (Proxy (Proxy))
+import "base" Data.Semigroup ((<>))
 import "base" Data.String (String, fromString)
 import "base" Data.Void (Void)
 import "base" Numeric.Natural (Natural)
@@ -32,7 +33,7 @@ import "template-haskell" Language.Haskell.TH.Quote qualified as TH
 import "template-haskell" Language.Haskell.TH.Syntax qualified as TH
 import "yaya" Yaya.Fold (Recursive, cata, embed)
 import "yaya" Yaya.Pattern (Maybe (Nothing), XNor (Both, Neither), maybe, xnor)
-import "this" Data.Path (AnyPath)
+import "this" Data.Path.Any qualified as Any
 import "this" Data.Path.Format (Format)
 import "this" Data.Path.Format qualified as Format
 import "this" Data.Path.Parser qualified as Parser
@@ -68,8 +69,20 @@ deconstructNat n =
 
 -- | While this deconstructs `AnyPath`, the resulting `TH.Exp` represents a
 --   specific @`IsString` rep => forall rel typ. `Path` rel typ rep@ type.
-deconstructAnyPath :: AnyPath String -> TH.Exp
-deconstructAnyPath (Path p d f) =
+deconstructAnyPath :: Any.Path String -> TH.Exp
+deconstructAnyPath =
+  deconstructPathFields
+    . Any.path
+      (\(Path () d (Const ())) -> (Nothing, d, Nothing))
+      (\(Path () d (Identity f)) -> (Nothing, d, pure f))
+      (\(Path Proxy d _) -> (pure 0, d, Nothing))
+      (\(Path Proxy d (Identity f)) -> (pure 0, d, pure f))
+      (\(Path p d (Const ())) -> (pure p, d, Nothing))
+      (\(Path p d (Identity f)) -> (pure p, d, pure f))
+
+deconstructPathFields ::
+  (Recursive (->) t (XNor String)) => (Maybe Natural, t, Maybe String) -> TH.Exp
+deconstructPathFields (p, d, f) =
   TH.RecConE
     'Path
     [ ('parents, deconstructMaybe deconstructNat p),
@@ -85,11 +98,16 @@ path format =
 pathQuoter :: Format String -> TH.QuasiQuoter
 pathQuoter format =
   TH.QuasiQuoter
-    { TH.quoteDec = const $ fail "Meh",
+    { TH.quoteDec = wrongConstruct "declaration",
       TH.quoteExp = path format,
-      TH.quotePat = const $ fail "Meh",
-      TH.quoteType = const $ fail "Meh"
+      TH.quotePat = wrongConstruct "pattern",
+      TH.quoteType = wrongConstruct "type"
     }
+  where
+    wrongConstruct =
+      const
+        . fail
+        . ("Pathway’s ‘Path’ can only be quasi-quoted as an expression, but here it’s quoted as a " <>)
 
 -- |
 --
