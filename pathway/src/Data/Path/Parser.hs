@@ -11,7 +11,7 @@
 --         `local`) ""@ and then creating informative failures for the invalid
 --          cases.
 module Data.Path.Parser
-  ( -- ambiguousPath,
+  ( ambiguousPath,
     directory,
     path,
   )
@@ -22,10 +22,12 @@ import "base" Control.Category ((.))
 import "base" Control.Monad.Fail (fail)
 import "base" Data.Bool ((&&))
 import "base" Data.Char (Char, isPrint)
+import "base" Data.Either (Either (Left))
 import "base" Data.Eq ((/=))
 import "base" Data.Foldable (fold, foldr)
 import "base" Data.Function (flip, ($))
 import "base" Data.Functor (fmap, void, (<$), (<$>))
+import "base" Data.Functor.Compose (Compose (Compose))
 import "base" Data.Functor.Const (Const (Const))
 import "base" Data.List (length)
 import "base" Data.Monoid (Monoid)
@@ -42,10 +44,13 @@ import "pathway-internal" Data.Path.Internal
   )
 import "yaya" Yaya.Applied (reverse')
 import "yaya" Yaya.Fold (Mu, Projectable, Steppable, cata, embed)
-import "yaya" Yaya.Pattern (Maybe (Nothing), XNor (Both, Neither))
+import "yaya" Yaya.Pattern (Maybe (Just, Nothing), XNor (Both, Neither))
 import "yaya-containers" Yaya.Containers.Pattern.Map (MapF (BinF, TipF))
 import "yaya-unsafe" Yaya.Unsafe.Fold (unsafeCata)
-import "this" Data.Path (AnyPath, Relativity (Any), Type (Dir))
+import "this" Data.Path (Type (Dir))
+import "this" Data.Path.Ambiguous qualified as Ambiguous
+import "this" Data.Path.Anchored qualified as Anchored
+import "this" Data.Path.Any qualified as Any
 import "this" Data.Path.Format
   ( Format,
     current,
@@ -54,13 +59,14 @@ import "this" Data.Path.Format
     separator,
     substitutions,
   )
+import "this" Data.Path.Functor (Flip (Flip), Flip1 (Flip1))
+import "this" Data.Path.Unambiguous qualified as Unambiguous
 import "base" Prelude (fromIntegral)
 #if MIN_VERSION_base(4, 17, 0)
 import "base" Data.Type.Equality (type (~))
 #endif
 
 -- $setup
--- >>> :seti -XOverloadedStrings
 -- >>> import qualified "megaparsec" Text.Megaparsec as MP
 -- >>> import "this" Data.Path.Format (posix)
 
@@ -72,7 +78,7 @@ unsafeReverse = embed . flip (unsafeCata reverse') Neither
 -- >>> MP.parse (rootDirectory posix) "" "/"
 -- Right ()
 -- >>> MP.parse (path posix) "" "/"
--- Right (Path {parents = Nothing, directories = List (embed Neither), filename = Nothing})
+-- Right (Absolute (Compose (Compose (Directory (Flip1 {unflip1 = Flip {unflip = Path {parents = (), directories = List (embed Neither), filename = Const ()}}})))))
 rootDirectory ::
   (MP.Stream s, Ord e) => Format (MP.Tokens s) -> MP.Parsec e s ()
 rootDirectory = void . MP.chunk . root
@@ -81,7 +87,7 @@ rootDirectory = void . MP.chunk . root
 -- >>> MP.parse (currentDirectory posix) "" "./"
 -- Right ()
 -- >>> MP.parse (path posix) "" "./"
--- Right (Path {parents = Just 0, directories = List (embed Neither), filename = Nothing})
+-- Right (Relative (Compose (Compose (Directory (Flip1 {unflip1 = Flip {unflip = Path {parents = Proxy, directories = List (embed Neither), filename = Const ()}}})))))
 currentDirectory ::
   (MP.Stream s, Ord e) => Format (MP.Tokens s) -> MP.Parsec e s ()
 currentDirectory = void . MP.chunk . current
@@ -90,7 +96,7 @@ currentDirectory = void . MP.chunk . current
 -- >>> MP.parse (parents' posix) "" "../"
 -- Right 1
 -- >>> MP.parse (path posix) "" "../"
--- Right (Path {parents = Just 1, directories = List (embed Neither), filename = Nothing})
+-- Right (Reparented (Compose (Compose (Directory (Flip1 {unflip1 = Flip {unflip = Path {parents = 1, directories = List (embed Neither), filename = Const ()}}})))))
 parents' :: (MP.Stream s, Ord e) => Format (MP.Tokens s) -> MP.Parsec e s Natural
 parents' = fmap (fromIntegral . length) . MP.many . MP.chunk . parent
 
@@ -132,16 +138,16 @@ componentChar format =
 
 -- |
 --
--- >>> MP.parse (component posix) "" "env"
+-- >>> MP.parse (component' posix) "" "env"
 -- Right "env"
 --
 -- >>> MP.parse (path posix) "" "env"
--- Right (Path {parents = Just 0, directories = List (embed Neither), filename = Just "env"})
-component ::
+-- Right (Relative (Compose (Compose (File (Flip1 {unflip1 = Flip {unflip = Path {parents = Proxy, directories = List (embed Neither), filename = Identity "env"}}})))))
+component' ::
   (MP.Stream s, MP.Token s ~ Char, Monoid (MP.Tokens s), Ord e) =>
   Format (MP.Tokens s) ->
   MP.Parsec e s (MP.Tokens s)
-component = fmap fold . MP.some . componentChar
+component' = fmap fold . MP.some . componentChar
 
 -- |
 --
@@ -149,12 +155,12 @@ component = fmap fold . MP.some . componentChar
 -- Right "bin"
 --
 -- >>> MP.parse (path posix) "" "bin/"
--- Right (Path {parents = Just 0, directories = List (embed (Both "bin" (embed Neither))), filename = Nothing})
+-- Right (Relative (Compose (Compose (Directory (Flip1 {unflip1 = Flip {unflip = Path {parents = Proxy, directories = List (embed (Both "bin" (embed Neither))), filename = Const ()}}})))))
 directoryName ::
   (MP.Stream s, MP.Token s ~ Char, Monoid (MP.Tokens s), Ord e) =>
   Format (MP.Tokens s) ->
   MP.Parsec e s (MP.Tokens s)
-directoryName format = component format <* MP.chunk (separator format)
+directoryName format = component' format <* MP.chunk (separator format)
 
 -- |
 --
@@ -162,7 +168,7 @@ directoryName format = component format <* MP.chunk (separator format)
 -- Right (embed (Both "baz" (embed (Both "bar" (embed (Both "bin" (embed Neither)))))))
 --
 -- >>> MP.parse (path posix) "" "bin/bar/baz/"
--- Right (Path {parents = Just 0, directories = List (embed (Both "baz" (embed (Both "bar" (embed (Both "bin" (embed Neither))))))), filename = Nothing})
+-- Right (Relative (Compose (Compose (Directory (Flip1 {unflip1 = Flip {unflip = Path {parents = Proxy, directories = List (embed (Both "baz" (embed (Both "bar" (embed (Both "bin" (embed Neither))))))), filename = Const ()}}})))))
 --
 --  __TODO__: Support interior and final @.@ & @..@ (final ones always indicate
 --            a directory, even without a trailing slash – also, how portable is
@@ -181,26 +187,43 @@ protoPath format =
   (,,)
     <$> anchor format
     <*> directories' format
-    <*> MP.option Nothing (pure <$> component format)
+    <*> MP.option Nothing (pure <$> component' format)
 
 -- | This will parse a path without a trailing separator as a file and one with
 --   a trailing separator as a directory. See `directory` for when you know you
 --   have a directory and need more lax parsing.
 --
 -- >>> MP.parse (path posix) "" "../../d/e/"
--- Right (Path {parents = Just 2, directories = List (embed (Both "e" (embed (Both "d" (embed Neither))))), filename = Nothing})
+-- Right (Reparented (Compose (Compose (Directory (Flip1 {unflip1 = Flip {unflip = Path {parents = 2, directories = List (embed (Both "e" (embed (Both "d" (embed Neither))))), filename = Const ()}}})))))
 -- >>> MP.parse (path posix) "" "../../../b/f/g/"
--- Right (Path {parents = Just 3, directories = List (embed (Both "g" (embed (Both "f" (embed (Both "b" (embed Neither))))))), filename = Nothing})
+-- Right (Reparented (Compose (Compose (Directory (Flip1 {unflip1 = Flip {unflip = Path {parents = 3, directories = List (embed (Both "g" (embed (Both "f" (embed (Both "b" (embed Neither))))))), filename = Const ()}}})))))
 path ::
+  forall e s.
   (MP.Stream s, MP.Token s ~ Char, Monoid (MP.Tokens s), Ord e) =>
   Format (MP.Tokens s) ->
-  MP.Parsec e s (AnyPath (MP.Tokens s))
+  MP.Parsec e s (Any.Path (MP.Tokens s))
 path =
   fmap
-    ( \(parents, dir, filename) ->
-        Path {parents, directories = List dir, filename}
+    ( ( \case
+          (Nothing, directories, Nothing) ->
+            Anchored.Absolute $ dir Path {parents = (), directories, filename = Const ()}
+          (Nothing, directories, Just filename) ->
+            Anchored.Absolute $ file Path {parents = (), directories, filename = pure filename}
+          (Just 0, directories, Nothing) ->
+            Anchored.Relative $ dir Path {parents = Proxy, directories, filename = Const ()}
+          (Just 0, directories, Just filename) ->
+            Anchored.Relative $ file Path {parents = Proxy, directories, filename = pure filename}
+          (Just parents, directories, Nothing) ->
+            Anchored.Reparented $ dir Path {parents, directories, filename = Const ()}
+          (Just parents, directories, Just filename) ->
+            Anchored.Reparented $ file Path {parents, directories, filename = pure filename}
+      )
+        . \(p, d, f) -> (p, List d, f)
     )
     . protoPath
+  where
+    dir = Compose . Compose . Unambiguous.Directory . Flip1 . Flip
+    file = Compose . Compose . Unambiguous.File . Flip1 . Flip
 
 -- | Knowing that we’re parsing a directory, this can be a bit more lax in
 --   parsing. E.g., this will parse as a directory even without a trailing
@@ -208,19 +231,65 @@ path =
 directory ::
   (MP.Stream s, MP.Token s ~ Char, Monoid (MP.Tokens s), Ord e) =>
   Format (MP.Tokens s) ->
-  MP.Parsec e s (Path 'Any 'Dir (MP.Tokens s))
+  MP.Parsec e s (Anchored.Path 'Dir (MP.Tokens s))
 directory =
   fmap
-    ( \(parents, dir, filenm) ->
-        Path
-          { parents,
-            directories = List $ foldr ((embed .) . Both) dir filenm,
-            filename = Const ()
-          }
+    ( Compose . \case
+        (Nothing, dir, com) ->
+          Anchored.Absolute . Flip $
+            Flip1
+              Path
+                { parents = (),
+                  directories = List $ foldr ((embed .) . Both) dir com,
+                  filename = Const ()
+                }
+        (Just 0, dir, com) ->
+          Anchored.Relative . Flip $
+            Flip1
+              Path
+                { parents = Proxy,
+                  directories = List $ foldr ((embed .) . Both) dir com,
+                  filename = Const ()
+                }
+        (Just parents, dir, com) ->
+          Anchored.Reparented . Flip $
+            Flip1
+              Path
+                { parents,
+                  directories = List $ foldr ((embed .) . Both) dir com,
+                  filename = Const ()
+                }
     )
     . protoPath
 
--- -- | When we need lax parsing, but don’t know at the time of parsing whether we
--- --   have a file or directory, this parses to the more flexible
--- --  `AnyAmbiguousPath` that can be disambiguated later (if at all).
--- ambiguousPath :: Format -> MP.Parsec e FilePath AnyAmbiguousPath
+-- | When we need lax parsing, but don’t know at the time of parsing whether we
+--   have a file or directory, this parses to the more flexible
+--  `Anchored.AmbiguousPath` that can be disambiguated later (if at all).
+ambiguousPath ::
+  (MP.Stream s, MP.Token s ~ Char, Monoid (MP.Tokens s), Ord e) =>
+  Format (MP.Tokens s) ->
+  -- | Returns in `Either` because some paths (that is, anything with a trailing
+  --   directory delimiter or anything that has no components like @/@ or @..@)
+  --   are unambiguously directories.
+  MP.Parsec e s (Either (Anchored.Path 'Dir (MP.Tokens s)) (Anchored.AmbiguousPath (MP.Tokens s)))
+ambiguousPath =
+  fmap
+    ( ( \case
+          (Nothing, directories, Nothing) ->
+            Left . Compose . Anchored.Absolute $ dir Path {parents = (), directories, filename = Const ()}
+          (Nothing, directories, Just component) ->
+            pure . Compose . Anchored.Absolute $ Flip Ambiguous.Path {parents = (), directories, component}
+          (Just 0, directories, Nothing) ->
+            Left . Compose . Anchored.Relative $ dir Path {parents = Proxy, directories, filename = Const ()}
+          (Just 0, directories, Just component) ->
+            pure . Compose . Anchored.Relative $ Flip Ambiguous.Path {parents = Proxy, directories, component}
+          (Just parents, directories, Nothing) ->
+            Left . Compose . Anchored.Reparented $ dir Path {parents, directories, filename = Const ()}
+          (Just parents, directories, Just component) ->
+            pure . Compose . Anchored.Reparented $ Flip Ambiguous.Path {parents, directories, component}
+      )
+        . \(p, d, f) -> (p, List d, f)
+    )
+    . protoPath
+  where
+    dir = Flip . Flip1

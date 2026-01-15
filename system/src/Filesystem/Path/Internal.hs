@@ -1,6 +1,10 @@
 {-# LANGUAGE Safe #-}
 
--- | Non-public definitions that are relied on by multiple modules in this
+-- |
+-- Copyright: 2025 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-commercial
+--
+-- Non-public definitions that are relied on by multiple modules in this
 -- library. This may eventually be a public module for providing alternative
 -- implementations (like `FilePath` vs `OsPath`).
 module Filesystem.Path.Internal
@@ -13,7 +17,7 @@ where
 import "base" Data.Kind qualified as Kind
 import "base" Data.String (String)
 import "filepath" System.FilePath (FilePath)
-import "pathway" Data.Path (Path, Pathy)
+import "pathway" Data.Path (Path, Relative, Typey)
 import "pathway" Data.Path qualified as Path
 import "pathway" Data.Path.Format qualified as Format
 
@@ -33,5 +37,5 @@ type PathRep = FilePath
 type PathComponent :: Kind.Type
 type PathComponent = String
 
-toPathRep :: (Pathy rel typ) => Path rel typ PathComponent -> PathRep
-toPathRep = Path.toText Format.local
+toPathRep :: (Relative rel, Typey typ) => Path rel typ PathComponent -> PathRep
+toPathRep = Path.serialize Format.local

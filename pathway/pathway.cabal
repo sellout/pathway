@@ -137,11 +137,17 @@ library
     yaya-unsafe ^>= {0.4.1},
   exposed-modules:
     Data.Path
+    Data.Path.Ambiguous
+    Data.Path.Anchored
+    Data.Path.Any
     Data.Path.Directory
     Data.Path.File
     Data.Path.Format
+    Data.Path.Functor
+    Data.Path.NonReparented
     Data.Path.Parser
     Data.Path.TH
+    Data.Path.Unambiguous
 
 test-suite doctests
   import: defaults

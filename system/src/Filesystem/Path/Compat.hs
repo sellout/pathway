@@ -5,8 +5,12 @@
 -- this module is inferred ‘Safe’ in some configurations.
 {-# OPTIONS_GHC -Wno-safe -Wno-trustworthy-safe #-}
 
--- | Operations that don’t fit with the philosophy of this library, but that
--- help with interoperability with other code.
+-- |
+-- Copyright: 2025 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-commercial
+--
+-- Operations that don’t fit with the philosophy of this library, but that help
+-- with interoperability with other code.
 module Filesystem.Path.Compat
   ( withCurrentDirectory,
   )

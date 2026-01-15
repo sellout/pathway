@@ -7,6 +7,12 @@ This provides filesystem integration for [Pathway](https://hackage.haskell.org/p
 
 ## usage
 
+## related packages
+
+- [Pathway](https://hackage.haskell.org/package/pathway) – the pure path library that this is based on.
+- [XDG Base Directory](https://hackage.haskell.org/package/xdg-base-directory) – a library for accessing XDG base directories, like `XDG_CONFIG_HOME`, etc.
+- [XDG User Dirs]() – a library for accessing XDG user directories, like `DOCUMENTS` and `DOWNLOADS`.
+
 ## versioning
 
 This project largely follows the [Haskell Package Versioning Policy](https://pvp.haskell.org/) (PVP), but is more strict in some ways.

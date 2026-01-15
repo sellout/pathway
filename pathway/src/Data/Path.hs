@@ -9,20 +9,34 @@
 -- module made ‘Safe’) once base-4.14.4 is the oldest supported version.
 {-# OPTIONS_GHC -Wno-safe -Wno-trustworthy-safe #-}
 
--- | A representation-agnostic, structured, type-safe path library.
+-- |
+-- Copyright: 2024 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-commercial
 --
---  __NB__: This library stores paths in a normalized form. However, because it
---          is a pure library, it is not canonicalized. This makes the behavior
---          consistent across systems, whereas with canonical paths, `/a/b/../c`
---          could behave differently between Posix and Windows. If `/a/b/` is a
---          symlink to /d/e/`, then Posix would canonicalize the path to `/d/c`,
---          whereas Windows would canonicalize to `/a/c`. If you want
---          system-specific canonicalization, look at the @pathway-system@
---          package, which depends on this one.
+-- A representation-agnostic, structured, type-safe path library.
+--
+-- __NB__: This library stores paths in a normalized form. However, because it
+--         is a pure library, it is not canonicalized. This makes the behavior
+--         consistent across systems, whereas with canonical paths, `/a/b/../c`
+--         could behave differently between Posix and Windows. If `/a/b/` is a
+--         symlink to /d/e/`, then Posix would canonicalize the path to `/d/c`,
+--         whereas Windows would canonicalize to `/a/c`. If you want
+--         system-specific canonicalization, look at the @pathway-system@
+--         package, which depends on this one. Also, regardless of system,
+--         @canonicalize parent </> child@ has different semantics than
+--         @canonicalize (parent </> child)@. Given parent = /a/b/ and child =
+--         ../c, on POSIX, the first one would result in /d/c (since the symlink
+--         is followed before the `../` is normalized) and the second would
+--         result in /a/c (because the `../` is normalized before we see that
+--         `/a/b/` is a symlink).
+--
+-- __TODO__: Many of the path types involve jumping through hoops with `Compose`
+--           and `Flip` in order to avoid more newtypes. This isn’t great, but
+--           it does make things very generic – for example, we can provide
+--           instances for our classes over things ilke Chris Penner’s ‘path’
+--           library, making for easier adoption of parts of this approach.
 module Data.Path
-  ( Anchored (..),
-    AnyPath,
-    Path,
+  ( Path,
     Pathish (..),
     Pathy,
     Prefixed (..),
@@ -31,7 +45,9 @@ module Data.Path
     Relativity (..),
     Type (..),
     Typey,
-    anchor,
+    Filename,
+    Flip (..),
+    Flip1 (..),
     current,
     forgetRelativity,
     forgetType,
@@ -39,20 +55,27 @@ module Data.Path
     reparent,
     route,
     strengthen,
-    toText,
     unanchor,
     (</>),
+    disambiguate,
+    liftRelativity,
+    extractType,
+    liftType,
+    lift,
+    serialize,
   )
 where
 
 import safe "base" Control.Applicative (pure)
 import safe "base" Control.Category (id, (.))
 import safe "base" Data.Bool (Bool (False, True))
+import safe "base" Data.Either (Either (Left))
 import safe "base" Data.Eq (Eq, (==))
-import safe "base" Data.Function (($))
+import safe "base" Data.Function (const, ($))
 import safe "base" Data.Functor (fmap)
+import safe "base" Data.Functor.Compose (Compose (Compose), getCompose)
 import safe "base" Data.Functor.Const (Const (Const))
-import safe "base" Data.Functor.Identity (runIdentity)
+import safe "base" Data.Functor.Identity (Identity (Identity), runIdentity)
 import safe "base" Data.Kind qualified as Kind
 import safe "base" Data.Maybe qualified as Lazy
 import safe "base" Data.Proxy (Proxy (Proxy))
@@ -65,10 +88,9 @@ import safe "extra" Data.List.Extra qualified as List
 import safe "pathway-internal" Data.Path.Internal
   ( Filename,
     List,
-    Parents,
     Path (Path),
-    Relativity (Abs, Any, Rel),
-    Type (Dir, File, Pathic),
+    Relativity (Abs, Rel),
+    Type (Dir, File),
     current,
     directories,
     filename,
@@ -100,12 +122,27 @@ import safe "yaya" Yaya.Pattern
     xnor,
   )
 import safe "yaya-containers" Yaya.Containers.Pattern.Map (MapF (BinF, TipF))
+import safe "this" Data.Path.Ambiguous qualified as Ambiguous
+import safe "this" Data.Path.Anchored (anchored)
+import safe "this" Data.Path.Anchored qualified as Anchored
+import safe "this" Data.Path.Any qualified as Any
 import safe "this" Data.Path.Format (Format, parent, root, separator, substitutions)
+import safe "this" Data.Path.Functor
+  ( Flip (Flip),
+    Flip1 (Flip1),
+    dmap,
+    dtraverse,
+    unflip,
+    unflip1,
+  )
+import safe "this" Data.Path.Unambiguous (Unambiguous, unambiguous)
+import safe "this" Data.Path.Unambiguous qualified as Unambiguous
 import safe "base" Prelude ((+))
 
 -- $setup
 -- >>> :seti -XQuasiQuotes
 -- >>> :seti -XTypeApplications
+-- >>> :seti -XNoOverloadedStrings
 -- >>> import "QuickCheck" Test.QuickCheck
 -- >>> import "base" Data.Bool (Bool (True))
 -- >>> import "base" Data.Functor ((<$>))
@@ -137,56 +174,121 @@ class Pathish path (rel :: Relativity) (typ :: Type) rep where
 instance Pathish (Path rel typ rep) rel typ rep where
   specializePath = id
 
--- | This is a path where we don’t know (at the type level) whether it’s
---   anchored, or whether it’s a file. `parents` is `None` for an absolute path
---   and otherwise contains the number of leading `../` parents that should be
---   produced.
---
---   There are not many operations on this type, but it is the type used for
---   generic operations like parsing and printing, with separate functions (like
---  `anchor`) to lift the contained information to the type level.
-type AnyPath :: Kind.Type -> Kind.Type
-type AnyPath = Path 'Any 'Pathic
-
--- -- | Convert an arbitrary value representing a path to `AnyPath`.
--- --
--- --  __NB__: Don’t make an instance for `FilePath`, as it would be partial. Not
--- --          all strings represent paths. Instead, use the parsers that exist for
--- --          that purpose.
--- class Pathy path rep where
---   generalizePath :: path -> AnyPath rep
-
 type Relative :: Relativity -> Kind.Constraint
 class Relative rel where
-  generalizeRelativity :: Parents rel -> Parents 'Any
+  -- | Returns the number of reparentings in this path (or `Nothing` for an absolute path).
+  mayParents :: Path rel typ rep -> Maybe Natural
+
+  forgetRelativity :: Path rel typ rep -> Anchored.Path typ rep
+
+  -- | Lift the `Type` to the type level. If it doesn’t have the specific
+  --   `Relativity`, it fails with a user-provided error parameterized over the
+  --   encountered `Relativity`.
+  liftRelativity :: (Relativity -> e) -> Any.Path rep -> Either e (Unambiguous.Path rel rep)
 
 instance Relative 'Abs where
-  generalizeRelativity () = Nothing
-
-instance Relative 'Any where
-  generalizeRelativity = id
+  mayParents Path {} = Nothing
+  forgetRelativity = Compose . Anchored.Absolute . Flip . Flip1
+  liftRelativity err =
+    anchored
+      (pure . Compose . dmap unflip1 . getCompose . getCompose)
+      (const . Left . err $ Rel False)
+      (const . Left . err $ Rel True)
 
 instance Relative ('Rel 'False) where
-  generalizeRelativity Proxy = pure 0
+  mayParents Path {} = pure 0
+  forgetRelativity = Compose . Anchored.Relative . Flip . Flip1
+  liftRelativity err =
+    anchored
+      (const . Left . err $ Abs)
+      (pure . Compose . dmap unflip1 . getCompose . getCompose)
+      (const . Left . err $ Rel True)
 
 instance Relative ('Rel 'True) where
-  generalizeRelativity = pure
+  mayParents Path {parents} = pure parents
+  forgetRelativity = Compose . Anchored.Reparented . Flip . Flip1
+  liftRelativity err =
+    anchored
+      (const . Left . err $ Abs)
+      (const . Left . err $ Rel False)
+      (pure . Compose . dmap unflip1 . getCompose . getCompose)
 
 type Typey :: Type -> Kind.Constraint
 class Typey typ where
-  generalizeType :: Filename typ rep -> Filename 'Pathic rep
+  -- | Returns the filename of the path (or `Nothing` if a directory).
+  mayFilename :: Path rel typ rep -> Maybe rep
+
+  extractType :: proxy typ -> Type
+  disambiguate :: Ambiguous.Path rel rep -> Path rel typ rep
+  forgetType :: Path rel typ rep -> Unambiguous.Path rel rep
+
+  -- | Lift the `Type` to the type level. If it doesn’t have the specific
+  --   `Type`, it fails with a user-provided error parameterized over the
+  --   encountered `Type`.
+  liftType :: (Type -> e) -> Any.Path rep -> Either e (Anchored.Path typ rep)
 
 instance Typey 'Dir where
-  generalizeType (Const ()) = Nothing
+  mayFilename Path {} = Nothing
+  disambiguate Ambiguous.Path {parents, directories, component} =
+    Path {parents, directories = embed $ Both component directories, filename = Const ()}
+  extractType _ = Dir
+  forgetType = Compose . Unambiguous.Directory . Flip
+  liftType err =
+    fmap Compose
+      . dtraverse
+        ( unambiguous
+            (pure . Flip . Flip1 . unflip . unflip1)
+            (const . Left $ err File)
+            . getCompose
+            . getCompose
+        )
 
 instance Typey 'File where
-  generalizeType = pure . runIdentity
-
-instance Typey 'Pathic where
-  generalizeType = id
+  mayFilename Path {filename} = pure $ runIdentity filename
+  disambiguate Ambiguous.Path {parents, directories, component} =
+    Path {parents, directories, filename = Identity component}
+  extractType _ = File
+  forgetType = Compose . Unambiguous.File . Flip
+  liftType err =
+    fmap Compose
+      . dtraverse
+        ( unambiguous
+            (const . Left $ err Dir)
+            (pure . Flip . Flip1 . unflip . unflip1)
+            . getCompose
+            . getCompose
+        )
 
 type Pathy :: Relativity -> Type -> Kind.Constraint
-type Pathy rel typ = (Relative rel, Typey typ)
+class (Relative rel, Typey typ) => Pathy rel typ where
+  lift ::
+    (Relativity -> Type -> e) -> Any.Path rep -> Either e (Path rel typ rep)
+
+instance Pathy 'Abs 'Dir where
+  lift ::
+    forall e rep.
+    (Relativity -> Type -> e) ->
+    Any.Path rep ->
+    Either e (Path 'Abs 'Dir rep)
+  lift err =
+    anchored
+      ( unambiguous (pure . unflip . unflip1) (const . Left $ err Abs File)
+          . getCompose
+          . getCompose
+      )
+      (errRel False)
+      (errRel True)
+    where
+      errRel ::
+        Bool ->
+        Compose (Compose Unambiguous (Flip1 Flip rep)) Path ('Rel b) ->
+        Either e (Path 'Abs 'Dir rep)
+      errRel b =
+        Left
+          . err (Rel b)
+          . unambiguous (const Dir) (const File)
+          . getCompose
+          . getCompose
 
 -- -- | This is the only instance needed by Pathway itself, but the class exists as
 -- --   an integration point for other libraries that have some path
@@ -227,12 +329,12 @@ class RelOps rel where
   --   we can see why if we first convert them to absolute paths
   --
   -- >>> let from = fromJust $ [posix|/a/b/c/|] </?> [posix|../../d/e/|]
-  -- >>> toText @_ @_ @Text Format.posix from
+  -- >>> serialize @Text Format.posix from
   -- "/a/d/e/"
   -- >>> let to = fromJust $ [posix|/a/b/c/|] </?> [posix|../f/g/|]
-  -- >>> toText @_ @_ @Text Format.posix to
+  -- >>> serialize @Text Format.posix to
   -- "/a/b/f/g/"
-  -- >>> toText @_ @_ @Text Format.posix $ minimalRoute from to
+  -- >>> serialize @Text Format.posix $ minimalRoute from to
   -- "../../b/f/g/"
   --
   --   You can see that the directory “b” is in the result, but isn’t present in
@@ -247,12 +349,12 @@ class RelOps rel where
   --   only makes a difference when both paths have the same amount of
   --   reparenting. E.g.
   --
-  -- >>> toText Format.posix <$> maybeMinimalRoute @('Rel 'True) @Text [posix|../d/e/|] [posix|../d/f/|]
+  -- >>> serialize Format.posix <$> maybeMinimalRoute @('Rel 'True) @Text [posix|../d/e/|] [posix|../d/f/|]
   -- Just "../f/"
   --
   --   whereas
   --
-  -- >>> toText Format.posix <$> maybeRoute @('Rel 'True) @Text [posix|../d/e/|] [posix|../d/f/|]
+  -- >>> serialize Format.posix <$> maybeRoute @('Rel 'True) @Text [posix|../d/e/|] [posix|../d/f/|]
   -- Just "../../d/f/"
   --
   --   The thing to consider is that various operations can fail depending on how
@@ -583,8 +685,13 @@ escape' = \case
   TipF -> id
   BinF _ direct escaped fn fn' -> fn' . replace direct escaped . fn
 
-anyToText :: (IsString a, Semigroup a, Substible a) => Format a -> AnyPath a -> a
-anyToText format path =
+serialize ::
+  forall rep rel typ.
+  (Relative rel, Typey typ, IsString rep, Semigroup rep, Substible rep) =>
+  Format rep ->
+  Path rel typ rep ->
+  rep
+serialize format path =
   let escapeComponent = cata escape' $ substitutions format
       prefix =
         maybe
@@ -592,7 +699,7 @@ anyToText format path =
           ( fromMaybe ""
               . cata (fmap $ maybe (parent format) (parent format <>))
           )
-          $ parents path
+          $ mayParents path
       directory =
         cata
           ( \case
@@ -601,96 +708,18 @@ anyToText format path =
                 pathStr <> escapeComponent directoryName <> separator format
           )
           $ directories path
-      file = maybe "" escapeComponent $ filename path
+      file = maybe "" escapeComponent $ mayFilename path
    in prefix <> directory <> file
-
-toText ::
-  (Pathy rel typ, IsString a, Semigroup a, Substible a) => Format a -> Path rel typ a -> a
-toText format = anyToText format . unanchor
 
 -- __TODO__: This forms a `Prism'` with `weaken`.
 strengthen :: Path ('Rel 'True) typ rep -> Maybe (Path ('Rel 'False) typ rep)
 strengthen path =
   if parents path == 0 then pure path {parents = Proxy} else Nothing
 
-type Anchored :: Kind.Type -> Kind.Type
-data Anchored rep
-  = AbsDir (Path 'Abs 'Dir rep)
-  | AbsFile (Path 'Abs 'File rep)
-  | RelDir (Path ('Rel 'False) 'Dir rep)
-  | RelFile (Path ('Rel 'False) 'File rep)
-  | ReparentedDir (Path ('Rel 'True) 'Dir rep)
-  | ReparentedFile (Path ('Rel 'True) 'File rep)
-
--- | Discover the specific type of a `Path`.
-anchor :: AnyPath rep -> Anchored rep
-anchor path =
-  maybe
-    ( maybe
-        ( AbsDir
-            Path
-              { parents = (),
-                directories = directories path,
-                filename = Const ()
-              }
-        )
-        ( \filenm ->
-            AbsFile
-              Path
-                { parents = (),
-                  directories = directories path,
-                  filename = pure filenm
-                }
-        )
-        $ filename path
-    )
-    ( \case
-        0 ->
-          maybe
-            ( RelDir
-                Path
-                  { parents = Proxy,
-                    directories = directories path,
-                    filename = Const ()
-                  }
-            )
-            ( \filenm ->
-                RelFile
-                  Path
-                    { parents = Proxy,
-                      directories = directories path,
-                      filename = pure filenm
-                    }
-            )
-            $ filename path
-        parnts ->
-          maybe
-            ( ReparentedDir
-                Path
-                  { parents = parnts,
-                    directories = directories path,
-                    filename = Const ()
-                  }
-            )
-            ( \filenm ->
-                ReparentedFile
-                  Path
-                    { parents = parnts,
-                      directories = directories path,
-                      filename = pure filenm
-                    }
-            )
-            $ filename path
-    )
-    $ parents path
-
-forgetRelativity :: (Relative rel) => Path rel typ rep -> Path 'Any typ rep
-forgetRelativity path = path {parents = generalizeRelativity $ parents path}
-
-forgetType :: (Typey typ) => Path rel typ rep -> Path rel 'Pathic rep
-forgetType path = path {filename = generalizeType $ filename path}
-
 -- | Forget the specific type of the path (which can be recovered with
 --  `anchor`).
-unanchor :: (Pathy rel typ) => Path rel typ rep -> AnyPath rep
-unanchor = forgetRelativity . forgetType
+unanchor :: (Pathy rel typ) => Path rel typ rep -> Any.Path rep
+unanchor =
+  dmap (Compose . Compose . dmap Flip1 . getCompose . forgetType . unflip1 . unflip)
+    . getCompose
+    . forgetRelativity
