@@ -9,29 +9,32 @@
 -- module made ‘Safe’) once base-4.14.4 is the oldest supported version.
 {-# OPTIONS_GHC -Wno-safe -Wno-trustworthy-safe #-}
 
--- | A representation-agnostic, structured, type-safe path library.
+-- |
+-- Copyright: 2024 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-commercial
 --
---  __NB__: This library stores paths in a normalized form. However, because it
---          is a pure library, it is not canonicalized. This makes the behavior
---          consistent across systems, whereas with canonical paths, `/a/b/../c`
---          could behave differently between Posix and Windows. If `/a/b/` is a
---          symlink to /d/e/`, then Posix would canonicalize the path to `/d/c`,
---          whereas Windows would canonicalize to `/a/c`. If you want
---          system-specific canonicalization, look at the @pathway-system@
---          package, which depends on this one. Also, regardless of system,
---          @canonicalize parent </> child@ has different semantics than
---          @canonicalize (parent </> child)@. Given parent = /a/b/ and child =
---          ../c, on POSIX, the first one would result in /d/c (since the
---          symlink is followed before the `../` is normalized) and the second
---          would result in /a/c (because the `../` is normalized before we see
---          that `/a/b/` is a symlink).
+-- A representation-agnostic, structured, type-safe path library.
 --
---  __TODO__: Many of the path types involve jumping through hoops with
---            `Compose` and `Flip` in order to avoid more newtypes. This isn’t
---            great, but it does make things very generic – for example, we can
---            provide instances for our classes over things ilke Chris Penner’s
---            ‘path’ library, making for easier adoption of parts of this
---            approach.
+-- __NB__: This library stores paths in a normalized form. However, because it
+--         is a pure library, it is not canonicalized. This makes the behavior
+--         consistent across systems, whereas with canonical paths, `/a/b/../c`
+--         could behave differently between Posix and Windows. If `/a/b/` is a
+--         symlink to /d/e/`, then Posix would canonicalize the path to `/d/c`,
+--         whereas Windows would canonicalize to `/a/c`. If you want
+--         system-specific canonicalization, look at the @pathway-system@
+--         package, which depends on this one. Also, regardless of system,
+--         @canonicalize parent </> child@ has different semantics than
+--         @canonicalize (parent </> child)@. Given parent = /a/b/ and child =
+--         ../c, on POSIX, the first one would result in /d/c (since the symlink
+--         is followed before the `../` is normalized) and the second would
+--         result in /a/c (because the `../` is normalized before we see that
+--         `/a/b/` is a symlink).
+--
+-- __TODO__: Many of the path types involve jumping through hoops with `Compose`
+--           and `Flip` in order to avoid more newtypes. This isn’t great, but
+--           it does make things very generic – for example, we can provide
+--           instances for our classes over things ilke Chris Penner’s ‘path’
+--           library, making for easier adoption of parts of this approach.
 module Data.Path
   ( Path,
     Pathish (..),

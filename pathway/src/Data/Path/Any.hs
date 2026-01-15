@@ -1,6 +1,12 @@
 {-# LANGUAGE Safe #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
+-- |
+-- Copyright: 2025 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-commercial
+--
+-- This provides a path type that will hold any of the myriad `Path.Path` types
+-- that the library provides. These are created by `Data.Path.Parser.path`.
 module Data.Path.Any
   ( Path,
     mapPath,

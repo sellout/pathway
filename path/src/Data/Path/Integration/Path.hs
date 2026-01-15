@@ -1,20 +1,31 @@
 {-# LANGUAGE Unsafe #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
--- | Compatibility module for the existing "Path" library.
+-- |
+-- Copyright: 2024 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-commercial
 --
---   There are a number of differences between "Path" and
---   "Data.Path". Among them are
--- - "Path" doesn’t allow for ../ reparenting
--- - "Data.Path" doesn’t handle extensions specially, they are simply part of
---   the filename
--- - "Data.Path" doesn’t handle drives (as in Windows paths)
--- - "Data.Path" only cares about the system when parsing and printing
---   paths, all other operations are agnostic, rather than having separate
---   modules per system, with one duplicated to reflect the current system.
--- - "Data.Path" equivalent of `Path.SomeBase` is `Path 'Any`, but also has
---  `AmbiguousPath`, where we don’t know whether the path is a file or directory
---  (as it is common to have to deal with paths where that is unclear).
+-- Compatibility module for the existing "Path" library.
+--
+-- There are a number of differences between the
+-- [/Path/](https://hackage.haskell.org/package/path) and /Pathway/ packages.
+-- Among them are
+--
+-- - /Path/ doesn’t allow for ../ reparenting
+--
+-- - /Pathway/ doesn’t handle extensions specially, they are simply part of the
+--   filename
+--
+-- - /Pathway/ doesn’t handle drives (as in Windows paths)
+--
+-- - /Pathway/ only cares about the system when parsing and printing paths, all
+--   other operations are agnostic, rather than having separate modules per
+--   system, with one duplicated to reflect the current system.
+--
+-- - /Pathway/ equivalent of `Path.SomeBase` is `Data.Path.Anchored.Path`, but
+--   also has `Data.Path.Ambiguous.Path`, where we don’t know whether the path
+--   is a file or directory (as it is common to have to deal with paths where
+--   that is unclear).
 module Data.Path.Integration.Path () where
 
 import safe "base" Control.Applicative (pure)

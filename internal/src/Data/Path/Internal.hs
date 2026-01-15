@@ -12,6 +12,14 @@
 -- module made ‘Safe’) once base-4.14.4 is the oldest supported version.
 {-# OPTIONS_GHC -Wno-safe -Wno-trustworthy-safe #-}
 
+-- |
+-- Copyright: 2024 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-commercial
+--
+-- **DO NOT IMPORT THIS**
+--
+-- Everything here should be available in the @pathway@ package via "Data.Path".
+-- Depend on that instead.
 module Data.Path.Internal
   ( List (List),
     Parents,

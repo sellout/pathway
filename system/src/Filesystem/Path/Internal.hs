@@ -1,6 +1,10 @@
 {-# LANGUAGE Safe #-}
 
--- | Non-public definitions that are relied on by multiple modules in this
+-- |
+-- Copyright: 2025 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-commercial
+--
+-- Non-public definitions that are relied on by multiple modules in this
 -- library. This may eventually be a public module for providing alternative
 -- implementations (like `FilePath` vs `OsPath`).
 module Filesystem.Path.Internal

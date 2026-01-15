@@ -2,6 +2,9 @@
 -- __NB__: Because of the nested `Path.Type` constraints.
 {-# LANGUAGE UndecidableInstances #-}
 
+-- |
+-- Copyright: 2024 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-commercial
 module Data.Path.NonReparented
   ( NonReparented (Absolute, Relative),
     nonReparented,

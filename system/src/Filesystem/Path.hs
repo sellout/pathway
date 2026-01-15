@@ -8,9 +8,14 @@
 -- this module is inferred ‘Safe’ in some configurations.
 {-# OPTIONS_GHC -Wno-safe -Wno-trustworthy-safe #-}
 
--- | This provides an API similar to "System.Directory", but for Pathway types.
+-- |
+-- Copyright: 2024 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-commercial
 --
---   Some differences:
+-- This provides an API similar to "System.Directory", but for Pathway types.
+--
+-- Some differences:
+--
 -- - Operations mostly require absolute paths, the “current directory” is not
 --   implicit (operations may _return_ relative paths, but they will be relative
 --   to an argument). The reason for returning relative paths, is because it’s a
@@ -18,22 +23,26 @@
 --   concat the relative path to the path passed in (creating the absolute path
 --   that would be returned), but a partial operation to convert a returned
 --   absolute path to the same relative path.
--- - There is no `Dir.makeAbsolute`. to do the same thing,
---   @(`</?>` myPath) `<$>` `getCurrentDirectory`@ or similar will work. This
---   just makes all paths explicit, even if they do end up relative to the
---  “current” path. __TODO__: Might be worth removing the idea of a “current”
---   directory altogether?
+--
+-- - There is no `Dir.makeAbsolute`. to do the same thing, @(`</?>` myPath)
+--   `<$>` `getCurrentDirectory`@ or similar will work. This just makes all
+--   paths explicit, even if they do end up relative to the “current” path.
+--   __TODO__: Might be worth removing the idea of a “current” directory
+--   altogether?
+--
 -- - Similarly, there’s no `Dir.makeRelativeToCurrentDirectory`.
+--
 -- - This includes some exception handlers for dealing with filesystem-specific
 --   meanings of different `IOError`s.
+--
 -- - XDG base directories are managed via the
 --   [XDG Base Directory](https://hackage.haskell.org/package/xdg-base-directory)
 --   package, which is much richer than the XDG operations offered by "Dir".
 --
---   One reason for enforcing the absoluteness of paths, is that paths are often
---   reported to users, and often without enough context. This tries to ensure
---   that there is at least a full path available (unless the developer makes an
---   effort to remove it.
+-- One reason for enforcing the absoluteness of paths, is that paths are often
+-- reported to users, and often without enough context. This tries to ensure
+-- that there is at least a full path available (unless the developer makes an
+-- effort to remove it).
 module Filesystem.Path
   ( FundamentalFailure (..),
     ArgumentFailure (..),

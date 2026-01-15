@@ -2,6 +2,18 @@
 -- __NB__: Because of the nested `Parents` constraints.
 {-# LANGUAGE UndecidableInstances #-}
 
+-- |
+-- Copyright: 2025 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-commercial
+--
+-- An ambiguous path is one that may be either a directory or a file. These are
+-- created by `Data.Path.Parser.ambiguous.Path` when it parses a path with no
+-- trailing delimiter. For example ‘/usr/bin/’ is unambiguously a directory, but
+-- ‘/usr/bin’ is ambiguous.
+--
+-- Ambiguous paths can be disambiguated by either `Data.Path.disambiguate` or
+-- `Filesystem.Path.disambiguate`. The former just resolves to whichever type is
+-- required, while the latter looks at the filesystem to see what exists.
 module Data.Path.Ambiguous
   ( Path (..),
   )

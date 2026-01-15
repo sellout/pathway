@@ -2,6 +2,12 @@
 -- __NB__: Because of the nested `Path.Type` constraints.
 {-# LANGUAGE UndecidableInstances #-}
 
+-- |
+-- Copyright: 2024 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-commercial
+--
+-- Unambiguous paths represent either a directory or a file, but which one isn’t
+-- tracked in the type. It’s not ambiguous, but can hold either at runtime.
 module Data.Path.Unambiguous
   ( Unambiguous (Directory, File),
     unambiguous,
