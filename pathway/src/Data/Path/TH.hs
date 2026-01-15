@@ -93,7 +93,7 @@ deconstructPathFields (p, d, f) =
 path :: Format String -> String -> TH.Q TH.Exp
 path format =
   either (fail . show) (pure . deconstructAnyPath)
-    . MP.parse (Parser.path @_ @Void format) ""
+    . MP.parse (Parser.path @Void format) ""
 
 pathQuoter :: Format String -> TH.QuasiQuoter
 pathQuoter format =

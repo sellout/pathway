@@ -198,6 +198,7 @@ protoPath format =
 -- >>> MP.parse (path posix) "" "../../../b/f/g/"
 -- Right (Reparented (Compose (Compose (Directory (Flip1 {unflip1 = Flip {unflip = Path {parents = 3, directories = List (embed (Both "g" (embed (Both "f" (embed (Both "b" (embed Neither))))))), filename = Const ()}}})))))
 path ::
+  forall e s.
   (MP.Stream s, MP.Token s ~ Char, Monoid (MP.Tokens s), Ord e) =>
   Format (MP.Tokens s) ->
   MP.Parsec e s (Any.Path (MP.Tokens s))

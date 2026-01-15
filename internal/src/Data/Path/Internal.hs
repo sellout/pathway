@@ -299,7 +299,7 @@ class PartialOps dir relPath result | dir relPath -> result where
   --          be written without parentheses.
   --
   -- > :{
-  --   serialize @_ @_ @Text Format.posix
+  --   serialize @Text Format.posix
   --     <$> [posix|/|] </?> [posix|user/|] </> [posix|../usr/bine/|] <> [posix|../bin/|] </> [posix|env|]
   -- :}
   -- Just "/usr/bin/env"

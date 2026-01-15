@@ -326,12 +326,12 @@ class RelOps rel where
   --   we can see why if we first convert them to absolute paths
   --
   -- >>> let from = fromJust $ [posix|/a/b/c/|] </?> [posix|../../d/e/|]
-  -- >>> serialize @_ @_ @Text Format.posix from
+  -- >>> serialize @Text Format.posix from
   -- "/a/d/e/"
   -- >>> let to = fromJust $ [posix|/a/b/c/|] </?> [posix|../f/g/|]
-  -- >>> serialize @_ @_ @Text Format.posix to
+  -- >>> serialize @Text Format.posix to
   -- "/a/b/f/g/"
-  -- >>> serialize @_ @_ @Text Format.posix $ minimalRoute from to
+  -- >>> serialize @Text Format.posix $ minimalRoute from to
   -- "../../b/f/g/"
   --
   --   You can see that the directory “b” is in the result, but isn’t present in
@@ -683,6 +683,7 @@ escape' = \case
   BinF _ direct escaped fn fn' -> fn' . replace direct escaped . fn
 
 serialize ::
+  forall rep rel typ.
   (Relative rel, Typey typ, IsString rep, Semigroup rep, Substible rep) =>
   Format rep ->
   Path rel typ rep ->
