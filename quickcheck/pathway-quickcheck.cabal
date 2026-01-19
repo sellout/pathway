@@ -64,7 +64,7 @@ custom-setup
     --       9.8.3 include an older Cabal, so a newer one may need to be
     --       manually installed.
     Cabal >= 3.10.3 && < 99,
-    base ^>= {4.13.0, 4.14.0, 4.15.0, 4.16.0, 4.17.0, 4.18.0, 4.19.0, 4.20.0, 4.21.0, 4.22.0},
+    base ^>= {4.14.0, 4.15.0, 4.16.0, 4.17.0, 4.18.0, 4.19.0, 4.20.0, 4.21.0, 4.22.0},
     cabal-doctest ^>= {1.0.0},
 
 flag noisy-deprecations
@@ -140,7 +140,7 @@ common GHC2024
 common defaults
   import: GHC2024
   build-depends:
-    base ^>= {4.13.0, 4.14.0, 4.15.0, 4.16.0, 4.17.0, 4.18.0, 4.19.0, 4.20.0, 4.21.0, 4.22.0},
+    base ^>= {4.14.0, 4.15.0, 4.16.0, 4.17.0, 4.18.0, 4.19.0, 4.20.0, 4.21.0, 4.22.0},
   ghc-options:
     -Weverything
     -- This one just reports unfixable things, AFAICT.
@@ -184,7 +184,7 @@ common defaults
       -DSELLOUT_NOISY_DEPRECATIONS
   if flag(verify-no-recursion)
     build-depends:
-      no-recursion,
+      no-recursion ^>= {0.2.0, 0.3.0, 0.4.0},
     ghc-options:
       -fplugin=NoRecursion
 
@@ -193,9 +193,9 @@ library
   hs-source-dirs:
     src
   build-depends:
-    QuickCheck ^>= {2.14.3, 2.15.0},
+    QuickCheck ^>= {2.14.2, 2.15.0, 2.16.0, 2.17.1},
     pathway-internal ^>= {0.0.1},
-    quickcheck-instances ^>= {0.3.29},
+    quickcheck-instances ^>= {0.3.26, 0.4},
     yaya ^>= {0.6.2, 0.7.0},
     yaya-quickcheck ^>= {0.2.0, 0.3.0},
   exposed-modules:
@@ -208,8 +208,8 @@ test-suite doctests
     tests
   main-is: doctests.hs
   build-depends:
-    QuickCheck ^>= {2.14.3, 2.15.0},
-    doctest ^>= {0.20.1, 0.21.1, 0.22.2, 0.24.2},
+    QuickCheck ^>= {2.14.2, 2.15.0, 2.16.0, 2.17.1},
+    doctest ^>= {0.16.3, 0.18.1, 0.20.1, 0.21.1, 0.22.2, 0.24.2},
     pathway-quickcheck,
   -- TODO: The sections below here are necessary because we don’t have control
   --       over the generated `Build_doctests.hs` file. So we have to silence

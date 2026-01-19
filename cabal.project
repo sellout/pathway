@@ -8,6 +8,10 @@ reorder-goals: true
 constraints:
   -- path <0.9.6 is lacking a bound on aeson, but requires at least 1.0.0
   aeson >= 1.0.0,
+  -- earlier versions are Unsafe
+  megaparsec >= 9.0.1,
+  -- earlier versions don’t support ignoring recursion
+  no-recursion >= 0.2.0.0,
   -- earlier versions don’t have `SomeBase` and other types
   path >= 0.8.0,
   -- earlier versions use -fpackage-trust, which causes no end of trouble
@@ -18,6 +22,20 @@ constraints:
   yaya-quickcheck >= 0.2.0.2,
   -- earlier versions use -fpackage-trust, which causes no end of trouble
   yaya-unsafe >= 0.4.1.2,
+
+allow-newer:
+  -- The latest versions of these don’t have bounds that support GHC 9.14.
+  aeson-2.2.3.0:*,
+  array-0.5.8.0:*,
+  boring-0.2.2:*,
+  indexed-traversable-0.1.4:*,
+  indexed-traversable-instances-0.1.2:*,
+  quickcheck-instances-0.4:*,
+  semialign-1.3.1:*,
+  these-1.2.1:*,
+  text-iso8601-0.1.1:*,
+  time-compat-1.9.8:*,
+  uuid-types-1.0.6:*,
 
 flags:
   -- Ensure development of this project always uses @NoRecursion@, even if it
