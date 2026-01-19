@@ -46,7 +46,7 @@ custom-setup
     --       requires it to have _some_ upper bound. (Since there’s no direct
     --       dependency, it doesn’t use PVP bounds.)
     Cabal >= 3.0 && < 99,
-    base ^>= {4.17.1, 4.18.0, 4.19.0, 4.20.0},
+    base ^>= {4.17.1, 4.18.0, 4.19.0, 4.20.0, 4.21.0},
     cabal-doctest ^>= {1.0.0},
 
 flag noisy-deprecations
@@ -82,7 +82,7 @@ common GHC2024
 common defaults
   import: GHC2024
   build-depends:
-    base ^>= {4.17.1, 4.18.0, 4.19.0, 4.20.0},
+    base ^>= {4.17.1, 4.18.0, 4.19.0, 4.20.0, 4.21.0},
   ghc-options:
     -Weverything
     -- This one just reports unfixable things, AFAICT.
@@ -130,11 +130,11 @@ library
     extra ^>= {1.7.7, 1.8.1},
     megaparsec ^>= {9.2.0, 9.5.0, 9.6.1, 9.7.0},
     pathway-internal ^>= {0.0.1},
-    template-haskell ^>= {2.19.0, 2.20.0, 2.21.0, 2.22.0},
+    template-haskell ^>= {2.19.0, 2.20.0, 2.21.0, 2.22.0, 2.23.0},
     text ^>= {2.0.2, 2.1},
-    yaya ^>= {0.6.2},
-    yaya-containers ^>= {0.1.2},
-    yaya-unsafe ^>= {0.4.1},
+    yaya ^>= {0.6.2, 0.7.0},
+    yaya-containers ^>= {0.1.2, 0.2.0},
+    yaya-unsafe ^>= {0.4.1, 0.5.0},
   exposed-modules:
     Data.Path
     Data.Path.Directory

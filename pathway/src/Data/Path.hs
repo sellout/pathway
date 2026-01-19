@@ -244,7 +244,7 @@ class RelOps rel where
     Maybe (Path ('Rel 'True) typ rep)
 
   -- | Like `maybeRoute`, but shortens the path as much as possible. This can
-  --   only makes a difference when both paths have the same amount of
+  --   only make a difference when both paths have the same amount of
   --   reparenting. E.g.
   --
   -- >>> toText Format.posix <$> maybeMinimalRoute @('Rel 'True) @Text [posix|../d/e/|] [posix|../d/f/|]
