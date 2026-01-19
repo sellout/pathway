@@ -1,5 +1,6 @@
 # Pathway QuickCheck integration
 
+[![Hackage Version](https://img.shields.io/hackage/v/pathway-quickcheck)](https://hackage.haskell.org/package/pathway-quickcheck)
 [![Packaging status](https://repology.org/badge/tiny-repos/haskell:pathway-quickcheck.svg)](https://repology.org/project/haskell:pathway-quickcheck/versions)
 [![latest packaged versions](https://repology.org/badge/latest-versions/haskell:pathway-quickcheck.svg)](https://repology.org/project/haskell:pathway-quickcheck/versions)
 
