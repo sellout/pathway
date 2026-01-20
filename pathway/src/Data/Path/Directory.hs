@@ -38,11 +38,11 @@ import "yaya" Yaya.Pattern (Maybe (Nothing), XNor (Both, Neither), xnor)
 
 -- $setup
 -- >>> :seti -XQuasiQuotes
+-- >>> import Data.Path (toText)
+-- >>> import qualified Data.Path.Format as Format
+-- >>> import Data.Path.TH (posix)
 -- >>> import "base" Data.Functor ((<$>))
 -- >>> import "text" Data.Text (Text)
--- >>> import "this" Data.Path (toText)
--- >>> import qualified "this" Data.Path.Format as Format
--- >>> import "this" Data.Path.TH (posix)
 
 -- | __FIXME__: Move upstream.
 isNeither :: XNor a b -> Bool

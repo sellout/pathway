@@ -40,7 +40,7 @@ import "base" Prelude (fromIntegral)
 
 -- $setup
 -- >>> :seti -XQuasiQuotes
--- >>> import "this" Data.Path (Relativity (Abs), Type (File))
+-- >>> import Data.Path (Relativity (Abs), Type (File))
 
 deconstructXNor :: (a -> TH.Exp) -> (b -> TH.Exp) -> XNor a b -> TH.Exp
 deconstructXNor f g =

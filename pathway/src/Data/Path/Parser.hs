@@ -61,8 +61,8 @@ import "base" Data.Type.Equality (type (~))
 
 -- $setup
 -- >>> :seti -XOverloadedStrings
+-- >>> import Data.Path.Format (posix)
 -- >>> import qualified "megaparsec" Text.Megaparsec as MP
--- >>> import "this" Data.Path.Format (posix)
 
 unsafeReverse ::
   (Projectable (->) t (XNor a), Steppable (->) u (XNor a)) => t -> u
