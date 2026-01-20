@@ -11,11 +11,11 @@ import "base" Data.Functor.Const (Const (Const))
 import "base" Data.Functor.Identity (runIdentity)
 import "pathway-internal" Data.Path.Internal
   ( Path (Path),
-    Type (Dir, File),
     directories,
     filename,
     parents,
   )
+import "this" Data.Path.Type (Type (Dir, File))
 
 basename :: Path rel 'File rep -> rep
 basename = runIdentity . filename

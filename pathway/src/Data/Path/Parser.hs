@@ -45,7 +45,7 @@ import "yaya" Yaya.Fold (Mu, Projectable, Steppable, cata, embed)
 import "yaya" Yaya.Pattern (Maybe (Nothing), XNor (Both, Neither))
 import "yaya-containers" Yaya.Containers.Pattern.Map (MapF (BinF, TipF))
 import "yaya-unsafe" Yaya.Unsafe.Fold (unsafeCata)
-import "this" Data.Path (AnyPath, Relativity (Any), Type (Dir))
+import "this" Data.Path (AnyPath)
 import "this" Data.Path.Format
   ( Format,
     current,
@@ -54,6 +54,8 @@ import "this" Data.Path.Format
     separator,
     substitutions,
   )
+import "this" Data.Path.Relativity (Relativity (Any))
+import "this" Data.Path.Type (Type (Dir))
 import "base" Prelude (fromIntegral)
 #if MIN_VERSION_base(4, 17, 0)
 import "base" Data.Type.Equality (type (~))

@@ -28,8 +28,8 @@ module Data.Path
     Prefixed (..),
     RelOps (..),
     Relative,
-    Relativity (..),
-    Type (..),
+    Relativity (Abs, Rel),
+    Type (Dir, File),
     Typey,
     anchor,
     current,
@@ -67,8 +67,6 @@ import safe "pathway-internal" Data.Path.Internal
     List,
     Parents,
     Path (Path),
-    Relativity (Abs, Any, Rel),
-    Type (Dir, File, Pathic),
     current,
     directories,
     filename,
@@ -101,6 +99,9 @@ import safe "yaya" Yaya.Pattern
   )
 import safe "yaya-containers" Yaya.Containers.Pattern.Map (MapF (BinF, TipF))
 import safe "this" Data.Path.Format (Format, parent, root, separator, substitutions)
+import safe "this" Data.Path.Relativity (Relativity (Abs, Any, Rel))
+import safe "this" Data.Path.Type (Type (Dir, File))
+import safe "this" Data.Path.Type qualified as Type (Type (Any))
 import safe "base" Prelude ((+))
 
 -- $setup
@@ -146,7 +147,7 @@ instance Pathish (Path rel typ rep) rel typ rep where
 --   generic operations like parsing and printing, with separate functions (like
 --  `anchor`) to lift the contained information to the type level.
 type AnyPath :: Kind.Type -> Kind.Type
-type AnyPath = Path 'Any 'Pathic
+type AnyPath = Path 'Any 'Type.Any
 
 -- -- | Convert an arbitrary value representing a path to `AnyPath`.
 -- --
@@ -174,7 +175,7 @@ instance Relative ('Rel 'True) where
 
 type Typey :: Type -> Kind.Constraint
 class Typey typ where
-  generalizeType :: Filename typ rep -> Filename 'Pathic rep
+  generalizeType :: Filename typ rep -> Filename 'Type.Any rep
 
 instance Typey 'Dir where
   generalizeType (Const ()) = Nothing
@@ -182,7 +183,7 @@ instance Typey 'Dir where
 instance Typey 'File where
   generalizeType = pure . runIdentity
 
-instance Typey 'Pathic where
+instance Typey 'Type.Any where
   generalizeType = id
 
 type Pathy :: Relativity -> Type -> Kind.Constraint
@@ -687,7 +688,7 @@ anchor path =
 forgetRelativity :: (Relative rel) => Path rel typ rep -> Path 'Any typ rep
 forgetRelativity path = path {parents = generalizeRelativity $ parents path}
 
-forgetType :: (Typey typ) => Path rel typ rep -> Path rel 'Pathic rep
+forgetType :: (Typey typ) => Path rel typ rep -> Path rel 'Type.Any rep
 forgetType path = path {filename = generalizeType $ filename path}
 
 -- | Forget the specific type of the path (which can be recovered with

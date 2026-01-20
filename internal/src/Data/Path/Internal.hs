@@ -15,8 +15,6 @@ module Data.Path.Internal
     Parents,
     Filename,
     Path (..),
-    Relativity (..),
-    Type (..),
     current,
     (</>),
   )
@@ -54,22 +52,13 @@ import safe "yaya" Yaya.Fold
   )
 import safe "yaya" Yaya.Functor (firstMap)
 import safe "yaya" Yaya.Pattern (Maybe, XNor (Neither), xnor)
+import "this" Data.Path.Internal.Relativity (Relativity (Abs, Any, Rel))
+import "this" Data.Path.Internal.Type (Type (Dir, File))
+import "this" Data.Path.Internal.Type qualified as Type (Type (Any))
 import safe "base" Prelude ((+))
 
--- |
---
---  __TODO__: Instead of `Bool` this could perhaps be a `Nat`, which would
---            indicate the maximum number of @../@ in the path (I think things
---            like `minimalRoute*` prevent us from tracking the /exact/ number –
---            and parsing arbitrary paths might make even the relative case
---            untenable – perhaps @`Rel` (`Maybe` `Nat`)@, where `Nothing`
---            indicates an unknown number of reparentings). That could later
---            allow for more total operations, if we add some way to track the
---            number of components in an absolute path.
-type Relativity :: Kind.Type
-data Relativity = Abs | Rel Bool | Any
-  deriving stock (Eq, Generic, Ord, Read, Show)
-
+-- | The `Parents` closed type family maps `Relativity` to types that encode the
+--  number of leading @../@ in the path.
 type Parents :: Relativity -> Kind.Type
 type family Parents rel = result | result -> rel where
   Parents 'Abs = ()
@@ -77,15 +66,11 @@ type family Parents rel = result | result -> rel where
   Parents ('Rel 'True) = Natural
   Parents 'Any = Maybe Natural
 
-type Type :: Kind.Type
-data Type = File | Dir | Pathic
-  deriving stock (Eq, Generic, Ord, Read, Show)
-
 type Filename :: Type -> Kind.Type -> Kind.Type
 type family Filename typ = result | result -> typ where
   Filename 'Dir = Const ()
   Filename 'File = Identity
-  Filename 'Pathic = Maybe
+  Filename 'Type.Any = Maybe
 
 -- | A strict sequence.
 --
