@@ -192,6 +192,10 @@ library
   import: defaults
   hs-source-dirs:
     src
+  ghc-options:
+    -- __NB__: Because @yaya@ is unused if QuickCheck is at least 2.17.
+    -Wno-unused-packages
+
   build-depends:
     QuickCheck ^>= {2.14.2, 2.15.0, 2.16.0, 2.17.1},
     pathway-internal ^>= {0.0.1},
