@@ -1,5 +1,6 @@
 # Pathway internals
 
+[![Hackage Version](https://img.shields.io/hackage/v/pathway-internal)](https://hackage.haskell.org/package/pathway-internal)
 [![Packaging status](https://repology.org/badge/tiny-repos/haskell:pathway-internal.svg)](https://repology.org/project/haskell:pathway-internal/versions)
 [![latest packaged versions](https://repology.org/badge/latest-versions/haskell:pathway-internal.svg)](https://repology.org/project/haskell:pathway-internal/versions)
 

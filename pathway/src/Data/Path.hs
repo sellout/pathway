@@ -106,14 +106,14 @@ import safe "base" Prelude ((+))
 -- $setup
 -- >>> :seti -XQuasiQuotes
 -- >>> :seti -XTypeApplications
+-- >>> import Data.Path.Directory ((</?>))
+-- >>> import qualified Data.Path.Format as Format
+-- >>> import Data.Path.TH (posix)
 -- >>> import "QuickCheck" Test.QuickCheck
 -- >>> import "base" Data.Bool (Bool (True))
 -- >>> import "base" Data.Functor ((<$>))
 -- >>> import "pathway-quickcheck" Test.Path.QuickCheck ()
 -- >>> import "yaya" Yaya.Pattern (fromJust, isNothing)
--- >>> import "this" Data.Path.Directory ((</?>))
--- >>> import qualified "this" Data.Path.Format as Format
--- >>> import "this" Data.Path.TH (posix)
 
 -- | __FIXME__: Move upstream.
 isNeither :: XNor a b -> Bool

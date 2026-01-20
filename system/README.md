@@ -1,5 +1,6 @@
 # Pathway system integration
 
+[![Hackage Version](https://img.shields.io/hackage/v/pathway-system)](https://hackage.haskell.org/package/pathway-system)
 [![Packaging status](https://repology.org/badge/tiny-repos/haskell:pathway-system.svg)](https://repology.org/project/haskell:pathway-system/versions)
 [![latest packaged versions](https://repology.org/badge/latest-versions/haskell:pathway-system.svg)](https://repology.org/project/haskell:pathway-system/versions)
 

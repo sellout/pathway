@@ -1,5 +1,6 @@
 # Pathway
 
+[![Hackage Version](https://img.shields.io/hackage/v/pathway)](https://hackage.haskell.org/package/pathway)
 [![Packaging status](https://repology.org/badge/tiny-repos/haskell:pathway.svg)](https://repology.org/project/haskell:pathway/versions)
 [![latest packaged versions](https://repology.org/badge/latest-versions/haskell:pathway.svg)](https://repology.org/project/haskell:pathway/versions)
 

@@ -1,7 +1,7 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE Safe #-}
 -- __NB__: Because of the nested `Parents` and `Filename` constraints.
 {-# LANGUAGE UndecidableInstances #-}
--- __NB__: Because QuickCheck doesn’t provide @`QC.Arbitrary` `Natural`@.
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module Test.Path.QuickCheck
@@ -15,7 +15,6 @@ import "base" Control.Applicative ((<*>))
 import "base" Control.Category ((.))
 import "base" Data.Functor ((<$>))
 import "base" Data.String (IsString, fromString)
-import "base" Numeric.Natural (Natural)
 import "pathway-internal" Data.Path.Internal
   ( Filename,
     List,
@@ -23,9 +22,12 @@ import "pathway-internal" Data.Path.Internal
     Path (Path),
   )
 import "quickcheck-instances" Test.QuickCheck.Instances.Strict ()
+import "yaya-quickcheck" Yaya.QuickCheck.Fold (arbitrarySteppable)
+#if !MIN_VERSION_QuickCheck (2, 17, 0)
+import "base" Numeric.Natural (Natural)
 import "yaya" Yaya.Applied (naturals, take)
 import "yaya" Yaya.Fold (Nu)
-import "yaya-quickcheck" Yaya.QuickCheck.Fold (arbitrarySteppable)
+#endif
 
 arbitraryNonEmptyText :: (IsString s) => QC.Gen s
 arbitraryNonEmptyText = fromString <$> QC.listOf1 QC.arbitraryPrintableChar
@@ -41,9 +43,11 @@ arbitraryPath ::
 arbitraryPath rel typ rep =
   Path <$> rel <*> arbitraryDirectories rep <*> typ rep
 
+#if !MIN_VERSION_QuickCheck (2, 17, 0)
 instance QC.Arbitrary Natural where
   arbitrary = QC.arbitrarySizedNatural
   shrink x = take x (naturals :: Nu ((,) Natural))
+#endif
 
 instance
   (QC.Arbitrary (Parents rel), QC.Arbitrary1 (Filename typ)) =>

@@ -1,5 +1,6 @@
 # Pathway ↔ `path` integration
 
+[![Hackage Version](https://img.shields.io/hackage/v/pathway-path)](https://hackage.haskell.org/package/pathway-path)
 [![Packaging status](https://repology.org/badge/tiny-repos/haskell:pathway-path.svg)](https://repology.org/project/haskell:pathway-path/versions)
 [![latest packaged versions](https://repology.org/badge/latest-versions/haskell:pathway-path.svg)](https://repology.org/project/haskell:pathway-path/versions)
 
