@@ -40,20 +40,42 @@
   ## CI
   ## FIXME: Shouldn’t need `mkForce` here (or to duplicate the base contexts).
   ##        Need to improve module merging.
-  services.github.settings.branches.main.protection.required_status_checks.contexts =
-    lib.mkForce
-    ([
-        "All Garnix checks"
-        "check-bounds"
-        "check-licenses"
-      ]
-      ++ lib.concatMap (sys:
-        lib.concatMap (ghc: [
-          "build (${ghc}, ${sys})"
-          "build (--prefer-oldest, ${ghc}, ${sys})"
-        ])
-        self.lib.nonNixTestedGhcVersions)
-      config.services.haskell-ci.systems);
+  services.github.settings = {
+    collaborators = [{username = "Aster89";}];
+    branches.main.protection.required_status_checks.contexts =
+      lib.mkForce
+      ([
+          "All Garnix checks"
+          "check-bounds"
+          "check-licenses"
+        ]
+        ++ lib.concatMap (sys:
+          lib.concatMap (ghc:
+            ## Don’t add `exclude`d matrix entries to the required list
+            ##
+            ## TODO: Make this less manual (like the `include` component).
+              if
+                ghc
+                == "8.10.1"
+                && builtins.elem sys ["macos-15-intel" "windows-2025"]
+                || ghc == "9.2.1" && builtins.elem sys ["macos-15" "ubuntu-24.04-arm"]
+                || ghc == "9.4.1" && builtins.elem sys ["macos-15" "macos-15-intel" "ubuntu-24.04" "ubuntu-24.04-arm" "windows-2025"]
+              then []
+              else [
+                "build (${ghc}, ${sys})"
+                "build (--prefer-oldest, ${ghc}, ${sys})"
+              ])
+          self.lib.nonNixTestedGhcVersions)
+        config.services.haskell-ci.systems
+        ## Add `include`d matrix entries to the required list.
+        ++ map (
+          entry:
+            if entry.bounds == ""
+            then "build (${entry.ghc}, ${entry.os})"
+            else "build (${entry.bounds}, ${entry.ghc}, ${entry.os})"
+        )
+        config.services.haskell-ci.include);
+  };
   services.haskell-ci = {
     inherit (self.lib) defaultGhcVersion;
     ghcVersions = self.lib.nonNixTestedGhcVersions;
