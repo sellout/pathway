@@ -55,9 +55,10 @@
             ##
             ## TODO: Make this less manual (like the `include` component).
               if
-                ghc
-                == "8.10.1"
-                && builtins.elem sys ["macos-15-intel" "windows-2025"]
+                builtins.elem ghc ["7.10.3" "8.0.2" "8.2.2"]
+                && sys == "ubuntu-24.04"
+                || lib.versionOlder ghc "9.2" && builtins.elem sys ["macos-15" "ubuntu-24.04-arm"]
+                || ghc == "8.10.1" && builtins.elem sys ["macos-15-intel" "windows-2025"]
                 || ghc == "9.2.1" && builtins.elem sys ["macos-15" "ubuntu-24.04-arm"]
                 || ghc == "9.4.1" && builtins.elem sys ["macos-15" "macos-15-intel" "ubuntu-24.04" "ubuntu-24.04-arm" "windows-2025"]
               then []
