@@ -29,10 +29,10 @@ import safe "filepath" System.FilePath qualified as FilePath
 import "path" Path qualified
 import safe "pathway" Data.Path
   ( Pathish,
-    Relativity (Abs, Any, Rel),
-    Type (Dir, File),
     specializePath,
   )
+import safe "pathway" Data.Path.Relativity (Relativity (Abs, Any, Rel))
+import safe "pathway" Data.Path.Type (Type (Dir, File))
 import safe "pathway-internal" Data.Path.Internal
   ( Path (Path),
     directories,

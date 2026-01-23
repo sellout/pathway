@@ -16,7 +16,9 @@ import safe "base" Control.Category ((.))
 import safe "base" Data.Either (Either)
 import safe "base" System.IO (IO)
 import "directory" System.Directory qualified as Dir
-import safe "pathway" Data.Path (Path, Relativity (Abs), Type (Dir))
+import safe "pathway" Data.Path (Path)
+import safe "pathway" Data.Path.Relativity (Relativity (Abs))
+import safe "pathway" Data.Path.Type (Type (Dir))
 import safe "transformers" Control.Monad.Trans.Class (lift)
 import safe "transformers" Control.Monad.Trans.Except (ExceptT)
 import safe "this" Filesystem.Path qualified as Path

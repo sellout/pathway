@@ -24,8 +24,6 @@ import "base" Data.Semigroup ((<>))
 import "pathway-internal" Data.Path.Internal
   ( List,
     Path (Path),
-    Relativity (Abs, Rel),
-    Type (Dir, File),
     current,
     directories,
     filename,
@@ -35,6 +33,8 @@ import "pathway-internal" Data.Path.Internal
 import "yaya" Yaya.Applied (drop, length, reverse, tail)
 import "yaya" Yaya.Fold (cata, embed)
 import "yaya" Yaya.Pattern (Maybe (Nothing), XNor (Both, Neither), xnor)
+import "this" Data.Path.Relativity (Relativity (Abs, Rel))
+import "this" Data.Path.Type (Type (Dir, File))
 
 -- $setup
 -- >>> :seti -XQuasiQuotes

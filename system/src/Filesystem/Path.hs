@@ -99,14 +99,15 @@ import safe "pathway" Data.Path
     AnyPath,
     Path,
     Relative,
-    Relativity (Abs, Any, Rel),
-    Type (Dir, File, Pathic),
     Typey,
     anchor,
     unanchor,
   )
 import safe "pathway" Data.Path.Format qualified as Format
 import safe "pathway" Data.Path.Parser qualified as Parser
+import safe "pathway" Data.Path.Relativity (Relativity (Abs, Any, Rel))
+import safe "pathway" Data.Path.Type (Type (Dir, File))
+import safe "pathway" Data.Path.Type qualified as Type (Type (Any))
 import safe "time" Data.Time.Clock (UTCTime)
 import safe "transformers" Control.Monad.Trans.Class (lift)
 import safe "transformers" Control.Monad.Trans.Except (ExceptT (ExceptT))
@@ -217,7 +218,7 @@ relPathFromPathRep ::
         (Path ('Rel 'False) 'File PathComponent)
     )
 relPathFromPathRep =
-  let badType rel typ = Left . IncorrectResultType Abs Pathic rel typ
+  let badType rel typ = Left . IncorrectResultType Abs Type.Any rel typ
    in handleAnchoredPath \case
         AbsDir path -> badType Abs Dir $ unanchor path
         AbsFile path -> badType Abs File $ unanchor path

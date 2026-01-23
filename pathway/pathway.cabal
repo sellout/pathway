@@ -208,7 +208,9 @@ library
     Data.Path.File
     Data.Path.Format
     Data.Path.Parser
+    Data.Path.Relativity
     Data.Path.TH
+    Data.Path.Type
 
 test-suite doctests
   import: defaults
