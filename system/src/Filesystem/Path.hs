@@ -78,7 +78,8 @@ where
 import safe "base" Control.Applicative (pure)
 import safe "base" Control.Category ((.))
 import safe "base" Control.Exception (Exception, throwIO)
-import safe "base" Data.Bool (Bool (False, True))
+import safe "base" Control.Monad ((<=<))
+import safe "base" Data.Bool (Bool (False, True), bool)
 import safe "base" Data.Either (Either (Left), either, partitionEithers)
 import safe "base" Data.Eq (Eq)
 import safe "base" Data.Foldable (toList)
@@ -101,6 +102,7 @@ import safe "pathway" Data.Path
     Relative,
     Typey,
     anchor,
+    forgetType,
     unanchor,
   )
 import safe "pathway" Data.Path.Format qualified as Format
@@ -119,12 +121,38 @@ fromPathRep ::
   Either (MP.ParseErrorBundle PathRep e) (Anchored PathComponent)
 fromPathRep = fmap anchor . MP.parse (Parser.path Format.local) ""
 
+dirFromPathRep' ::
+  (Ord e) =>
+  PathRep ->
+  Either (MP.ParseErrorBundle PathRep e) (Anchored PathComponent)
+dirFromPathRep' = fmap (anchor . forgetType) . MP.parse (Parser.directory Format.local) ""
+
+-- | This one needs to query the filesystem to determine if it’s a file or
+--   directory. If you know which one you want, you should use `handleAnchoredDir`
+--   or `handleAnchoredFile`.
 handleAnchoredPath ::
   (Ord e) =>
   (Anchored PathComponent -> Either (InternalFailure PathRep e) a) ->
   PathRep ->
+  IO (Either (InternalFailure PathRep e) a)
+handleAnchoredPath handler rep =
+  either (Left . ParseFailure) handler
+    . bool (fromPathRep rep) (dirFromPathRep' rep)
+    <$> Dir.doesDirectoryExist rep
+
+handleAnchoredDir ::
+  (Ord e) =>
+  (Anchored PathComponent -> Either (InternalFailure PathRep e) a) ->
+  PathRep ->
   Either (InternalFailure PathRep e) a
-handleAnchoredPath handler = either (Left . ParseFailure) handler . fromPathRep
+handleAnchoredDir handler = either (Left . ParseFailure) handler . dirFromPathRep'
+
+handleAnchoredFile ::
+  (Ord e) =>
+  (Anchored PathComponent -> Either (InternalFailure PathRep e) a) ->
+  PathRep ->
+  Either (InternalFailure PathRep e) a
+handleAnchoredFile handler = either (Left . ParseFailure) handler . fromPathRep
 
 absDirFromPathRep ::
   (Ord e) =>
@@ -132,12 +160,13 @@ absDirFromPathRep ::
   Either (InternalFailure PathRep e) (Path 'Abs 'Dir PathComponent)
 absDirFromPathRep =
   let badType rel typ = Left . IncorrectResultType Abs Dir rel typ
-   in handleAnchoredPath \case
+   in handleAnchoredDir \case
         AbsDir path -> pure path
-        AbsFile path -> badType Abs File $ unanchor path
         RelDir path -> badType (Rel False) Dir $ unanchor path
-        RelFile path -> badType (Rel False) File $ unanchor path
         ReparentedDir path -> badType (Rel True) Dir $ unanchor path
+        -- These are impossible, but not currently obvious to the type system.
+        AbsFile path -> badType Abs File $ unanchor path
+        RelFile path -> badType (Rel False) File $ unanchor path
         ReparentedFile path -> badType (Rel True) File $ unanchor path
 
 dirFromPathRep ::
@@ -151,12 +180,13 @@ dirFromPathRep ::
     )
 dirFromPathRep =
   let badType rel typ = Left . IncorrectResultType Any Dir rel typ
-   in handleAnchoredPath \case
+   in handleAnchoredDir \case
         AbsDir path -> pure $ Left path
-        AbsFile path -> badType Abs File $ unanchor path
         RelDir path -> pure $ pure path
-        RelFile path -> badType (Rel False) File $ unanchor path
         ReparentedDir path -> badType (Rel True) Dir $ unanchor path
+        -- These are impossible, but not currently obvious to the type system.
+        AbsFile path -> badType Abs File $ unanchor path
+        RelFile path -> badType (Rel False) File $ unanchor path
         ReparentedFile path -> badType (Rel True) File $ unanchor path
 
 absFileFromPathRep ::
@@ -165,7 +195,7 @@ absFileFromPathRep ::
   Either (InternalFailure PathRep e) (Path 'Abs 'File PathComponent)
 absFileFromPathRep =
   let badType rel typ = Left . IncorrectResultType Abs File rel typ
-   in handleAnchoredPath \case
+   in handleAnchoredFile \case
         AbsDir path -> badType Abs Dir $ unanchor path
         AbsFile path -> pure path
         RelDir path -> badType (Rel False) Dir $ unanchor path
@@ -184,7 +214,7 @@ fileFromPathRep ::
     )
 fileFromPathRep =
   let badType rel typ = Left . IncorrectResultType Abs File rel typ
-   in handleAnchoredPath \case
+   in handleAnchoredFile \case
         AbsDir path -> badType Abs Dir $ unanchor path
         AbsFile path -> pure $ Left path
         RelDir path -> badType (Rel False) Dir $ unanchor path
@@ -195,8 +225,9 @@ fileFromPathRep =
 -- absPathFromPathRep ::
 --   (Ord e) =>
 --   PathRep ->
---   Either
+--   ExceptT
 --     (InternalFailure PathRep e)
+--     IO
 --     (Either (Path 'Abs 'Dir PathComponent) (Path 'Abs 'File PathComponent))
 -- absPathFromPathRep =
 --   let badType rel typ = Left . IncorrectResultType Abs Pathic rel typ
@@ -211,11 +242,13 @@ fileFromPathRep =
 relPathFromPathRep ::
   (Ord e) =>
   PathRep ->
-  Either
-    (InternalFailure PathRep e)
+  IO
     ( Either
-        (Path ('Rel 'False) 'Dir PathComponent)
-        (Path ('Rel 'False) 'File PathComponent)
+        (InternalFailure PathRep e)
+        ( Either
+            (Path ('Rel 'False) 'Dir PathComponent)
+            (Path ('Rel 'False) 'File PathComponent)
+        )
     )
 relPathFromPathRep =
   let badType rel typ = Left . IncorrectResultType Abs Type.Any rel typ
@@ -375,9 +408,10 @@ listDirectory ::
     )
 listDirectory =
   lift
-    . fmap (fmap partitionEithers . partitionEithers . fmap relPathFromPathRep)
-    . Dir.listDirectory
-    . toPathRep
+    . ( fmap (fmap partitionEithers . partitionEithers)
+          . traverse relPathFromPathRep
+          <=< Dir.listDirectory . toPathRep
+      )
 
 -- |
 --
@@ -403,9 +437,10 @@ getDirectoryContents ::
     )
 getDirectoryContents =
   lift
-    . fmap (fmap partitionEithers . partitionEithers . fmap relPathFromPathRep)
-    . Dir.getDirectoryContents
-    . toPathRep
+    . ( fmap (fmap partitionEithers . partitionEithers)
+          . traverse relPathFromPathRep
+          <=< Dir.getDirectoryContents . toPathRep
+      )
 
 -- | This returns what the system understands as the “current” directory. This
 --   is generally the directory from which the program was executed, but it
