@@ -605,6 +605,10 @@ anyToText format path =
       file = maybe "" escapeComponent $ filename path
    in prefix <> directory <> file
 
+-- |
+--
+-- >>> toText Format.posix [posix|.be/|]
+-- ".be/"
 toText ::
   (Pathy rel typ, IsString a, Semigroup a, Substible a) => Format a -> Path rel typ a -> a
 toText format = anyToText format . unanchor
