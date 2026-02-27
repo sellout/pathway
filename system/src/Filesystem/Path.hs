@@ -32,7 +32,8 @@
 --   that there is at least a full path available (unless the developer makes an
 --   effort to remove it.
 module Filesystem.Path
-  ( FundamentalFailure (..),
+  ( InternalFailure (..),
+    FundamentalFailure (..),
     ArgumentFailure (..),
     CreationFailure (..),
     MaybeCreationFailure (..),
