@@ -78,7 +78,7 @@ where
 import safe "base" Control.Applicative (pure)
 import safe "base" Control.Category ((.))
 import safe "base" Control.Exception (Exception, throwIO)
-import safe "base" Control.Monad ((<=<))
+import safe "base" Control.Monad ((=<<))
 import safe "base" Data.Bool (Bool (False, True), bool)
 import safe "base" Data.Either (Either (Left), either, partitionEithers)
 import safe "base" Data.Eq (Eq)
@@ -88,6 +88,7 @@ import safe "base" Data.Functor (fmap, (<$>))
 import safe "base" Data.Kind qualified as Kind
 import safe "base" Data.Maybe (Maybe)
 import safe "base" Data.Ord (Ord)
+import safe "base" Data.Semigroup ((<>))
 import safe "base" Data.Traversable (traverse)
 import safe "base" Data.Typeable (Typeable)
 import safe "base" GHC.Generics (Generic)
@@ -132,13 +133,14 @@ dirFromPathRep' = fmap (anchor . forgetType) . MP.parse (Parser.directory Format
 --   or `handleAnchoredFile`.
 handleAnchoredPath ::
   (Ord e) =>
+  PathRep ->
   (Anchored PathComponent -> Either (InternalFailure PathRep e) a) ->
   PathRep ->
   IO (Either (InternalFailure PathRep e) a)
-handleAnchoredPath handler rep =
+handleAnchoredPath base handler rep =
   either (Left . ParseFailure) handler
     . bool (fromPathRep rep) (dirFromPathRep' rep)
-    <$> Dir.doesDirectoryExist rep
+    <$> Dir.doesDirectoryExist (base <> "/" <> rep)
 
 handleAnchoredDir ::
   (Ord e) =>
@@ -242,6 +244,7 @@ fileFromPathRep =
 relPathFromPathRep ::
   (Ord e) =>
   PathRep ->
+  PathRep ->
   IO
     ( Either
         (InternalFailure PathRep e)
@@ -250,9 +253,9 @@ relPathFromPathRep ::
             (Path ('Rel 'False) 'File PathComponent)
         )
     )
-relPathFromPathRep =
+relPathFromPathRep base =
   let badType rel typ = Left . IncorrectResultType Abs Type.Any rel typ
-   in handleAnchoredPath \case
+   in handleAnchoredPath base \case
         AbsDir path -> badType Abs Dir $ unanchor path
         AbsFile path -> badType Abs File $ unanchor path
         RelDir path -> pure $ Left path
@@ -406,12 +409,12 @@ listDirectory ::
         [Path ('Rel 'False) 'File PathComponent]
       )
     )
-listDirectory =
-  lift
-    . ( fmap (fmap partitionEithers . partitionEithers)
-          . traverse relPathFromPathRep
-          <=< Dir.listDirectory . toPathRep
-      )
+listDirectory dir =
+  let rep = toPathRep dir
+   in lift $
+        fmap (fmap partitionEithers . partitionEithers)
+          . traverse (relPathFromPathRep rep)
+          =<< Dir.listDirectory rep
 
 -- |
 --
@@ -435,12 +438,12 @@ getDirectoryContents ::
         [Path ('Rel 'False) 'File PathComponent]
       )
     )
-getDirectoryContents =
-  lift
-    . ( fmap (fmap partitionEithers . partitionEithers)
-          . traverse relPathFromPathRep
-          <=< Dir.getDirectoryContents . toPathRep
-      )
+getDirectoryContents dir =
+  let rep = toPathRep dir
+   in lift $
+        fmap (fmap partitionEithers . partitionEithers)
+          . traverse (relPathFromPathRep rep)
+          =<< Dir.getDirectoryContents rep
 
 -- | This returns what the system understands as the “current” directory. This
 --   is generally the directory from which the program was executed, but it
