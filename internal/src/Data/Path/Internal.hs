@@ -138,7 +138,8 @@ data Path rel typ rep = Path
     directories :: List rep,
     filename :: Filename typ rep
   }
-  deriving stock (Generic, Generic1)
+  deriving stock (Generic)
+  deriving stock (Generic1)
 
 deriving stock instance
   (Eq (Parents rel), Eq (Filename typ rep), Eq rep) => Eq (Path rel typ rep)

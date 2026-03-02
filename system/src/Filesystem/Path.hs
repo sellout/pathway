@@ -93,8 +93,9 @@ import safe "base" Data.Ord (Ord)
 import safe "base" Data.Semigroup ((<>))
 import safe "base" Data.Traversable (traverse)
 import safe "base" Data.Typeable (Typeable)
-import safe "base" GHC.Generics (Generic)
+import safe "base" GHC.Generics (Generic, Generic1)
 import safe "base" System.IO (IO)
+import safe "base" Text.Read (Read)
 import safe "base" Text.Show (Show)
 import "directory" System.Directory qualified as Dir
 import safe "megaparsec" Text.Megaparsec qualified as MP
@@ -265,11 +266,17 @@ relPathFromPathRep base =
         ReparentedDir path -> badType (Rel True) Dir $ unanchor path
         ReparentedFile path -> badType (Rel True) File $ unanchor path
 
+-- |
+--
+--  __NB__: This is lacking `Ord`, `Read`, `Foldable`, `Functor`, and
+--          `Traversable` instances because `MP.ParseErrorBundle` is missing
+--          them.
 type InternalFailure :: Kind.Type -> Kind.Type -> Kind.Type
 data InternalFailure rep e
   = ParseFailure (MP.ParseErrorBundle rep e)
   | IncorrectResultType Relativity Type Relativity Type (AnyPath rep)
   deriving stock (Generic)
+  deriving stock (Generic1)
 
 deriving stock instance
   (Eq rep, Eq (MP.Token rep), Eq e) => Eq (InternalFailure rep e)
@@ -290,6 +297,7 @@ data FundamentalFailure
     PermissionError
   | -- | A physical I/O error has occurred. [EIO]
     HardwareFault
+  deriving stock (Eq, Generic, Ord, Read, Show)
 
 type ArgumentFailure :: Kind.Type
 data ArgumentFailure
@@ -299,18 +307,21 @@ data ArgumentFailure
   | -- | The path refers to an existing non-directory object. [EEXIST]
     InappropriateType
   | AFFF FundamentalFailure
+  deriving stock (Eq, Generic, Ord, Read, Show)
 
 type CreationFailure :: Kind.Type
 data CreationFailure
   = -- | The operand refers to a directory that already exists. [EEXIST]
     AlreadyExistsError
   | MCF MaybeCreationFailure
+  deriving stock (Eq, Generic, Ord, Read, Show)
 
 type MaybeCreationFailure :: Kind.Type
 data MaybeCreationFailure
   = -- | There is no path to the directory. [ENOENT, ENOTDIR]
     DoesNotExistError
   | MPCF MaybeParentCreationFailure
+  deriving stock (Eq, Generic, Ord, Read, Show)
 
 type MaybeParentCreationFailure :: Kind.Type
 data MaybeParentCreationFailure
@@ -319,12 +330,14 @@ data MaybeParentCreationFailure
     --  [EDQUOT, ENOSPC, ENOMEM, EMLINK]
     FullError
   | MPCFAF ArgumentFailure
+  deriving stock (Eq, Generic, Ord, Read, Show)
 
 type DirRemovalFailure :: Kind.Type
 data DirRemovalFailure
   = -- | The implementation does not support removal in this situation. [EINVAL]
     DRmFUnsupportedOperation
   | RF RemovalFailure
+  deriving stock (Eq, Generic, Ord, Read, Show)
 
 type RemovalFailure :: Kind.Type
 data RemovalFailure
@@ -334,6 +347,7 @@ data RemovalFailure
     --   ENOTEMPTY, EEXIST]
     RmFUnsatisfiedConstraints
   | RmFAF ArgumentFailure
+  deriving stock (Eq, Generic, Ord, Read, Show)
 
 type RenameFailure :: Kind.Type
 data RenameFailure
@@ -350,6 +364,7 @@ data RenameFailure
     --   ENOSPC, ENOMEM, EMLINK]
     RnFFullError
   | DRFAF ArgumentFailure
+  deriving stock (Eq, Generic, Ord, Read, Show)
 
 type GetFailure :: Kind.Type
 data GetFailure
@@ -361,6 +376,7 @@ data GetFailure
     --   ENFILE]
     GFFullError
   | GFFF FundamentalFailure
+  deriving stock (Eq, Generic, Ord, Read, Show)
 
 type SetFailure :: Kind.Type
 data SetFailure
@@ -370,6 +386,7 @@ data SetFailure
     --   working directory cannot be dynamically changed.
     SFUnsupportedOperation
   | SFAF ArgumentFailure
+  deriving stock (Eq, Generic, Ord, Read, Show)
 
 type ListFailure :: Kind.Type
 data ListFailure
@@ -379,6 +396,7 @@ data ListFailure
     --   ENFILE]
     LFFullError
   | LFAF ArgumentFailure
+  deriving stock (Eq, Generic, Ord, Read, Show)
 
 createDirectory :: Path 'Abs 'Dir PathComponent -> ExceptT CreationFailure IO ()
 createDirectory = lift . Dir.createDirectory . toPathRep
