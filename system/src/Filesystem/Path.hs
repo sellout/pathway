@@ -65,6 +65,7 @@ module Filesystem.Path
     getAccessTime,
     getCurrentDirectory,
     getDirectoryContents,
+    getHomeDirectory,
     getModificationTime,
     getPermissions,
     listDirectory,
@@ -456,7 +457,12 @@ getDirectoryContents dir =
 getCurrentDirectory ::
   (Ord e) =>
   ExceptT (InternalFailure PathRep e) IO (Path 'Abs 'Dir PathComponent)
-getCurrentDirectory = ExceptT $ fmap absDirFromPathRep Dir.getCurrentDirectory
+getCurrentDirectory = ExceptT $ absDirFromPathRep <$> Dir.getCurrentDirectory
+
+getHomeDirectory ::
+  (Ord e) =>
+  ExceptT (InternalFailure PathRep e) IO (Path 'Abs 'Dir PathComponent)
+getHomeDirectory = ExceptT $ absDirFromPathRep <$> Dir.getHomeDirectory
 
 -- __TODO__: Fill in a lot of stuff
 
