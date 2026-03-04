@@ -22,6 +22,8 @@
 module Data.Path
   ( Anchored (..),
     AnyPath,
+    Filename,
+    Parents,
     Path,
     Pathish (..),
     Pathy,
