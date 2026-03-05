@@ -1,5 +1,4 @@
 {-# LANGUAGE Safe #-}
-{-# LANGUAGE TypeApplications #-}
 
 module Data.Path.TH
   ( path,
@@ -81,16 +80,18 @@ deconstructAnyPath (Path p d f) =
 path :: Format String -> String -> TH.Q TH.Exp
 path format =
   either (fail . show) (pure . deconstructAnyPath)
-    . MP.parse (Parser.path @_ @Void format) ""
+    . MP.parse (Parser.path format :: MP.Parsec Void String (AnyPath String)) ""
 
 pathQuoter :: Format String -> TH.QuasiQuoter
 pathQuoter format =
   TH.QuasiQuoter
-    { TH.quoteDec = const $ fail "Meh",
+    { TH.quoteDec = invalid,
       TH.quoteExp = path format,
-      TH.quotePat = const $ fail "Meh",
-      TH.quoteType = const $ fail "Meh"
+      TH.quotePat = invalid,
+      TH.quoteType = invalid
     }
+  where
+    invalid = const $ fail "Paths can only be used as expressions."
 
 -- |
 --
