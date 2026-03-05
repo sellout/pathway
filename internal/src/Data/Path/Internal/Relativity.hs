@@ -14,8 +14,8 @@ import "base" Text.Show (Show)
 --  to be `Abs`olute or `Rel`ative; if not, the constructor `Any` encodes the fact
 --  that such information will only be available at runtime.
 --
---  The `Rel` constructor accepts a @Bool@ which encodes whether or not the
---  `Path` has a leading @../@. TODO clarify what's True and what's False.
+--  The `Rel` constructor accepts a @Bool@ which encodes whether (`True`)
+--  or not (`False`) the `Path` is allowed to have a leading @../@.
 --
 --   __TODO__: Instead of `Bool` this could perhaps be a `Nat`, which would
 --             indicate the maximum number of leading @../@ in the path (I think
