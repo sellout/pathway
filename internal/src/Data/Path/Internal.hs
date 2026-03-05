@@ -1,7 +1,9 @@
 {-# LANGUAGE Trustworthy #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilyDependencies #-}
 -- __NB__: Because of the nested `Parents` and `Filename` constraints.
 {-# LANGUAGE UndecidableInstances #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 -- "GHC.Natural" is ‘Unsafe’ before base 4.14.4. We can’t conditionalize the
 -- Safe Haskell extension (because it forces Safe Haskell-using consumers to
 -- conditionalize), so this silences the fact that this module is inferred
@@ -20,7 +22,10 @@ module Data.Path.Internal
   )
 where
 
+import safe "base" Control.Applicative (Applicative, liftA2, pure)
 import safe "base" Control.Category ((.))
+import safe "base" Data.Bifoldable (Bifoldable, bifoldr)
+import safe "base" Data.Bitraversable (Bitraversable, bisequenceA, bitraverse)
 import safe "base" Data.Bool (Bool (False, True))
 import safe "base" Data.Eq (Eq)
 import safe "base" Data.Foldable (Foldable, foldr, sum)
@@ -33,7 +38,7 @@ import safe "base" Data.Monoid (Monoid, mempty)
 import safe "base" Data.Ord (Ord)
 import safe "base" Data.Proxy (Proxy (Proxy))
 import safe "base" Data.Semigroup (Semigroup, stimes, stimesMonoid, (<>))
--- import safe "base" Data.Traversable (Traversable, traverse)
+import safe "base" Data.Traversable (Traversable, traverse)
 import safe "base" GHC.Generics (Generic, Generic1)
 -- TODO: `minusNaturalMaybe` is exported from Numeric.Natural starting with base-4.18 (GHC 9.6).
 import "base" GHC.Natural (minusNaturalMaybe)
@@ -50,8 +55,8 @@ import safe "yaya" Yaya.Fold
     embed,
     project,
   )
-import safe "yaya" Yaya.Functor (firstMap)
-import safe "yaya" Yaya.Pattern (Maybe, XNor (Neither), xnor)
+import safe "yaya" Yaya.Functor (DFunctor, firstMap)
+import safe "yaya" Yaya.Pattern (Maybe, XNor (Both, Neither), xnor)
 import "this" Data.Path.Internal.Relativity (Relativity (Abs, Any, Rel))
 import "this" Data.Path.Internal.Type (Type (Dir, File))
 import "this" Data.Path.Internal.Type qualified as Type (Type (Any))
@@ -101,6 +106,30 @@ instance Foldable List where
 instance Functor List where
   fmap f (List mu) = List (firstMap f mu)
 
+instance Bifoldable XNor where
+  bifoldr f g z = xnor z \a -> f a . (`g` z)
+
+instance Bitraversable XNor where
+  bitraverse f g = xnor (pure Neither) \a -> liftA2 Both (f a) . g
+
+-- |
+--
+--  __TODO__: Move this – "Yaya.Functor" would be a good place, but this depends
+--            on things from "Yaya.Fold", which is downstream from that.
+firstTraverse ::
+  forall d b f a c u.
+  ( Recursive (->) (d (b (f c))) (b (f c)),
+    Steppable (->) u (b c),
+    DFunctor d,
+    Bitraversable b,
+    Applicative f
+  ) =>
+  (a -> f c) -> d (b a) -> f u
+firstTraverse f = cata @_ @_ @(b (f c)) (fmap embed . bisequenceA) . firstMap f
+
+instance Traversable List where
+  traverse f (List mu) = List <$> firstTraverse f mu
+
 -- | This provides a dozen variants of a filesystem path type, split into four
 --   categories:
 --
@@ -138,7 +167,8 @@ data Path rel typ rep = Path
     directories :: List rep,
     filename :: Filename typ rep
   }
-  deriving stock (Generic, Generic1)
+  deriving stock (Generic)
+  deriving stock (Generic1)
 
 deriving stock instance
   (Eq (Parents rel), Eq (Filename typ rep), Eq rep) => Eq (Path rel typ rep)
@@ -160,9 +190,8 @@ deriving stock instance
 deriving stock instance
   (Functor (Filename typ)) => Functor (Path rel typ)
 
--- deriving stock instance Traversable (Path rel 'Dir)
-
--- deriving stock instance Traversable (Path rel 'File)
+deriving stock instance
+  (Traversable (Filename typ)) => Traversable (Path rel typ)
 
 type TotalOps :: Relativity -> Bool -> Relativity -> Kind.Constraint
 class TotalOps rel par rel' | rel par -> rel' where

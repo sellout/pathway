@@ -41,7 +41,7 @@ posix =
       current = "./",
       parent = "../",
       separator = "/",
-      substitutions = Map.fromList [("/", "\\/"), (".", "\\.")]
+      substitutions = Map.fromList [("/", "\\/")]
     }
 
 windows :: (IsString s, Ord s, Semigroup s) => Maybe s -> Format s

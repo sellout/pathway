@@ -32,7 +32,8 @@
 --   that there is at least a full path available (unless the developer makes an
 --   effort to remove it.
 module Filesystem.Path
-  ( FundamentalFailure (..),
+  ( InternalFailure (..),
+    FundamentalFailure (..),
     ArgumentFailure (..),
     CreationFailure (..),
     MaybeCreationFailure (..),
@@ -64,6 +65,7 @@ module Filesystem.Path
     getAccessTime,
     getCurrentDirectory,
     getDirectoryContents,
+    getHomeDirectory,
     getModificationTime,
     getPermissions,
     listDirectory,
@@ -78,7 +80,8 @@ where
 import safe "base" Control.Applicative (pure)
 import safe "base" Control.Category ((.))
 import safe "base" Control.Exception (Exception, throwIO)
-import safe "base" Data.Bool (Bool (False, True))
+import safe "base" Control.Monad ((=<<))
+import safe "base" Data.Bool (Bool (False, True), bool)
 import safe "base" Data.Either (Either (Left), either, partitionEithers)
 import safe "base" Data.Eq (Eq)
 import safe "base" Data.Foldable (toList)
@@ -87,10 +90,12 @@ import safe "base" Data.Functor (fmap, (<$>))
 import safe "base" Data.Kind qualified as Kind
 import safe "base" Data.Maybe (Maybe)
 import safe "base" Data.Ord (Ord)
+import safe "base" Data.Semigroup ((<>))
 import safe "base" Data.Traversable (traverse)
 import safe "base" Data.Typeable (Typeable)
-import safe "base" GHC.Generics (Generic)
+import safe "base" GHC.Generics (Generic, Generic1)
 import safe "base" System.IO (IO)
+import safe "base" Text.Read (Read)
 import safe "base" Text.Show (Show)
 import "directory" System.Directory qualified as Dir
 import safe "megaparsec" Text.Megaparsec qualified as MP
@@ -101,6 +106,7 @@ import safe "pathway" Data.Path
     Relative,
     Typey,
     anchor,
+    forgetType,
     unanchor,
   )
 import safe "pathway" Data.Path.Format qualified as Format
@@ -119,12 +125,39 @@ fromPathRep ::
   Either (MP.ParseErrorBundle PathRep e) (Anchored PathComponent)
 fromPathRep = fmap anchor . MP.parse (Parser.path Format.local) ""
 
+dirFromPathRep' ::
+  (Ord e) =>
+  PathRep ->
+  Either (MP.ParseErrorBundle PathRep e) (Anchored PathComponent)
+dirFromPathRep' = fmap (anchor . forgetType) . MP.parse (Parser.directory Format.local) ""
+
+-- | This one needs to query the filesystem to determine if it’s a file or
+--   directory. If you know which one you want, you should use `handleAnchoredDir`
+--   or `handleAnchoredFile`.
 handleAnchoredPath ::
+  (Ord e) =>
+  PathRep ->
+  (Anchored PathComponent -> Either (InternalFailure PathRep e) a) ->
+  PathRep ->
+  IO (Either (InternalFailure PathRep e) a)
+handleAnchoredPath base handler rep =
+  either (Left . ParseFailure) handler
+    . bool (fromPathRep rep) (dirFromPathRep' rep)
+    <$> Dir.doesDirectoryExist (base <> "/" <> rep)
+
+handleAnchoredDir ::
   (Ord e) =>
   (Anchored PathComponent -> Either (InternalFailure PathRep e) a) ->
   PathRep ->
   Either (InternalFailure PathRep e) a
-handleAnchoredPath handler = either (Left . ParseFailure) handler . fromPathRep
+handleAnchoredDir handler = either (Left . ParseFailure) handler . dirFromPathRep'
+
+handleAnchoredFile ::
+  (Ord e) =>
+  (Anchored PathComponent -> Either (InternalFailure PathRep e) a) ->
+  PathRep ->
+  Either (InternalFailure PathRep e) a
+handleAnchoredFile handler = either (Left . ParseFailure) handler . fromPathRep
 
 absDirFromPathRep ::
   (Ord e) =>
@@ -132,12 +165,13 @@ absDirFromPathRep ::
   Either (InternalFailure PathRep e) (Path 'Abs 'Dir PathComponent)
 absDirFromPathRep =
   let badType rel typ = Left . IncorrectResultType Abs Dir rel typ
-   in handleAnchoredPath \case
+   in handleAnchoredDir \case
         AbsDir path -> pure path
-        AbsFile path -> badType Abs File $ unanchor path
         RelDir path -> badType (Rel False) Dir $ unanchor path
-        RelFile path -> badType (Rel False) File $ unanchor path
         ReparentedDir path -> badType (Rel True) Dir $ unanchor path
+        -- These are impossible, but not currently obvious to the type system.
+        AbsFile path -> badType Abs File $ unanchor path
+        RelFile path -> badType (Rel False) File $ unanchor path
         ReparentedFile path -> badType (Rel True) File $ unanchor path
 
 dirFromPathRep ::
@@ -151,12 +185,13 @@ dirFromPathRep ::
     )
 dirFromPathRep =
   let badType rel typ = Left . IncorrectResultType Any Dir rel typ
-   in handleAnchoredPath \case
+   in handleAnchoredDir \case
         AbsDir path -> pure $ Left path
-        AbsFile path -> badType Abs File $ unanchor path
         RelDir path -> pure $ pure path
-        RelFile path -> badType (Rel False) File $ unanchor path
         ReparentedDir path -> badType (Rel True) Dir $ unanchor path
+        -- These are impossible, but not currently obvious to the type system.
+        AbsFile path -> badType Abs File $ unanchor path
+        RelFile path -> badType (Rel False) File $ unanchor path
         ReparentedFile path -> badType (Rel True) File $ unanchor path
 
 absFileFromPathRep ::
@@ -165,7 +200,7 @@ absFileFromPathRep ::
   Either (InternalFailure PathRep e) (Path 'Abs 'File PathComponent)
 absFileFromPathRep =
   let badType rel typ = Left . IncorrectResultType Abs File rel typ
-   in handleAnchoredPath \case
+   in handleAnchoredFile \case
         AbsDir path -> badType Abs Dir $ unanchor path
         AbsFile path -> pure path
         RelDir path -> badType (Rel False) Dir $ unanchor path
@@ -184,7 +219,7 @@ fileFromPathRep ::
     )
 fileFromPathRep =
   let badType rel typ = Left . IncorrectResultType Abs File rel typ
-   in handleAnchoredPath \case
+   in handleAnchoredFile \case
         AbsDir path -> badType Abs Dir $ unanchor path
         AbsFile path -> pure $ Left path
         RelDir path -> badType (Rel False) Dir $ unanchor path
@@ -195,8 +230,9 @@ fileFromPathRep =
 -- absPathFromPathRep ::
 --   (Ord e) =>
 --   PathRep ->
---   Either
+--   ExceptT
 --     (InternalFailure PathRep e)
+--     IO
 --     (Either (Path 'Abs 'Dir PathComponent) (Path 'Abs 'File PathComponent))
 -- absPathFromPathRep =
 --   let badType rel typ = Left . IncorrectResultType Abs Pathic rel typ
@@ -211,15 +247,18 @@ fileFromPathRep =
 relPathFromPathRep ::
   (Ord e) =>
   PathRep ->
-  Either
-    (InternalFailure PathRep e)
+  PathRep ->
+  IO
     ( Either
-        (Path ('Rel 'False) 'Dir PathComponent)
-        (Path ('Rel 'False) 'File PathComponent)
+        (InternalFailure PathRep e)
+        ( Either
+            (Path ('Rel 'False) 'Dir PathComponent)
+            (Path ('Rel 'False) 'File PathComponent)
+        )
     )
-relPathFromPathRep =
+relPathFromPathRep base =
   let badType rel typ = Left . IncorrectResultType Abs Type.Any rel typ
-   in handleAnchoredPath \case
+   in handleAnchoredPath base \case
         AbsDir path -> badType Abs Dir $ unanchor path
         AbsFile path -> badType Abs File $ unanchor path
         RelDir path -> pure $ Left path
@@ -227,11 +266,17 @@ relPathFromPathRep =
         ReparentedDir path -> badType (Rel True) Dir $ unanchor path
         ReparentedFile path -> badType (Rel True) File $ unanchor path
 
+-- |
+--
+--  __NB__: This is lacking `Ord`, `Read`, `Foldable`, `Functor`, and
+--          `Traversable` instances because `MP.ParseErrorBundle` is missing
+--          them.
 type InternalFailure :: Kind.Type -> Kind.Type -> Kind.Type
 data InternalFailure rep e
   = ParseFailure (MP.ParseErrorBundle rep e)
   | IncorrectResultType Relativity Type Relativity Type (AnyPath rep)
   deriving stock (Generic)
+  deriving stock (Generic1)
 
 deriving stock instance
   (Eq rep, Eq (MP.Token rep), Eq e) => Eq (InternalFailure rep e)
@@ -252,6 +297,7 @@ data FundamentalFailure
     PermissionError
   | -- | A physical I/O error has occurred. [EIO]
     HardwareFault
+  deriving stock (Eq, Generic, Ord, Read, Show)
 
 type ArgumentFailure :: Kind.Type
 data ArgumentFailure
@@ -261,18 +307,21 @@ data ArgumentFailure
   | -- | The path refers to an existing non-directory object. [EEXIST]
     InappropriateType
   | AFFF FundamentalFailure
+  deriving stock (Eq, Generic, Ord, Read, Show)
 
 type CreationFailure :: Kind.Type
 data CreationFailure
   = -- | The operand refers to a directory that already exists. [EEXIST]
     AlreadyExistsError
   | MCF MaybeCreationFailure
+  deriving stock (Eq, Generic, Ord, Read, Show)
 
 type MaybeCreationFailure :: Kind.Type
 data MaybeCreationFailure
   = -- | There is no path to the directory. [ENOENT, ENOTDIR]
     DoesNotExistError
   | MPCF MaybeParentCreationFailure
+  deriving stock (Eq, Generic, Ord, Read, Show)
 
 type MaybeParentCreationFailure :: Kind.Type
 data MaybeParentCreationFailure
@@ -281,12 +330,14 @@ data MaybeParentCreationFailure
     --  [EDQUOT, ENOSPC, ENOMEM, EMLINK]
     FullError
   | MPCFAF ArgumentFailure
+  deriving stock (Eq, Generic, Ord, Read, Show)
 
 type DirRemovalFailure :: Kind.Type
 data DirRemovalFailure
   = -- | The implementation does not support removal in this situation. [EINVAL]
     DRmFUnsupportedOperation
   | RF RemovalFailure
+  deriving stock (Eq, Generic, Ord, Read, Show)
 
 type RemovalFailure :: Kind.Type
 data RemovalFailure
@@ -296,6 +347,7 @@ data RemovalFailure
     --   ENOTEMPTY, EEXIST]
     RmFUnsatisfiedConstraints
   | RmFAF ArgumentFailure
+  deriving stock (Eq, Generic, Ord, Read, Show)
 
 type RenameFailure :: Kind.Type
 data RenameFailure
@@ -312,6 +364,7 @@ data RenameFailure
     --   ENOSPC, ENOMEM, EMLINK]
     RnFFullError
   | DRFAF ArgumentFailure
+  deriving stock (Eq, Generic, Ord, Read, Show)
 
 type GetFailure :: Kind.Type
 data GetFailure
@@ -323,6 +376,7 @@ data GetFailure
     --   ENFILE]
     GFFullError
   | GFFF FundamentalFailure
+  deriving stock (Eq, Generic, Ord, Read, Show)
 
 type SetFailure :: Kind.Type
 data SetFailure
@@ -332,6 +386,7 @@ data SetFailure
     --   working directory cannot be dynamically changed.
     SFUnsupportedOperation
   | SFAF ArgumentFailure
+  deriving stock (Eq, Generic, Ord, Read, Show)
 
 type ListFailure :: Kind.Type
 data ListFailure
@@ -341,6 +396,7 @@ data ListFailure
     --   ENFILE]
     LFFullError
   | LFAF ArgumentFailure
+  deriving stock (Eq, Generic, Ord, Read, Show)
 
 createDirectory :: Path 'Abs 'Dir PathComponent -> ExceptT CreationFailure IO ()
 createDirectory = lift . Dir.createDirectory . toPathRep
@@ -373,11 +429,12 @@ listDirectory ::
         [Path ('Rel 'False) 'File PathComponent]
       )
     )
-listDirectory =
-  lift
-    . fmap (fmap partitionEithers . partitionEithers . fmap relPathFromPathRep)
-    . Dir.listDirectory
-    . toPathRep
+listDirectory dir =
+  let rep = toPathRep dir
+   in lift $
+        fmap (fmap partitionEithers . partitionEithers)
+          . traverse (relPathFromPathRep rep)
+          =<< Dir.listDirectory rep
 
 -- |
 --
@@ -401,11 +458,12 @@ getDirectoryContents ::
         [Path ('Rel 'False) 'File PathComponent]
       )
     )
-getDirectoryContents =
-  lift
-    . fmap (fmap partitionEithers . partitionEithers . fmap relPathFromPathRep)
-    . Dir.getDirectoryContents
-    . toPathRep
+getDirectoryContents dir =
+  let rep = toPathRep dir
+   in lift $
+        fmap (fmap partitionEithers . partitionEithers)
+          . traverse (relPathFromPathRep rep)
+          =<< Dir.getDirectoryContents rep
 
 -- | This returns what the system understands as the “current” directory. This
 --   is generally the directory from which the program was executed, but it
@@ -417,7 +475,12 @@ getDirectoryContents =
 getCurrentDirectory ::
   (Ord e) =>
   ExceptT (InternalFailure PathRep e) IO (Path 'Abs 'Dir PathComponent)
-getCurrentDirectory = ExceptT $ fmap absDirFromPathRep Dir.getCurrentDirectory
+getCurrentDirectory = ExceptT $ absDirFromPathRep <$> Dir.getCurrentDirectory
+
+getHomeDirectory ::
+  (Ord e) =>
+  ExceptT (InternalFailure PathRep e) IO (Path 'Abs 'Dir PathComponent)
+getHomeDirectory = ExceptT $ absDirFromPathRep <$> Dir.getHomeDirectory
 
 -- __TODO__: Fill in a lot of stuff
 

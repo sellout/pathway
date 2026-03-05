@@ -1,6 +1,4 @@
 {-# LANGUAGE Safe #-}
-{-# LANGUAGE TemplateHaskellQuotes #-}
-{-# LANGUAGE TypeApplications #-}
 
 module Data.Path.TH
   ( path,
@@ -40,7 +38,9 @@ import "base" Prelude (fromIntegral)
 
 -- $setup
 -- >>> :seti -XQuasiQuotes
--- >>> import Data.Path (Relativity (Abs), Type (File))
+-- >>> :seti -XTypeApplications
+-- >>> import "base" Data.Bool (Bool (False))
+-- >>> import Data.Path (Relativity (Abs, Rel), Type (Dir, File))
 
 deconstructXNor :: (a -> TH.Exp) -> (b -> TH.Exp) -> XNor a b -> TH.Exp
 deconstructXNor f g =
@@ -80,21 +80,26 @@ deconstructAnyPath (Path p d f) =
 path :: Format String -> String -> TH.Q TH.Exp
 path format =
   either (fail . show) (pure . deconstructAnyPath)
-    . MP.parse (Parser.path @_ @Void format) ""
+    . MP.parse (Parser.path format :: MP.Parsec Void String (AnyPath String)) ""
 
 pathQuoter :: Format String -> TH.QuasiQuoter
 pathQuoter format =
   TH.QuasiQuoter
-    { TH.quoteDec = const $ fail "Meh",
+    { TH.quoteDec = invalid,
       TH.quoteExp = path format,
-      TH.quotePat = const $ fail "Meh",
-      TH.quoteType = const $ fail "Meh"
+      TH.quotePat = invalid,
+      TH.quoteType = invalid
     }
+  where
+    invalid = const $ fail "Paths can only be used as expressions."
 
 -- |
 --
 -- >>> [posix|/usr/bin/env|] :: Path 'Abs 'File String
 -- Path {parents = (), directories = List (embed (Both "bin" (embed (Both "usr" (embed Neither))))), filename = Identity "env"}
+--
+-- >>> [posix|.be/|] :: Path ('Rel 'False) ' Dir String
+-- Path {parents = Proxy, directories = List (embed (Both ".be" (embed Neither))), filename = Const ()}
 posix :: TH.QuasiQuoter
 posix = pathQuoter Format.posix
 
