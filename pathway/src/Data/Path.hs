@@ -43,6 +43,7 @@ module Data.Path
     strengthen,
     toText,
     unanchor,
+    weaken,
     (</>),
   )
 where
@@ -73,6 +74,7 @@ import safe "pathway-internal" Data.Path.Internal
     directories,
     filename,
     parents,
+    weaken,
     (</>),
   )
 import safe "text" Data.Text (Text)

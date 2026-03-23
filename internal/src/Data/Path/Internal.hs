@@ -18,6 +18,7 @@ module Data.Path.Internal
     Filename,
     Path (..),
     current,
+    weaken,
     (</>),
   )
 where

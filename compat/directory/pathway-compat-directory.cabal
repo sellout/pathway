@@ -2,10 +2,14 @@ cabal-version: 3.0
 -- ^ Cabal 3.0 is the first with the `Universal-FOSS-exception-1.0` SPDX license
 --   exception.
 
-name: pathway-system
+name: pathway-compat-directory
 version: 0.0.1.0
-synopsis: Type-safe system-independent file path library
-description: Type-safe system-independent file path library.
+synopsis: Drop-in replacements for directory operations on `FilePath` & `OsPath`
+description:
+  The directory library provides a number of operations on `FilePath` and
+  `OsPath`. This provides equivalent operations on `Path`. It has two layers –
+  one keeps any `Path`- parsing failures separate from `IO`, while the drop-in
+  layer throws them to provide an API that only differs in the path types.
 maintainer: Greg Pfeil <greg@technomadic.org>
 author: Greg Pfeil <greg@technomadic.org>
 copyright: 2024 Greg Pfeil
@@ -42,12 +46,12 @@ bug-reports: https://github.com/sellout/pathway/issues
 source-repository head
   type: git
   location: https://github.com/sellout/pathway.git
-  subdir: system
+  subdir: compat/base
 
 source-repository this
   type: git
   location: https://github.com/sellout/pathway.git
-  subdir: system
+  subdir: compat/base
   -- NB: This is the repo version, which is distinct from the package version.
   tag: v0.1.0
 
@@ -193,17 +197,20 @@ library
   hs-source-dirs:
     src
   build-depends:
+    directory ^>= {1.3.6},
+    -- Should encapsulate our specific failures higher up.
     megaparsec ^>= {9.0.1, 9.2.1, 9.5.0, 9.7.0},
     pathway ^>= {0.0.1},
-    pathway-compat-base ^>= {0.0.1},
-    pathway-compat-directory ^>= {0.0.1},
-    time ^>= {1.9.3, 1.11.1, 1.12.2, 1.14, 1.15},
-    transformers ^>= {0.5.6, 0.6.1},
+    time ^>= {1.8.0, 1.9.3, 1.11.1, 1.12.2, 1.13, 1.14, 1.15},
   exposed-modules:
-    Filesystem.Path
-    Filesystem.Path.Compat
+    System.Directory.Overlay
+    System.Directory.Pathway
+    System.Directory.Thin
+    -- System.Directory.OsPath.Overlay
+    -- System.Directory.OsPath.Pathway
+    -- System.Directory.OsPath.Thin
   other-modules:
-    Filesystem.Path.Internal
+    Common
 
 test-suite doctests
   import: defaults
@@ -213,7 +220,7 @@ test-suite doctests
   main-is: doctests.hs
   build-depends:
     doctest ^>= {0.16.3, 0.18.1, 0.20.1, 0.21.1, 0.22.2, 0.24.2},
-    pathway-system,
+    pathway-compat-directory,
   -- TODO: The sections below here are necessary because we don’t have control
   --       over the generated `Build_doctests.hs` file. So we have to silence
   --       all of its warnings one way or another.

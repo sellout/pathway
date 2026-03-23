@@ -97,7 +97,6 @@ import safe "base" GHC.Generics (Generic, Generic1)
 import safe "base" System.IO (IO)
 import safe "base" Text.Read (Read)
 import safe "base" Text.Show (Show)
-import "directory" System.Directory qualified as Dir
 import safe "megaparsec" Text.Megaparsec qualified as MP
 import safe "pathway" Data.Path
   ( Anchored (AbsDir, AbsFile, RelDir, RelFile, ReparentedDir, ReparentedFile),
@@ -114,6 +113,8 @@ import safe "pathway" Data.Path.Parser qualified as Parser
 import safe "pathway" Data.Path.Relativity (Relativity (Abs, Any, Rel))
 import safe "pathway" Data.Path.Type (Type (Dir, File))
 import safe "pathway" Data.Path.Type qualified as Type (Type (Any))
+import "pathway-compat-base" System.IO.Pathway qualified as Dir
+import "pathway-compat-directory" System.Directory.Pathway qualified as Dir
 import safe "time" Data.Time.Clock (UTCTime)
 import safe "transformers" Control.Monad.Trans.Class (lift)
 import safe "transformers" Control.Monad.Trans.Except (ExceptT (ExceptT))
