@@ -38,6 +38,8 @@ allow-newer:
   uuid-types-1.0.6:*,
 
 flags:
+  -- The variant package depends on unliftio if you let it.
+  -unliftio
   -- Ensure development of this project always uses @NoRecursion@, even if it
   -- causes the solver to fail.
   +verify-no-recursion

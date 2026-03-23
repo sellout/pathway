@@ -202,7 +202,9 @@ library
     megaparsec ^>= {9.0.1, 9.2.1, 9.5.0, 9.7.0},
     pathway ^>= {0.0.1},
     time ^>= {1.8.0, 1.9.3, 1.11.1, 1.12.2, 1.13, 1.14, 1.15},
+    variant,
   exposed-modules:
+    System.Directory.Caught
     System.Directory.Overlay
     System.Directory.Pathway
     System.Directory.Thin
