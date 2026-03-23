@@ -12,7 +12,7 @@ where
 
 import "base" Data.Kind qualified as Kind
 import "base" Data.String (String)
-import "filepath" System.FilePath (FilePath)
+import "base" System.IO (FilePath)
 import "pathway" Data.Path (Path, Pathy)
 import "pathway" Data.Path qualified as Path
 import "pathway" Data.Path.Format qualified as Format

@@ -11,7 +11,8 @@
 
 #if MIN_VERSION_directory(1, 3, 10)
 module System.Directory.Thin
-  ( FsOperations,
+  ( InternalFailure (..),
+    FsOperations,
     Dir.Permissions,
     XdgDirectory,
     XdgDirectoryList,
