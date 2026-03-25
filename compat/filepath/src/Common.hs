@@ -1,4 +1,5 @@
-{-# LANGUAGE Safe #-}
+{-# LANGUAGE Trustworthy #-}
+{-# LANGUAGE TypeFamilies #-}
 -- __NB__: Because of the nested @`Show` (`MP.Token` rep)@ constraints.
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -26,46 +27,53 @@
 --   that there is at least a full path available (unless the developer makes an
 --   effort to remove it.
 module Common
-  ( InternalFailure (..),
-    toPathRep,
-    fromPathRep,
-    handleAnchoredPath,
-    absDirFromPathRep,
-    anyDirFromPathRep,
+  ( Rep (..),
+    InternalFailure (..),
   )
 where
 
-import "base" Control.Applicative (pure)
-import "base" Control.Category ((.))
-import "base" Control.Exception (Exception)
-import "base" Data.Bool (Bool (False, True))
-import "base" Data.Either (Either (Left), either)
-import "base" Data.Eq (Eq)
-import "base" Data.Function (($))
-import "base" Data.Functor (fmap)
-import "base" Data.Kind qualified as Kind
-import "base" Data.Ord (Ord)
-import "base" Data.String (String)
-import "base" Data.Typeable (Typeable)
-import "base" GHC.Generics (Generic)
-import "base" System.IO (FilePath)
-import "base" Text.Show (Show)
-import "megaparsec" Text.Megaparsec qualified as MP
-import "pathway" Data.Path
-  ( Anchored (AbsDir, AbsFile, RelDir, RelFile, ReparentedDir, ReparentedFile),
-    AnyPath,
-    Path,
-    Pathy,
-    Relativity (Abs, Rel),
-    Type (Dir, File),
-    anchor,
-    forgetRelativity,
-    toText,
-    unanchor,
-  )
-import "pathway" Data.Path.Format qualified as Format
-import "pathway" Data.Path.Parser qualified as Parser
-import "pathway" Data.Path.Relativity qualified as Rel (Relativity (Any))
+import safe "base" Control.Applicative (pure)
+import safe "base" Control.Category (id)
+import safe "base" Control.Exception (Exception)
+import safe "base" Data.Char qualified as Base
+import safe "base" Data.Eq (Eq)
+import safe "base" Data.Kind qualified as Kind
+import safe "base" Data.Monoid (Monoid)
+import safe "base" Data.String (String)
+import safe "base" Data.Typeable (Typeable)
+import safe "base" GHC.Generics (Generic)
+import safe "base" System.IO (IO)
+import safe "base" Text.Show (Show)
+import safe "filepath" System.FilePath qualified as F.Path
+import "filepath" System.OsPath qualified as O.Path
+import "filepath" System.OsPath.Types (OsChar, OsString)
+import safe "megaparsec" Text.Megaparsec qualified as MP
+import safe "pathway" Data.Path (AnyPath, Relativity, Type)
+
+type Rep :: Kind.Type -> Kind.Constraint
+class (Monoid a) => Rep (a :: Kind.Type) where
+  type Char a
+  fromStringLiteral :: String -> IO a
+  joinPath :: [a] -> a
+  pack :: [Char a] -> a
+  pathSeparator :: proxy a -> Char a
+  (</>) :: a -> a -> a
+
+instance Rep OsString where
+  type Char OsString = OsChar
+  fromStringLiteral = O.Path.encodeUtf
+  joinPath = O.Path.joinPath
+  pack = O.Path.pack
+  pathSeparator _ = O.Path.pathSeparator
+  (</>) = (O.Path.</>)
+
+instance Rep String where
+  type Char String = Base.Char
+  fromStringLiteral = pure
+  joinPath = F.Path.joinPath
+  pack = id
+  pathSeparator _ = F.Path.pathSeparator
+  (</>) = (F.Path.</>)
 
 type InternalFailure :: Kind.Type -> Kind.Type -> Kind.Type
 data InternalFailure rep e
@@ -82,47 +90,3 @@ deriving stock instance
 instance
   (Show rep, Typeable rep, Show (MP.Token rep), Show e, Typeable e) =>
   Exception (InternalFailure rep e)
-
-toPathRep :: (Pathy rel typ) => Path rel typ String -> FilePath
-toPathRep = toText Format.local
-
-fromPathRep ::
-  (Ord e) =>
-  FilePath ->
-  Either (MP.ParseErrorBundle FilePath e) (Anchored String)
-fromPathRep = fmap anchor . MP.parse (Parser.path Format.local) ""
-
-handleAnchoredPath ::
-  (Ord e) =>
-  (Anchored String -> Either (InternalFailure FilePath e) a) ->
-  FilePath ->
-  Either (InternalFailure FilePath e) a
-handleAnchoredPath handler = either (Left . ParseFailure) handler . fromPathRep
-
-absDirFromPathRep ::
-  (Ord e) =>
-  FilePath ->
-  Either (InternalFailure FilePath e) (Path 'Abs 'Dir String)
-absDirFromPathRep =
-  let badType rel typ = Left . IncorrectResultType Abs Dir rel typ
-   in handleAnchoredPath \case
-        AbsDir path -> pure path
-        AbsFile path -> badType Abs File $ unanchor path
-        RelDir path -> badType (Rel False) Dir $ unanchor path
-        RelFile path -> badType (Rel False) File $ unanchor path
-        ReparentedDir path -> badType (Rel True) Dir $ unanchor path
-        ReparentedFile path -> badType (Rel True) File $ unanchor path
-
-anyDirFromPathRep ::
-  (Ord e) =>
-  FilePath ->
-  Either (InternalFailure FilePath e) (Path 'Rel.Any 'Dir String)
-anyDirFromPathRep =
-  let badType rel typ = Left . IncorrectResultType Rel.Any Dir rel typ
-   in handleAnchoredPath \case
-        AbsDir path -> pure $ forgetRelativity path
-        AbsFile path -> badType Abs File $ unanchor path
-        RelDir path -> pure $ forgetRelativity path
-        RelFile path -> badType (Rel False) File $ unanchor path
-        ReparentedDir path -> pure $ forgetRelativity path
-        ReparentedFile path -> badType (Rel True) File $ unanchor path

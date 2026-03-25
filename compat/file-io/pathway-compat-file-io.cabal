@@ -2,12 +2,12 @@ cabal-version: 3.0
 -- ^ Cabal 3.0 is the first with the `Universal-FOSS-exception-1.0` SPDX license
 --   exception.
 
-name: pathway-compat-filepath
+name: pathway-compat-file-io
 version: 0.0.1.0
-synopsis: Drop-in replacements for filepath operations on `FilePath` & `OsPath`
+synopsis: Drop-in replacements for file-io operations on `OsPath`
 description:
-  The filepath library provides a number of operations on `FilePath` and
-  `OsPath`. This provides equivalent operations on `Path`. It has three layers –
+  The file-io library provides a number of file I/O operations on `OsPath`.
+  This provides equivalent operations on `Path`. It has three layers –
   one keeps any `Path`- parsing failures separate from `IO`, while the drop-in
   layer throws them to provide an API that only differs in the path types.
 maintainer: Greg Pfeil <greg@technomadic.org>
@@ -46,22 +46,22 @@ bug-reports: https://github.com/sellout/pathway/issues
 source-repository head
   type: git
   location: https://github.com/sellout/pathway.git
-  subdir: compat/filepath
+  subdir: compat/file-io
 
 source-repository this
   type: git
   location: https://github.com/sellout/pathway.git
-  subdir: compat/filepath
+  subdir: compat/file-io
   -- NB: This is the repo version, which is distinct from the package version.
   tag: v0.1.0
 
 custom-setup
   setup-depends:
     -- TODO: Due to haskell/cabal#3751, `Cabal` has to be specified even though
-    --       there’s no direct dependency. Its lower bound needs to be at least
+    --       there's no direct dependency. Its lower bound needs to be at least
     --       as high as `cabal-version` at the top of this file, and Hackage
-    --       requires it to have _some_ upper bound. (Since there’s no direct
-    --       dependency, it doesn’t use PVP bounds.)
+    --       requires it to have _some_ upper bound. (Since there's no direct
+    --       dependency, it doesn't use PVP bounds.)
     --
     -- TODO: Due to haskell/cabal#9375, 3.10.3 is required in order to load
     --       plugins from a `ghc-options` field. Unfortunately, GHCs prior to
@@ -73,14 +73,14 @@ custom-setup
 
 flag noisy-deprecations
   description:
-    Prior to GHC 9.10, the @DEPRECATED@ pragma can’t distinguish between terms
-    and types. Consenquently, you can get spurious warnings when there’s a name
+    Prior to GHC 9.10, the @DEPRECATED@ pragma can't distinguish between terms
+    and types. Consenquently, you can get spurious warnings when there's a name
     collision and the name in the other namespace is deprecated. Or you can
     choose to not get those warnings, at the risk of not being warned when
-    there’s a name collision and the namespace you’re referencing is the one
-    that’s deprecated.
+    there's a name collision and the namespace you're referencing is the one
+    that's deprecated.
   default: True
-  -- Because disabling this flag won’t help the solver.
+  -- Because disabling this flag won't help the solver.
   manual: True
 
 flag verify-no-recursion
@@ -88,7 +88,7 @@ flag verify-no-recursion
     Compile with "NoRecursion" enabled. This is intended for developers of this
     package.
   default: False
-  -- Because disabling this flag won’t help the solver.
+  -- Because disabling this flag won't help the solver.
   manual: True
 
 -- This mimics the GHC2024 extension
@@ -197,22 +197,15 @@ library
   hs-source-dirs:
     src
   build-depends:
-    extra,
+    bytestring,
+    file-io ^>= {0.1.0},
     filepath ^>= {1.4.2, 1.5.0},
-    -- Should encapsulate our specific failures higher up.
-    megaparsec ^>= {9.0.1, 9.2.1, 9.5.0, 9.7.0},
     pathway ^>= {0.0.1},
+    pathway-compat-filepath ^>= {0.0.1},
   exposed-modules:
-    Common
-    Common.OsPath
-    System.FilePath.Overlay
-    System.FilePath.Pathway
-    System.FilePath.Thin
-    System.OsPath.Overlay
-    System.OsPath.Pathway
-    System.OsPath.Thin
-  other-modules:
-    Common.FilePath
+    System.File.OsPath.Overlay
+    System.File.OsPath.Pathway
+    System.File.OsPath.Thin
 
 test-suite doctests
   import: defaults
@@ -222,8 +215,8 @@ test-suite doctests
   main-is: doctests.hs
   build-depends:
     doctest ^>= {0.16.3, 0.18.1, 0.20.1, 0.21.1, 0.22.2, 0.24.2},
-    pathway-compat-filepath,
-  -- TODO: The sections below here are necessary because we don’t have control
+    pathway-compat-file-io,
+  -- TODO: The sections below here are necessary because we don't have control
   --       over the generated `Build_doctests.hs` file. So we have to silence
   --       all of its warnings one way or another.
   ghc-options:
@@ -239,7 +232,7 @@ test-suite doctests
     ghc-options:
       -Wno-missing-kind-signatures
   default-extensions:
-    -- Since we can’t add `{-# LANGUAGE Safe -#}` to the generated
-    -- “Build_doctests.hs”, we set it here, and that means it has to match
+    -- Since we can't add `{-# LANGUAGE Safe -#}` to the generated
+    -- "Build_doctests.hs", we set it here, and that means it has to match
     -- doctests.hs, which is `Unsafe`.
     Unsafe

@@ -11,7 +11,7 @@
 --            can capture failures at a lower level, and be more precise about
 --            which ones can occur in each operation, rather than relying on
 --            docs.
-module System.Directory.Caught
+module System.Directory.OsPath.Caught
   ( Dir.Permissions,
     createDirectory,
     createDirectoryIfMissing,
@@ -64,11 +64,11 @@ import safe "base" Data.Either (Either)
 import safe "base" Data.Function (($))
 import safe "base" Data.Functor ((<$>))
 import safe "base" Data.Ord (Ord)
-import safe "base" Data.String (String)
 import safe "base" Data.Void (Void)
-import safe "base" System.IO (FilePath, IO)
+import safe "base" System.IO (IO)
 import safe "base" System.IO.Error qualified as IO
 import "directory" System.Directory (XdgDirectory, XdgDirectoryList)
+import "filepath" System.OsPath.Types (OsPath, OsString)
 import safe "pathway" Data.Path
   ( Path,
     Relative,
@@ -113,7 +113,7 @@ import safe "this" System.Directory.Error
     recoverSetCurrentDirectoryFailure,
     tryWithIF,
   )
-import safe "this" System.Directory.Thin qualified as Dir
+import safe "this" System.Directory.OsPath.Thin qualified as Dir
 import safe "this" System.IO.Error
   ( AlreadyExistsError (AlreadyExistsError),
     FullError (FullError),
@@ -121,35 +121,35 @@ import safe "this" System.IO.Error
   )
 import safe "base" Prelude (Integer)
 
-createDirectory :: Path 'Abs 'Dir String -> IO (Either (V CreationFailure) ())
+createDirectory :: Path 'Abs 'Dir OsString -> IO (Either (V CreationFailure) ())
 createDirectory = tryJust recoverCreationFailure . Dir.createDirectory
 
 -- | Can perhaps unify this and the following definition depending on how we
 --   handle errors.
 createDirectoryIfMissing ::
-  Path 'Abs 'Dir String -> IO (Either (V MaybeCreationFailure) ())
+  Path 'Abs 'Dir OsString -> IO (Either (V MaybeCreationFailure) ())
 createDirectoryIfMissing =
   tryJust recoverMaybeCreationFailure . Dir.createDirectoryIfMissing False
 
 createDirectoryWithParentsIfMissing ::
-  Path 'Abs 'Dir String ->
+  Path 'Abs 'Dir OsString ->
   IO (Either (V MaybeParentCreationFailure) ())
 createDirectoryWithParentsIfMissing =
   tryJust recoverMaybeParentCreationFailure . Dir.createDirectoryIfMissing True
 
-removeDirectory :: Path 'Abs 'Dir String -> IO (Either (V DirRemovalFailure) ())
+removeDirectory :: Path 'Abs 'Dir OsString -> IO (Either (V DirRemovalFailure) ())
 removeDirectory = tryJust recoverDirRemovalFailure . Dir.removeDirectory
 
-removeDirectoryRecursive :: Path 'Abs 'Dir String -> IO (Either (V DirRemovalFailure) ())
+removeDirectoryRecursive :: Path 'Abs 'Dir OsString -> IO (Either (V DirRemovalFailure) ())
 removeDirectoryRecursive =
   tryJust recoverDirRemovalFailure . Dir.removeDirectoryRecursive
 
-removePathForcibly :: (Typey typ) => Path 'Abs typ String -> IO (Either (V DirRemovalFailure) ())
+removePathForcibly :: (Typey typ) => Path 'Abs typ OsString -> IO (Either (V DirRemovalFailure) ())
 removePathForcibly = tryJust recoverDirRemovalFailure . Dir.removePathForcibly
 
 renameDirectory ::
-  Path 'Abs 'Dir String ->
-  Path 'Abs 'Dir String ->
+  Path 'Abs 'Dir OsString ->
+  Path 'Abs 'Dir OsString ->
   IO (Either (V (AlreadyExistsError ': RenameFailure)) ())
 renameDirectory source =
   tryJust
@@ -162,19 +162,19 @@ renameDirectory source =
 
 listDirectory ::
   (Ord e) =>
-  Path 'Abs 'Dir String ->
+  Path 'Abs 'Dir OsString ->
   -- |
   --
-  --  __TODO__: This should be @`Unambiguous` ('`Rel` '`False`) `String`@ once #18
+  --  __TODO__: This should be @`Unambiguous` ('`Rel` '`False`) `OsString`@ once #18
   --            lands.
   IO
     ( Either
         (V ListFailure)
         [ Either
-            (InternalFailure FilePath e)
+            (InternalFailure OsPath e)
             ( Either
-                (Path ('Rel 'False) 'Dir String)
-                (Path ('Rel 'False) 'File String)
+                (Path ('Rel 'False) 'Dir OsString)
+                (Path ('Rel 'False) 'File OsString)
             )
         ]
     )
@@ -182,7 +182,7 @@ listDirectory = tryJust recoverListFailure . Dir.listDirectory
 
 getDirectoryContents ::
   (Ord e) =>
-  Path 'Abs 'Dir String ->
+  Path 'Abs 'Dir OsString ->
   -- |
   --
   --  __TODO__: Should the parent directory (`../`) be singled out, to allow
@@ -191,10 +191,10 @@ getDirectoryContents ::
     ( Either
         (V ListFailure)
         [ Either
-            (InternalFailure FilePath e)
+            (InternalFailure OsPath e)
             ( Either
-                (Path ('Rel 'True) 'Dir String)
-                (Path ('Rel 'False) 'File String)
+                (Path ('Rel 'True) 'Dir OsString)
+                (Path ('Rel 'False) 'File OsString)
             )
         ]
     )
@@ -203,8 +203,8 @@ getDirectoryContents = tryJust recoverListFailure . Dir.getDirectoryContents
 getCurrentDirectory ::
   IO
     ( Either
-        (V (FullError ': InternalFailure FilePath Void ': CurrentDirectoryFailure))
-        (Path 'Abs 'Dir String)
+        (V (FullError ': InternalFailure OsPath Void ': CurrentDirectoryFailure))
+        (Path 'Abs 'Dir OsString)
     )
 getCurrentDirectory = first toVariant <$> Dir.getCurrentDirectory @Void
 
@@ -213,12 +213,12 @@ getCurrentDirectory = first toVariant <$> Dir.getCurrentDirectory @Void
 --   are using code that expects the current directory to be set, then use
 --   `withCurrentDirectory`.
 setCurrentDirectory ::
-  Path 'Abs 'Dir String -> IO (Either (V SetCurrentDirectoryFailure) ())
+  Path 'Abs 'Dir OsString -> IO (Either (V SetCurrentDirectoryFailure) ())
 setCurrentDirectory =
   tryJust recoverSetCurrentDirectoryFailure . Dir.setCurrentDirectory
 
 withCurrentDirectory ::
-  Path 'Abs 'Dir String ->
+  Path 'Abs 'Dir OsString ->
   IO a ->
   IO (Either (V (FullError ': SetCurrentDirectoryFailure)) a)
 withCurrentDirectory path =
@@ -231,14 +231,14 @@ withCurrentDirectory path =
     . Dir.withCurrentDirectory path
 
 getHomeDirectory ::
-  IO (Either (V (GetUserDirectoryFailure FilePath)) (Path 'Abs 'Dir String))
+  IO (Either (V (GetUserDirectoryFailure OsString)) (Path 'Abs 'Dir OsString))
 getHomeDirectory = tryWithIF recoverGetUserDirectoryFailure $ Dir.getHomeDirectory @Void
 
 -- | Prefer `XDG.BaseDirectory.*Home`.`
 getXdgDirectory ::
   XdgDirectory ->
-  Path ('Rel 'False) 'Dir String ->
-  IO (Either (V (GetUserDirectoryFailure FilePath)) (Path 'Abs 'Dir String))
+  Path ('Rel 'False) 'Dir OsString ->
+  IO (Either (V (GetUserDirectoryFailure OsString)) (Path 'Abs 'Dir OsString))
 getXdgDirectory dir =
   tryWithIF recoverGetUserDirectoryFailure . Dir.getXdgDirectory @Void dir
 
@@ -248,43 +248,43 @@ getXdgDirectoryList ::
   IO
     ( Either
         (V GetUserDirectoriesFailure)
-        [Either (InternalFailure FilePath e) (Path 'Abs 'Dir String)]
+        [Either (InternalFailure OsPath e) (Path 'Abs 'Dir OsString)]
     )
 getXdgDirectoryList =
   tryJust recoverGetUserDirectoriesFailure . Dir.getXdgDirectoryList
 
 -- | Prefer `XDG.BaseDirectory.*Home`.
 getAppUserDataDirectory ::
-  Path ('Rel 'False) 'Dir String ->
-  IO (Either (V (GetUserDirectoryFailure FilePath)) (Path 'Abs 'Dir String))
+  Path ('Rel 'False) 'Dir OsString ->
+  IO (Either (V (GetUserDirectoryFailure OsString)) (Path 'Abs 'Dir OsString))
 getAppUserDataDirectory =
   tryWithIF recoverGetUserDirectoryFailure . Dir.getAppUserDataDirectory @Void
 
 -- | Prefer `XDG.UserDirectory.Common.documents`.
 getUserDocumentsDirectory ::
-  IO (Either (V (GetUserDirectoryFailure FilePath)) (Path 'Abs 'Dir String))
+  IO (Either (V (GetUserDirectoryFailure OsString)) (Path 'Abs 'Dir OsString))
 getUserDocumentsDirectory =
   tryWithIF recoverGetUserDirectoryFailure $ Dir.getUserDocumentsDirectory @Void
 
 -- | Prefer `XDG.BaseDirectory.runtimeDir`.
 getTemporaryDirectory ::
-  IO (Either (V (GetDirectoryFailure FilePath)) (Path 'Abs 'Dir String))
+  IO (Either (V (GetDirectoryFailure OsString)) (Path 'Abs 'Dir OsString))
 getTemporaryDirectory =
   tryWithIF recoverGetDirectoryFailure $ Dir.getTemporaryDirectory @Void
 
-removeFile :: Path 'Abs 'File String -> IO (Either (V RemovalFailure) ())
+removeFile :: Path 'Abs 'File OsString -> IO (Either (V RemovalFailure) ())
 removeFile = tryJust recoverRemovalFailure . Dir.removeFile
 
 renameFile ::
-  Path 'Abs 'File String ->
-  Path 'Abs 'File String ->
+  Path 'Abs 'File OsString ->
+  Path 'Abs 'File OsString ->
   IO (Either (V RenameFailure) ())
 renameFile old = tryJust recoverRenameFailure . Dir.renameFile old
 
 renamePath ::
   (Typey typ) =>
-  Path 'Abs typ String ->
-  Path 'Abs typ String ->
+  Path 'Abs typ OsString ->
+  Path 'Abs typ OsString ->
   IO (Either (V RenameFailure) ())
 renamePath source = tryJust recoverRenameFailure . Dir.renamePath source
 
@@ -293,7 +293,7 @@ renamePath source = tryJust recoverRenameFailure . Dir.renamePath source
 --  __TODO__: It seems likely this would fail with similar cases as
 --            `createDirectory`, but the docs don’t claim it.
 copyFile ::
-  Path 'Abs 'File String -> Path 'Abs 'File String -> IO ()
+  Path 'Abs 'File OsString -> Path 'Abs 'File OsString -> IO ()
 copyFile = Dir.copyFile
 
 -- |
@@ -301,54 +301,55 @@ copyFile = Dir.copyFile
 --  __TODO__: It seems likely this would fail with similar cases as
 --            `createDirectory`, but the docs don’t claim it.
 copyFileWithMetadata ::
-  Path 'Abs 'File String -> Path 'Abs 'File String -> IO ()
+  Path 'Abs 'File OsString -> Path 'Abs 'File OsString -> IO ()
 copyFileWithMetadata = Dir.copyFileWithMetadata
 
 -- |
 --
 --  __TODO__: It seems likely that this would fail with at least
 --            `MetadataFailure`, but the docs don’t claim any.
-getFileSize :: Path 'Abs 'File String -> IO Integer
+getFileSize :: Path 'Abs 'File OsString -> IO Integer
 getFileSize = Dir.getFileSize
 
 canonicalizePath ::
-  (Operations String typ) =>
-  Path 'Abs typ String ->
-  IO (Either (V (MakeFailure FilePath)) (Path 'Abs typ String))
-canonicalizePath = tryWithIF recoverMakeFailure . Dir.canonicalizePath @_ @_ @Void
+  (Operations OsString typ) =>
+  Path 'Abs typ OsString ->
+  IO (Either (V (MakeFailure OsString)) (Path 'Abs typ OsString))
+canonicalizePath =
+  tryWithIF recoverMakeFailure . Dir.canonicalizePath @_ @_ @Void
 
 -- | Don’t use this. It relies on the “current directory”.
 makeAbsolute ::
-  (Operations String typ) =>
-  Path ('Rel 'True) typ String ->
-  IO (Either (V (MakeFailure FilePath)) (Path 'Abs typ String))
+  (Operations OsString typ) =>
+  Path ('Rel 'True) typ OsString ->
+  IO (Either (V (MakeFailure OsString)) (Path 'Abs typ OsString))
 makeAbsolute = tryWithIF recoverMakeFailure . Dir.makeAbsolute @_ @_ @Void
 
 makeRelativeToCurrentDirectory ::
-  (Operations String typ) =>
-  Path 'Abs typ String ->
-  IO (Either (V (MakeFailure FilePath)) (Path ('Rel 'True) typ String))
+  (Operations OsString typ) =>
+  Path 'Abs typ OsString ->
+  IO (Either (V (MakeFailure OsString)) (Path ('Rel 'True) typ OsString))
 makeRelativeToCurrentDirectory =
   tryWithIF recoverMakeFailure . Dir.makeRelativeToCurrentDirectory @_ @_ @Void
 
 getSymbolicLinkTarget ::
-  (Operations String typ) =>
-  Path 'Abs typ String ->
-  IO (Either (V (GetDirectoryFailure FilePath)) (Path 'Rel.Any typ String))
+  (Operations OsString typ) =>
+  Path 'Abs typ OsString ->
+  IO (Either (V (GetDirectoryFailure OsString)) (Path 'Rel.Any typ OsString))
 getSymbolicLinkTarget =
   tryWithIF recoverGetDirectoryFailure . Dir.getSymbolicLinkTarget @_ @_ @Void
 
 createFileLink ::
   (Relative rel) =>
-  Path rel 'File String ->
-  Path 'Abs 'File String ->
+  Path rel 'File OsString ->
+  Path 'Abs 'File OsString ->
   IO (Either (V CreateLinkFailure) ())
 createFileLink old = tryJust recoverCreateLinkFailure . Dir.createFileLink old
 
 createDirectoryLink ::
   (Relative rel) =>
-  Path rel 'Dir String ->
-  Path 'Abs 'Dir String ->
+  Path rel 'Dir OsString ->
+  Path 'Abs 'Dir OsString ->
   IO (Either (V CreateLinkFailure) ())
 createDirectoryLink old =
   tryJust recoverCreateLinkFailure . Dir.createDirectoryLink old
@@ -357,23 +358,23 @@ createDirectoryLink old =
 --
 --  __TODO__: On POSIX, the failure could be restricted to `RemovalFailure`.
 removeDirectoryLink ::
-  Path 'Abs 'Dir String -> IO (Either (V DirRemovalFailure) ())
+  Path 'Abs 'Dir OsString -> IO (Either (V DirRemovalFailure) ())
 removeDirectoryLink = tryJust recoverDirRemovalFailure . Dir.removeDirectoryLink
 
 pathIsSymbolicLink ::
   (Typey typ) =>
-  Path 'Abs typ String ->
+  Path 'Abs typ OsString ->
   IO (Either (V MetadataFailure) Bool)
 pathIsSymbolicLink = tryJust recoverMetadataFailure . Dir.pathIsSymbolicLink
 
 getPermissions ::
   (Typey typ) =>
-  Path 'Abs typ String -> IO (Either (V MetadataFailure) Dir.Permissions)
+  Path 'Abs typ OsString -> IO (Either (V MetadataFailure) Dir.Permissions)
 getPermissions = tryJust recoverMetadataFailure . Dir.getPermissions
 
 setPermissions ::
   (Typey typ) =>
-  Path 'Abs typ String ->
+  Path 'Abs typ OsString ->
   Dir.Permissions ->
   IO (Either (V MetadataFailure) ())
 setPermissions path = tryJust recoverMetadataFailure . Dir.setPermissions path
@@ -384,24 +385,24 @@ setPermissions path = tryJust recoverMetadataFailure . Dir.setPermissions path
 --            `MetadataFailure`, but the docs don’t claim any.
 copyPermissions ::
   (Typey typ, Typey typ') =>
-  Path 'Abs typ String ->
-  Path 'Abs typ' String ->
+  Path 'Abs typ OsString ->
+  Path 'Abs typ' OsString ->
   IO ()
 copyPermissions from = Dir.copyPermissions from
 
 getAccessTime ::
   (Typey typ) =>
-  Path 'Abs typ String -> IO (Either (V MetadataFailure) UTCTime)
+  Path 'Abs typ OsString -> IO (Either (V MetadataFailure) UTCTime)
 getAccessTime = tryJust recoverMetadataFailure . Dir.getAccessTime
 
 getModificationTime ::
   (Typey typ) =>
-  Path 'Abs typ String -> IO (Either (V MetadataFailure) UTCTime)
+  Path 'Abs typ OsString -> IO (Either (V MetadataFailure) UTCTime)
 getModificationTime = tryJust recoverMetadataFailure . Dir.getModificationTime
 
 setAccessTime ::
   (Typey typ) =>
-  Path 'Abs typ String -> UTCTime -> IO (Either (V MetadataFailure) ())
+  Path 'Abs typ OsString -> UTCTime -> IO (Either (V MetadataFailure) ())
 setAccessTime path = tryJust recoverMetadataFailure . Dir.setAccessTime path
 
 -- |
@@ -409,7 +410,7 @@ setAccessTime path = tryJust recoverMetadataFailure . Dir.setAccessTime path
 --  __TODO__: On POSIX, the failure could be restricted to `MetadataFailure`.
 setModificationTime ::
   (Typey typ) =>
-  Path 'Abs typ String ->
+  Path 'Abs typ OsString ->
   UTCTime ->
   IO (Either (V (InvalidArgument ': MetadataFailure)) ())
 setModificationTime path =

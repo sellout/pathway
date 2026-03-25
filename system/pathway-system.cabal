@@ -193,14 +193,17 @@ library
   hs-source-dirs:
     src
   build-depends:
+    exceptions,
     pathway ^>= {0.0.1},
+    pathway-compat-base ^>= {0.0.1},
     pathway-compat-directory ^>= {0.0.1},
+    pathway-compat-file-io ^>= {0.0.1},
+    pathway-compat-filepath ^>= {0.0.1},
+    time ^>= {1.8.0, 1.9.3, 1.11.1, 1.12.2, 1.13, 1.14, 1.15},
     variant,
   exposed-modules:
     Filesystem.Path
     Filesystem.Path.Compat
-  other-modules:
-    Filesystem.Path.Internal
 
 test-suite doctests
   import: defaults
