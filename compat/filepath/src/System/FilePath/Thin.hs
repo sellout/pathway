@@ -40,10 +40,16 @@ module System.FilePath.Thin
     replaceBaseName,
     takeDirectory,
     replaceDirectory,
+    combine,
+    (</>),
+    splitPath,
+    -- joinPath, -- requires `AmbiguousPath` for the result
+    splitDirectories,
 
     -- * Type-level path queries
     IsAbsolute (..),
     isRelative,
+    isValid,
   )
 where
 
@@ -58,12 +64,20 @@ import safe "base" Data.Ord (Ord)
 import safe "base" Data.String (String)
 import safe "base" System.IO (FilePath, IO)
 import "filepath" System.FilePath qualified as FP
-import safe "pathway" Data.Path (Path, Relativity (Abs, Rel), Type (Dir, File))
+import safe "pathway" Data.Path
+  ( Path,
+    Relative,
+    Relativity (Abs, Rel),
+    Type (Dir, File),
+    Typey,
+    (</>),
+  )
 import safe "pathway" Data.Path.Directory (selectFile)
 import safe "pathway" Data.Path.File (basename, directory)
 import safe "pathway" Data.Path.Relativity qualified as Rel (Relativity (Any))
+import safe "pathway-internal" Data.Path.Internal (TotalOps)
 import safe "this" Common (InternalFailure)
-import safe "this" Common.FilePath (absDirFromPathRep, anyDirFromPathRep)
+import safe "this" Common.FilePath (absDirFromPathRep, anyDirFromPathRep, toPathRep)
 
 -- * \$PATH methods
 
@@ -196,6 +210,33 @@ replaceDirectory ::
   Path rel 'File String -> Path rel' 'Dir String -> Path rel' 'File String
 replaceDirectory path newDir = selectFile newDir (basename path)
 
+combine ::
+  (TotalOps rel par rel') =>
+  Path rel 'Dir String -> Path ('Rel par) typ String -> Path rel' typ String
+combine = (</>)
+
+-- |
+--
+--  __TODO__: This should perhaps return a list of actual path types, but it’s
+--            complicated, because it might have an initial absolute path, and
+--            it might have a filename.
+splitPath :: (Relative rel, Typey typ) => Path rel typ String -> [String]
+-- ( Maybe (Path 'Abs 'Dir String),
+--   [Path ('Rel 'False) 'Dir String],
+--   Maybe (Path ('Rel 'False) 'File String)
+-- )
+splitPath = FP.splitPath . toPathRep
+
+-- |
+--
+--  __TODO__: This is a bit complicated – should it be the same as `splitPath`, or should it return `[String]`?
+splitDirectories :: (Relative rel, Typey typ) => Path rel typ String -> [String]
+-- ( Maybe (Path 'Abs 'Dir String),
+--   [Path ('Rel 'False) 'Dir String],
+--   Maybe (Path ('Rel 'False) 'File String)
+-- )
+splitDirectories = FP.splitDirectories . toPathRep
+
 -- * Internal helpers
 
 -- | Replace the filename in a file path (internal helper).
@@ -218,3 +259,6 @@ instance IsAbsolute ('Rel rp) where
 -- | Is the path relative?
 isRelative :: (IsAbsolute rel) => Path rel typ String -> Bool
 isRelative = not . isAbsolute
+
+isValid :: (Relative rel, Typey typ) => Path rel typ String -> Bool
+isValid = FP.isValid . toPathRep
