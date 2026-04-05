@@ -1,7 +1,5 @@
 {-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE TypeFamilies #-}
--- __NB__: Because of the nested @`Show` (`MP.Token` rep)@ constraints.
-{-# LANGUAGE UndecidableInstances #-}
 
 -- | This provides an API similar to "System.FilePath", but for Pathway types.
 --
@@ -26,32 +24,46 @@
 --   reported to users, and often without enough context. This tries to ensure
 --   that there is at least a full path available (unless the developer makes an
 --   effort to remove it.
-module Common
-  ( InternalFailure (..),
+module System.Text
+  ( Rep (..),
   )
 where
 
-import safe "base" Control.Exception (Exception)
-import safe "base" Data.Eq (Eq)
+import safe "base" Control.Applicative (pure)
+import safe "base" Control.Category (id)
+import safe "base" Data.Char qualified as Base
 import safe "base" Data.Kind qualified as Kind
-import safe "base" Data.Typeable (Typeable)
+import safe "base" Data.Maybe (Maybe)
+import safe "base" Data.Monoid (Monoid)
+import safe "base" Data.Ord (Ord)
+import safe "base" Data.String (String)
 import safe "base" GHC.Generics (Generic)
+import safe "base" System.IO (IO)
 import safe "base" Text.Show (Show)
-import safe "megaparsec" Text.Megaparsec qualified as MP
-import safe "pathway" Data.Path (AnyPath, Relativity, Type)
+import "directory" System.Directory.Internal qualified as O.In
+import safe "pathway-compat-base" System.Environment.Pathway qualified as F.Env
+import safe "pathway-compat-filepath" System.FilePath.Pathway qualified as F.Path
+import "pathway-compat-filepath" System.OsPath.Pathway (OsChar, OsString)
+import "pathway-compat-filepath" System.OsPath.Pathway qualified as O.Path
 
-type InternalFailure :: Kind.Type -> Kind.Type -> Kind.Type
-data InternalFailure rep e
-  = ParseFailure (MP.ParseErrorBundle rep e)
-  | IncorrectResultType Relativity Type Relativity Type (AnyPath rep)
-  deriving stock (Generic)
+type Rep :: Kind.Type -> Kind.Constraint
+class (Ord a, Generic a, Monoid a, Show a) => Rep (a :: Kind.Type) where
+  type Char a
+  encodeString :: String -> IO a
+  lookupEnv :: a -> IO (Maybe a)
+  pack :: [Char a] -> a
+  pathSeparator :: proxy a -> Char a
 
-deriving stock instance
-  (Eq rep, Eq (MP.Token rep), Eq e) => Eq (InternalFailure rep e)
+instance Rep String where
+  type Char String = Base.Char
+  encodeString = pure
+  lookupEnv = F.Env.lookupEnv
+  pack = id
+  pathSeparator _ = F.Path.pathSeparator
 
-deriving stock instance
-  (Show rep, Show (MP.Token rep), Show e) => Show (InternalFailure rep e)
-
-instance
-  (Show rep, Typeable rep, Show (MP.Token rep), Show e, Typeable e) =>
-  Exception (InternalFailure rep e)
+instance Rep OsString where
+  type Char OsString = OsChar
+  encodeString = O.Path.encodeUtf
+  lookupEnv = O.In.lookupEnvOs
+  pack = O.Path.pack
+  pathSeparator _ = O.Path.pathSeparator

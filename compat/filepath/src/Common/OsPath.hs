@@ -48,7 +48,6 @@ import safe "base" Data.Functor (fmap, (<$>))
 import safe "base" Data.Monoid (mempty)
 import safe "base" Data.Ord (Ord)
 import safe "base" Data.Proxy (Proxy (Proxy))
-import safe "base" Data.Semigroup ((<>))
 import safe "extra" Data.List.Extra qualified as List
 import "filepath" System.OsPath qualified as O
 import "filepath" System.OsPath.Types (OsChar, OsPath, OsString)
@@ -70,29 +69,22 @@ import safe "pathway" Data.Path.Format qualified as Format
 import safe "pathway" Data.Path.Parser qualified as Parser
 import safe "pathway" Data.Path.Relativity qualified as Rel (Relativity (Any))
 import safe "this" Common (InternalFailure (IncorrectResultType, ParseFailure))
-import safe "this" Common qualified as System
-import safe "base" Prelude (error)
 
 instance Path.Substible OsString where
   replace i o = O.pack . List.replace (O.unpack i) (O.unpack o) . O.unpack
 
 -- | This is different from the standard POSIX format, because it outputs
 --   without `./` for relative directories.
-localFormat :: forall rep. (System.Rep rep, Ord rep) => Format rep
+localFormat :: Format OsString
 localFormat =
-  let proxy = Proxy :: Proxy rep
-   in Format
-        { Format.root = System.pack . pure $ System.pathSeparator proxy,
-          Format.current = mempty,
-          -- TODO: Figure out how to implement this without needing IO. I need
-          --       to be able to create an `OsPath` literal for `".."`.
-          Format.parent =
-            error $
-              "Internal xdg-base-directory error: This library doesn’t "
-                <> "allow reparented paths, but one was encountered.",
-          Format.separator = System.pack . pure $ System.pathSeparator proxy,
-          Format.substitutions = mempty
-        }
+  Format
+    { Format.root = O.pack . pure $ O.pathSeparator,
+      Format.current = mempty,
+      -- TODO: Make this safe, or eliminate for resolved paths somehow.
+      Format.parent = O.unsafeEncodeUtf "..",
+      Format.separator = O.pack . pure $ O.pathSeparator,
+      Format.substitutions = mempty
+    }
 
 toPathRep :: (Pathy rel typ) => Path rel typ OsString -> OsPath
 toPathRep = toText localFormat
