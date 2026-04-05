@@ -91,12 +91,16 @@ import safe "pathway-compat-directory" System.IO.Error
     InvalidArgument,
   )
 import safe "pathway-compat-file-io" System.File.OsPath.Pathway qualified as O.IO
+import safe "pathway-compat-filepath" System.FilePath.Thin qualified as FP
 import safe "pathway-compat-filepath" System.OsPath.Pathway (OsString)
+import safe "pathway-compat-filepath" System.OsPath.Thin qualified as OP
 import safe "time" Data.Time.Clock (UTCTime)
 import "variant" Data.Variant (V, liftVariant)
 
 type Rep :: Kind.Type -> Kind.Constraint
 class Rep rep where
+  splitSearchPath ::
+    rep -> [Either (InternalFailure rep Void) (Path 'Rel.Any 'Dir rep)]
   canonicalizePath ::
     (Dir.Operations rep typ) =>
     Path 'Abs typ rep -> IO (Either (V (MakeFailure rep)) (Path 'Abs typ rep))
@@ -214,6 +218,7 @@ class Operations rep typ where
     IO (Either (V (AlreadyExistsError ': RenameFailure)) ())
 
 instance Rep String where
+  splitSearchPath = FP.splitSearchPath
   canonicalizePath = F.Caught.canonicalizePath
   copyPermissions = F.Caught.copyPermissions
   createDirectory = F.Caught.createDirectory
@@ -251,6 +256,7 @@ instance Operations String 'File where
   rename old = fmap (first liftVariant) . F.Caught.renameFile old
 
 instance Rep OsString where
+  splitSearchPath = OP.splitSearchPath
   canonicalizePath = O.Caught.canonicalizePath
   copyPermissions = O.Caught.copyPermissions
   createDirectory = O.Caught.createDirectory
