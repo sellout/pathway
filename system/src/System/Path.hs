@@ -29,8 +29,9 @@
 --   reported to users, and often without enough context. This tries to ensure
 --   that there is at least a full path available (unless the developer makes an
 --   effort to remove it.
-module Filesystem.Path
-  ( ParseFailure,
+module System.Path
+  ( module System.Directory.Error,
+    ParseFailure,
     Rep (..),
     Operations (..),
     Dir.Permissions,

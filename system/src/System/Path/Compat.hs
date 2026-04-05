@@ -2,8 +2,9 @@
 
 -- | Operations that don’t fit with the philosophy of this library, but that
 -- help with interoperability with other code.
-module Filesystem.Path.Compat
-  ( withCurrentDirectory,
+module System.Path.Compat
+  ( module System.Directory.Error,
+    withCurrentDirectory,
   )
 where
 
