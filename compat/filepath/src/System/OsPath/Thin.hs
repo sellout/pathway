@@ -60,7 +60,7 @@ import safe "pathway" Data.Path (Path, Relativity (Abs, Rel), Type (Dir, File))
 import safe "pathway" Data.Path.Directory (selectFile)
 import safe "pathway" Data.Path.File (basename, directory)
 import safe "pathway" Data.Path.Relativity qualified as Rel (Relativity (Any))
-import safe "this" Common (InternalFailure)
+import safe "pathway-compat-base" Common (InternalFailure)
 import safe "this" Common.OsPath (anyDirFromPathRep)
 
 -- * \$PATH methods

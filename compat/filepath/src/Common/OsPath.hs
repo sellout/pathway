@@ -60,6 +60,7 @@ import safe "pathway" Data.Path
     Type (Dir, File),
     anchor,
     forgetRelativity,
+    forgetType,
     toText,
     unanchor,
   )
@@ -68,7 +69,9 @@ import safe "pathway" Data.Path.Format (Format (Format))
 import safe "pathway" Data.Path.Format qualified as Format
 import safe "pathway" Data.Path.Parser qualified as Parser
 import safe "pathway" Data.Path.Relativity qualified as Rel (Relativity (Any))
-import safe "this" Common (InternalFailure (IncorrectResultType, ParseFailure))
+import safe "pathway-compat-base" Common
+  ( InternalFailure (IncorrectResultType, ParseFailure),
+  )
 
 instance Path.Substible OsString where
   replace i o = O.pack . List.replace (O.unpack i) (O.unpack o) . O.unpack
@@ -105,7 +108,8 @@ fromPathRep ::
   (Ord e) =>
   OsPath ->
   Either (MP.ParseErrorBundle OsPath e) (Anchored OsString)
-fromPathRep = fmap anchor . MP.parse (Parser.path localFormat) ""
+fromPathRep =
+  fmap (anchor . forgetType) . MP.parse (Parser.directory localFormat) ""
 
 handleAnchoredPath ::
   (Ord e) =>

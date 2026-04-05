@@ -153,7 +153,7 @@ import safe "pathway" Data.Path
   )
 import safe "pathway" Data.Path.Relativity qualified as Rel
 import safe "pathway" Data.Path.Type qualified as Type
-import safe "pathway-compat-filepath" Common
+import safe "pathway-compat-base" Common
   ( InternalFailure (IncorrectResultType, ParseFailure),
   )
 import safe "pathway-compat-filepath" Common.OsPath

@@ -57,7 +57,7 @@ import safe "base" GHC.IO.Exception qualified as IO
 import safe "base" System.IO (IO)
 import safe "base" System.IO.Error (IOError)
 import safe "base" System.IO.Error qualified as IO
-import safe "pathway-compat-filepath" Common
+import safe "pathway-compat-base" Common
   ( InternalFailure (IncorrectResultType, ParseFailure),
   )
 import "variant" Data.Variant (V, liftVariant, toVariant, (:<))

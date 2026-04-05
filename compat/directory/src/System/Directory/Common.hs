@@ -37,7 +37,7 @@ import safe "base" System.IO (IO)
 import "directory" System.Directory (Permissions)
 import safe "pathway" Data.Path (Path, Relativity (Abs, Rel), Type, Typey)
 import safe "pathway" Data.Path.Relativity qualified as Rel
-import safe "pathway-compat-filepath" Common (InternalFailure)
+import safe "pathway-compat-base" Common (InternalFailure)
 
 type Operations :: Kind.Type -> Type -> Kind.Constraint
 class (Typey typ) => Operations rep typ where

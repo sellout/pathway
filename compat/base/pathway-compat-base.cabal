@@ -201,6 +201,7 @@ library
     megaparsec ^>= {9.0.1, 9.2.1, 9.5.0, 9.7.0},
     pathway ^>= {0.0.1},
   exposed-modules:
+    Common
     System.Environment.Overlay
     System.Environment.Pathway
     System.Environment.Thin
@@ -210,8 +211,6 @@ library
     System.IO.Error.Overlay
     System.IO.Error.Pathway
     System.IO.Error.Thin
-  other-modules:
-    Common
 
 test-suite doctests
   import: defaults

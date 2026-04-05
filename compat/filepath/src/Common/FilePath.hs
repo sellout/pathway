@@ -47,27 +47,27 @@ import "megaparsec" Text.Megaparsec qualified as MP
 import "pathway" Data.Path
   ( Anchored (AbsDir, AbsFile, RelDir, RelFile, ReparentedDir, ReparentedFile),
     Path,
-    Pathy,
     Relativity (Abs, Rel),
     Type (Dir, File),
     anchor,
     forgetRelativity,
-    toText,
+    forgetType,
     unanchor,
   )
 import "pathway" Data.Path.Format qualified as Format
 import "pathway" Data.Path.Parser qualified as Parser
 import "pathway" Data.Path.Relativity qualified as Rel (Relativity (Any))
-import "this" Common (InternalFailure (IncorrectResultType, ParseFailure))
-
-toPathRep :: (Pathy rel typ) => Path rel typ String -> FilePath
-toPathRep = toText Format.local
+import "pathway-compat-base" Common
+  ( InternalFailure (IncorrectResultType, ParseFailure),
+    toPathRep,
+  )
 
 fromPathRep ::
   (Ord e) =>
   FilePath ->
   Either (MP.ParseErrorBundle FilePath e) (Anchored String)
-fromPathRep = fmap anchor . MP.parse (Parser.path Format.local) ""
+fromPathRep =
+  fmap (anchor . forgetType) . MP.parse (Parser.directory Format.local) ""
 
 handleAnchoredPath ::
   (Ord e) =>

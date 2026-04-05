@@ -202,9 +202,9 @@ library
     -- Should encapsulate our specific failures higher up.
     megaparsec ^>= {9.0.1, 9.2.1, 9.5.0, 9.7.0},
     pathway ^>= {0.0.1},
+    pathway-compat-base ^>= {0.0.1},
     pathway-internal ^>= {0.0.1},
   exposed-modules:
-    Common
     Common.OsPath
     System.FilePath.Overlay
     System.FilePath.Pathway

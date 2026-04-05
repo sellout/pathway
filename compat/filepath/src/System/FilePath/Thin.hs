@@ -75,8 +75,8 @@ import safe "pathway" Data.Path
 import safe "pathway" Data.Path.Directory (selectFile)
 import safe "pathway" Data.Path.File (basename, directory)
 import safe "pathway" Data.Path.Relativity qualified as Rel (Relativity (Any))
+import safe "pathway-compat-base" Common (InternalFailure)
 import safe "pathway-internal" Data.Path.Internal (TotalOps)
-import safe "this" Common (InternalFailure)
 import safe "this" Common.FilePath (absDirFromPathRep, anyDirFromPathRep, toPathRep)
 
 -- * \$PATH methods

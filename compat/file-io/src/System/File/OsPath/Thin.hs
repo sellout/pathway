@@ -41,7 +41,7 @@ import safe "pathway" Data.Path
     Type (Dir, File),
     unanchor,
   )
-import safe "pathway-compat-filepath" Common (InternalFailure (IncorrectResultType))
+import safe "pathway-compat-base" Common (InternalFailure (IncorrectResultType))
 import safe "pathway-compat-filepath" Common.OsPath (handleAnchoredPath, toPathRep)
 
 openFile :: Path 'Abs 'File OsString -> IOMode -> IO Handle
