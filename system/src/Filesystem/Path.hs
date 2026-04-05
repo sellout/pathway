@@ -30,7 +30,8 @@
 --   that there is at least a full path available (unless the developer makes an
 --   effort to remove it.
 module Filesystem.Path
-  ( Rep (..),
+  ( ParseFailure,
+    Rep (..),
     Operations (..),
     Dir.Permissions,
   )
@@ -50,8 +51,12 @@ import safe "base" Data.String (String)
 import safe "base" Data.Void (Void)
 import safe "base" System.IO (Handle, IO, IOMode)
 import safe "exceptions" Control.Monad.Catch (MonadMask, bracket)
+import "megaparsec" Text.Megaparsec qualified as MP
 import safe "pathway" Data.Path (Path, Relative, Relativity (Abs, Rel), Type (Dir, File), Typey)
+import safe "pathway" Data.Path.Format qualified as Format
+import safe "pathway" Data.Path.Parser qualified as Parser
 import safe "pathway" Data.Path.Relativity qualified as Rel (Relativity (Any))
+import safe "pathway" Data.Path.Type qualified as Type (Type (Any))
 import safe "pathway-compat-base" System.IO.Pathway qualified as F.IO
 import safe "pathway-compat-directory" System.Directory.Caught qualified as F.Caught
 import safe "pathway-compat-directory" System.Directory.Common qualified as Dir
@@ -91,14 +96,20 @@ import safe "pathway-compat-directory" System.IO.Error
     InvalidArgument,
   )
 import safe "pathway-compat-file-io" System.File.OsPath.Pathway qualified as O.IO
+import safe "pathway-compat-filepath" Common.OsPath qualified as OsPath
 import safe "pathway-compat-filepath" System.FilePath.Thin qualified as FP
 import safe "pathway-compat-filepath" System.OsPath.Pathway (OsString)
 import safe "pathway-compat-filepath" System.OsPath.Thin qualified as OP
 import safe "time" Data.Time.Clock (UTCTime)
 import "variant" Data.Variant (V, liftVariant)
 
+type ParseFailure :: Kind.Type -> Kind.Type
+type ParseFailure rep = MP.ParseErrorBundle rep Void
+
 type Rep :: Kind.Type -> Kind.Constraint
 class Rep rep where
+  parseDirectory :: rep -> Either (ParseFailure rep) (Path 'Rel.Any 'Dir rep)
+  parsePath :: rep -> Either (ParseFailure rep) (Path 'Rel.Any 'Type.Any rep)
   splitSearchPath ::
     rep -> [Either (InternalFailure rep Void) (Path 'Rel.Any 'Dir rep)]
   canonicalizePath ::
@@ -218,6 +229,8 @@ class Operations rep typ where
     IO (Either (V (AlreadyExistsError ': RenameFailure)) ())
 
 instance Rep String where
+  parseDirectory = MP.parse (Parser.directory Format.local) ""
+  parsePath = MP.parse (Parser.path Format.local) ""
   splitSearchPath = FP.splitSearchPath
   canonicalizePath = F.Caught.canonicalizePath
   copyPermissions = F.Caught.copyPermissions
@@ -256,6 +269,8 @@ instance Operations String 'File where
   rename old = fmap (first liftVariant) . F.Caught.renameFile old
 
 instance Rep OsString where
+  parseDirectory = MP.parse (Parser.directory OsPath.localFormat) ""
+  parsePath = MP.parse (Parser.path OsPath.localFormat) ""
   splitSearchPath = OP.splitSearchPath
   canonicalizePath = O.Caught.canonicalizePath
   copyPermissions = O.Caught.copyPermissions

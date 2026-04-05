@@ -195,6 +195,7 @@ library
   build-depends:
     directory,
     exceptions,
+    megaparsec,
     pathway ^>= {0.0.1},
     pathway-compat-base ^>= {0.0.1},
     pathway-compat-directory ^>= {0.0.1},
