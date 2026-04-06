@@ -18,15 +18,14 @@ where
 
 import "base" Control.Applicative (pure, (<*), (<*>), (<|>))
 import "base" Control.Category ((.))
-import "base" Control.Monad.Fail (fail)
 import "base" Data.Eq ((/=))
 import "base" Data.Foldable (fold, foldr)
 import "base" Data.Function (flip, ($))
 import "base" Data.Functor (fmap, void, (<$), (<$>))
 import "base" Data.Functor.Const (Const (Const))
 import "base" Data.List (length)
+import "base" Data.List.NonEmpty (NonEmpty ((:|)))
 import "base" Data.Monoid (Monoid)
-import "base" Data.Ord (Ord)
 import "base" Data.Proxy (Proxy (Proxy))
 import "base" Numeric.Natural (Natural)
 import "megaparsec" Text.Megaparsec qualified as MP
@@ -69,8 +68,7 @@ unsafeReverse = embed . flip (unsafeCata reverse') Neither
 -- Right ()
 -- >>> MP.parse (path posix) "" "/"
 -- Right (Path {parents = Nothing, directories = List (embed Neither), filename = Nothing})
-rootDirectory ::
-  (MP.Stream s, Ord e) => Format (MP.Tokens s) -> MP.Parsec e s ()
+rootDirectory :: (MP.MonadParsec v s p) => Format (MP.Tokens s) -> p ()
 rootDirectory = void . MP.chunk . root
 
 -- |
@@ -78,8 +76,7 @@ rootDirectory = void . MP.chunk . root
 -- Right ()
 -- >>> MP.parse (path posix) "" "./"
 -- Right (Path {parents = Just 0, directories = List (embed Neither), filename = Nothing})
-currentDirectory ::
-  (MP.Stream s, Ord e) => Format (MP.Tokens s) -> MP.Parsec e s ()
+currentDirectory :: (MP.MonadParsec v s p) => Format (MP.Tokens s) -> p ()
 currentDirectory = void . MP.chunk . current
 
 -- |
@@ -87,39 +84,31 @@ currentDirectory = void . MP.chunk . current
 -- Right 1
 -- >>> MP.parse (path posix) "" "../"
 -- Right (Path {parents = Just 1, directories = List (embed Neither), filename = Nothing})
-parents' :: (MP.Stream s, Ord e) => Format (MP.Tokens s) -> MP.Parsec e s Natural
+parents' :: (MP.MonadParsec v s p) => Format (MP.Tokens s) -> p Natural
 parents' = fmap (fromIntegral . length) . MP.many . MP.chunk . parent
 
-anchor ::
-  (MP.Stream s, Ord e) => Format (MP.Tokens s) -> MP.Parsec e s (Maybe Natural)
+anchor :: (MP.MonadParsec v s p) => Format (MP.Tokens s) -> p (Maybe Natural)
 anchor format =
   Nothing <$ rootDirectory format
     <|> pure 0 <$ currentDirectory format
     <|> pure <$> parents' format
 
 escapeChar ::
-  (MP.Stream s, Ord e) =>
-  MapF (MP.Tokens s) (MP.Tokens s) (MP.Parsec e s (MP.Tokens s)) ->
-  MP.Parsec e s (MP.Tokens s)
+  (MP.MonadParsec v s p) =>
+  MapF (MP.Tokens s) (MP.Tokens s) (p (MP.Tokens s)) -> p (MP.Tokens s)
 escapeChar = \case
-  TipF -> fail "no parser"
+  TipF -> MP.unexpected $ MP.Label ('e' :| "scape character")
   BinF _ direct escaped fn fn' -> fn' <|> direct <$ MP.chunk escaped <|> fn
 
 standardChar ::
-  forall s e.
-  (MP.Stream s, Ord e) =>
-  Format (MP.Tokens s) ->
-  MP.Parsec e s (MP.Token s)
+  forall v s p. (MP.MonadParsec v s p) => Format (MP.Tokens s) -> p (MP.Token s)
 standardChar format =
   MP.satisfy
     ((separator format /=) . MP.tokenToChunk (Proxy :: Proxy s))
     MP.<?> "standard character"
 
 componentChar ::
-  forall s e.
-  (MP.Stream s, Ord e) =>
-  Format (MP.Tokens s) ->
-  MP.Parsec e s (MP.Tokens s)
+  forall v s p. (MP.MonadParsec v s p) => Format (MP.Tokens s) -> p (MP.Tokens s)
 componentChar format =
   cata escapeChar (substitutions format)
     <|> MP.tokenToChunk (Proxy :: Proxy s) <$> standardChar format
@@ -132,9 +121,8 @@ componentChar format =
 -- >>> MP.parse (path posix) "" "env"
 -- Right (Path {parents = Just 0, directories = List (embed Neither), filename = Just "env"})
 component ::
-  (MP.Stream s, Monoid (MP.Tokens s), Ord e) =>
-  Format (MP.Tokens s) ->
-  MP.Parsec e s (MP.Tokens s)
+  (MP.MonadParsec v s p, Monoid (MP.Tokens s)) =>
+  Format (MP.Tokens s) -> p (MP.Tokens s)
 component = fmap fold . MP.some . componentChar
 
 -- |
@@ -145,9 +133,8 @@ component = fmap fold . MP.some . componentChar
 -- >>> MP.parse (path posix) "" "bin/"
 -- Right (Path {parents = Just 0, directories = List (embed (Both "bin" (embed Neither))), filename = Nothing})
 directoryName ::
-  (MP.Stream s, Monoid (MP.Tokens s), Ord e) =>
-  Format (MP.Tokens s) ->
-  MP.Parsec e s (MP.Tokens s)
+  (MP.MonadParsec v s p, Monoid (MP.Tokens s)) =>
+  Format (MP.Tokens s) -> p (MP.Tokens s)
 directoryName format = component format <* MP.chunk (separator format)
 
 -- |
@@ -162,15 +149,14 @@ directoryName format = component format <* MP.chunk (separator format)
 --            a directory, even without a trailing slash – also, how portable is
 --            this?).
 directories' ::
-  (MP.Stream s, Monoid (MP.Tokens s), Ord e) =>
-  Format (MP.Tokens s) ->
-  MP.Parsec e s (Mu (XNor (MP.Tokens s)))
+  (MP.MonadParsec v s p, Monoid (MP.Tokens s)) =>
+  Format (MP.Tokens s) -> p (Mu (XNor (MP.Tokens s)))
 directories' = fmap unsafeReverse . MP.many . MP.try . directoryName
 
 protoPath ::
-  (MP.Stream s, Monoid (MP.Tokens s), Ord e) =>
+  (MP.MonadParsec v s p, Monoid (MP.Tokens s)) =>
   Format (MP.Tokens s) ->
-  MP.Parsec e s (Maybe Natural, Mu (XNor (MP.Tokens s)), Maybe (MP.Tokens s))
+  p (Maybe Natural, Mu (XNor (MP.Tokens s)), Maybe (MP.Tokens s))
 protoPath format =
   (,,)
     <$> anchor format
@@ -186,9 +172,8 @@ protoPath format =
 -- >>> MP.parse (path posix) "" "../../../b/f/g/"
 -- Right (Path {parents = Just 3, directories = List (embed (Both "g" (embed (Both "f" (embed (Both "b" (embed Neither))))))), filename = Nothing})
 path ::
-  (MP.Stream s, Monoid (MP.Tokens s), Ord e) =>
-  Format (MP.Tokens s) ->
-  MP.Parsec e s (AnyPath (MP.Tokens s))
+  (MP.MonadParsec v s p, Monoid (MP.Tokens s)) =>
+  Format (MP.Tokens s) -> p (AnyPath (MP.Tokens s))
 path =
   fmap
     ( \(parents, dir, filename) ->
@@ -200,9 +185,8 @@ path =
 --   parsing. E.g., this will parse as a directory even without a trailing
 --   separator on the final component.
 directory ::
-  (MP.Stream s, Monoid (MP.Tokens s), Ord e) =>
-  Format (MP.Tokens s) ->
-  MP.Parsec e s (Path 'Any 'Dir (MP.Tokens s))
+  (MP.MonadParsec v s p, Monoid (MP.Tokens s)) =>
+  Format (MP.Tokens s) -> p (Path 'Any 'Dir (MP.Tokens s))
 directory =
   fmap
     ( \(parents, dir, filenm) ->
@@ -217,4 +201,4 @@ directory =
 -- -- | When we need lax parsing, but don’t know at the time of parsing whether we
 -- --   have a file or directory, this parses to the more flexible
 -- --  `AnyAmbiguousPath` that can be disambiguated later (if at all).
--- ambiguousPath :: Format -> MP.Parsec e FilePath AnyAmbiguousPath
+-- ambiguousPath :: (MP.MonadParsec v FilePath p) => Format -> p AnyAmbiguousPath
