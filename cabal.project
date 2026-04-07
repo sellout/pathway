@@ -38,6 +38,8 @@ allow-newer:
   uuid-types-1.0.6:*,
 
 flags:
+  -- The variant package depends on unliftio if you let it.
+  -unliftio
   -- Ensure development of this project always uses @NoRecursion@, even if it
   -- causes the solver to fail.
   +verify-no-recursion
@@ -49,6 +51,10 @@ program-options
 tests: True
 
 packages:
+  ./compat/base/pathway-compat-base.cabal
+  ./compat/directory/pathway-compat-directory.cabal
+  ./compat/file-io/pathway-compat-file-io.cabal
+  ./compat/filepath/pathway-compat-filepath.cabal
   ./internal/pathway-internal.cabal
   ./path/pathway-path.cabal
   ./pathway/pathway.cabal

@@ -31,6 +31,7 @@ module Data.Path
     RelOps (..),
     Relative,
     Relativity (Abs, Rel),
+    Substible,
     Type (Dir, File),
     Typey,
     anchor,
@@ -39,10 +40,12 @@ module Data.Path
     forgetType,
     minimalRoute,
     reparent,
+    replace,
     route,
     strengthen,
     toText,
     unanchor,
+    weaken,
     (</>),
   )
 where
@@ -51,18 +54,25 @@ import safe "base" Control.Applicative (pure)
 import safe "base" Control.Category (id, (.))
 import safe "base" Data.Bool (Bool (False, True))
 import safe "base" Data.Eq (Eq, (==))
+import safe "base" Data.Foldable (Foldable)
 import safe "base" Data.Function (($))
-import safe "base" Data.Functor (fmap)
+import safe "base" Data.Functor (Functor, fmap)
 import safe "base" Data.Functor.Const (Const (Const))
 import safe "base" Data.Functor.Identity (runIdentity)
 import safe "base" Data.Kind qualified as Kind
 import safe "base" Data.Maybe qualified as Lazy
+import safe "base" Data.Monoid (Monoid, mempty)
+import safe "base" Data.Ord (Ord)
 import safe "base" Data.Proxy (Proxy (Proxy))
-import safe "base" Data.Semigroup (Semigroup, (<>))
-import safe "base" Data.String (IsString, String)
+import safe "base" Data.Semigroup ((<>))
+import safe "base" Data.String (String)
+import safe "base" Data.Traversable (Traversable)
+import safe "base" GHC.Generics (Generic, Generic1)
 -- TODO: `minusNaturalMaybe` is exported from Numeric.Natural starting with base-4.18 (GHC 9.6).
 import "base" GHC.Natural (minusNaturalMaybe)
 import safe "base" Numeric.Natural (Natural)
+import safe "base" Text.Read (Read)
+import safe "base" Text.Show (Show)
 import safe "extra" Data.List.Extra qualified as List
 import safe "pathway-internal" Data.Path.Internal
   ( Filename,
@@ -73,6 +83,7 @@ import safe "pathway-internal" Data.Path.Internal
     directories,
     filename,
     parents,
+    weaken,
     (</>),
   )
 import safe "text" Data.Text (Text)
@@ -586,25 +597,25 @@ escape' = \case
   TipF -> id
   BinF _ direct escaped fn fn' -> fn' . replace direct escaped . fn
 
-anyToText :: (IsString a, Semigroup a, Substible a) => Format a -> AnyPath a -> a
+anyToText :: (Monoid a, Substible a) => Format a -> AnyPath a -> a
 anyToText format path =
   let escapeComponent = cata escape' $ substitutions format
       prefix =
         maybe
           (root format)
-          ( fromMaybe ""
+          ( fromMaybe mempty
               . cata (fmap $ maybe (parent format) (parent format <>))
           )
           $ parents path
       directory =
         cata
           ( \case
-              Neither -> ""
+              Neither -> mempty
               Both directoryName pathStr ->
                 pathStr <> escapeComponent directoryName <> separator format
           )
           $ directories path
-      file = maybe "" escapeComponent $ filename path
+      file = maybe mempty escapeComponent $ filename path
    in prefix <> directory <> file
 
 -- |
@@ -612,7 +623,7 @@ anyToText format path =
 -- >>> toText Format.posix [posix|.be/|]
 -- ".be/"
 toText ::
-  (Pathy rel typ, IsString a, Semigroup a, Substible a) => Format a -> Path rel typ a -> a
+  (Pathy rel typ, Monoid a, Substible a) => Format a -> Path rel typ a -> a
 toText format = anyToText format . unanchor
 
 -- __TODO__: This forms a `Prism'` with `weaken`.
@@ -628,6 +639,8 @@ data Anchored rep
   | RelFile (Path ('Rel 'False) 'File rep)
   | ReparentedDir (Path ('Rel 'True) 'Dir rep)
   | ReparentedFile (Path ('Rel 'True) 'File rep)
+  deriving stock (Eq, Generic, Ord, Read, Show)
+  deriving stock (Foldable, Functor, Generic1, Traversable)
 
 -- | Discover the specific type of a `Path`.
 anchor :: AnyPath rep -> Anchored rep
