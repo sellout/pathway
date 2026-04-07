@@ -200,6 +200,7 @@ library
     bytestring,
     file-io ^>= {0.1.0},
     filepath ^>= {1.4.2, 1.5.0},
+    megaparsec,
     pathway ^>= {0.0.1},
     pathway-compat-base ^>= {0.0.1},
     pathway-compat-filepath ^>= {0.0.1},

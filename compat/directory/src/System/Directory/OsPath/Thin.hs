@@ -156,10 +156,14 @@ import safe "pathway" Data.Path.Type qualified as Type
 import safe "pathway-compat-base" Common
   ( InternalFailure (IncorrectResultType, ParseFailure),
   )
+import safe "pathway-compat-file-io" System.File.OsPath.Thin
+  ( absFileFromPathRep,
+    handleAnchoredPath,
+  )
 import safe "pathway-compat-filepath" Common.OsPath
   ( absDirFromPathRep,
     anyDirFromPathRep,
-    fromPathRep,
+    handleAnchoredDir,
     toPathRep,
   )
 import safe "time" Data.Time.Clock (UTCTime)
@@ -171,27 +175,6 @@ import safe "this" System.Directory.Common
     makeRelativeToCurrentDirectory,
   )
 import safe "base" Prelude (Integer)
-
-handleAnchoredPath ::
-  (Ord e) =>
-  (Anchored OsString -> Either (InternalFailure OsPath e) a) ->
-  OsPath ->
-  Either (InternalFailure OsPath e) a
-handleAnchoredPath handler = either (Left . ParseFailure) handler . fromPathRep
-
-absFileFromPathRep ::
-  (Ord e) =>
-  OsPath ->
-  Either (InternalFailure OsPath e) (Path 'Abs 'File OsString)
-absFileFromPathRep =
-  let badType rel typ = Left . IncorrectResultType Abs File rel typ
-   in handleAnchoredPath \case
-        AbsDir path -> badType Abs Dir $ unanchor path
-        AbsFile path -> pure path
-        RelDir path -> badType (Rel False) Dir $ unanchor path
-        RelFile path -> badType (Rel False) File $ unanchor path
-        ReparentedDir path -> badType (Rel True) Dir $ unanchor path
-        ReparentedFile path -> badType (Rel True) File $ unanchor path
 
 relPathFromPathRep ::
   (Ord e) =>
@@ -218,7 +201,7 @@ repDirFromPathRep ::
   Either (InternalFailure OsPath e) (Path ('Rel 'True) 'Dir OsString)
 repDirFromPathRep =
   let badType rel typ = Left . IncorrectResultType (Rel True) Dir rel typ
-   in handleAnchoredPath \case
+   in handleAnchoredDir \case
         AbsDir path -> badType Abs Dir $ unanchor path
         AbsFile path -> badType Abs File $ unanchor path
         RelDir path -> pure $ weaken path

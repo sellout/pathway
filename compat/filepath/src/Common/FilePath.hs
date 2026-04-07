@@ -27,8 +27,8 @@
 --   effort to remove it.
 module Common.FilePath
   ( toPathRep,
-    fromPathRep,
-    handleAnchoredPath,
+    fromPathRepDir,
+    handleAnchoredDir,
     absDirFromPathRep,
     anyDirFromPathRep,
   )
@@ -62,19 +62,19 @@ import "pathway-compat-base" Common
     toPathRep,
   )
 
-fromPathRep ::
+fromPathRepDir ::
   (Ord e) =>
   FilePath ->
   Either (MP.ParseErrorBundle FilePath e) (Anchored String)
-fromPathRep =
+fromPathRepDir =
   fmap (anchor . forgetType) . MP.parse (Parser.directory Format.local) ""
 
-handleAnchoredPath ::
+handleAnchoredDir ::
   (Ord e) =>
   (Anchored String -> Either (InternalFailure FilePath e) a) ->
   FilePath ->
   Either (InternalFailure FilePath e) a
-handleAnchoredPath handler = either (Left . ParseFailure) handler . fromPathRep
+handleAnchoredDir handler = either (Left . ParseFailure) handler . fromPathRepDir
 
 absDirFromPathRep ::
   (Ord e) =>
@@ -82,7 +82,7 @@ absDirFromPathRep ::
   Either (InternalFailure FilePath e) (Path 'Abs 'Dir String)
 absDirFromPathRep =
   let badType rel typ = Left . IncorrectResultType Abs Dir rel typ
-   in handleAnchoredPath \case
+   in handleAnchoredDir \case
         AbsDir path -> pure path
         AbsFile path -> badType Abs File $ unanchor path
         RelDir path -> badType (Rel False) Dir $ unanchor path
@@ -96,7 +96,7 @@ anyDirFromPathRep ::
   Either (InternalFailure FilePath e) (Path 'Rel.Any 'Dir String)
 anyDirFromPathRep =
   let badType rel typ = Left . IncorrectResultType Rel.Any Dir rel typ
-   in handleAnchoredPath \case
+   in handleAnchoredDir \case
         AbsDir path -> pure $ forgetRelativity path
         AbsFile path -> badType Abs File $ unanchor path
         RelDir path -> pure $ forgetRelativity path

@@ -18,6 +18,11 @@ module System.File.OsPath.Thin
     openBinaryTempFile,
     openTempFileWithDefaultPermissions,
     openBinaryTempFileWithDefaultPermissions,
+
+    -- * utils
+    fromPathRep,
+    handleAnchoredPath,
+    absFileFromPathRep,
   )
 where
 
@@ -25,7 +30,7 @@ import safe "base" Control.Applicative (pure)
 import safe "base" Control.Category ((.))
 import safe "base" Data.Bitraversable (bitraverse)
 import safe "base" Data.Bool (Bool (False, True))
-import safe "base" Data.Either (Either (Left))
+import safe "base" Data.Either (Either (Left), either)
 import safe "base" Data.Function (($))
 import safe "base" Data.Functor (fmap)
 import safe "base" Data.Ord (Ord)
@@ -34,15 +39,21 @@ import "bytestring" Data.ByteString qualified as Strict (ByteString)
 import "bytestring" Data.ByteString.Lazy qualified as Lazy (ByteString)
 import "file-io" System.File.OsPath qualified as FIO
 import "filepath" System.OsPath.Types (OsPath, OsString)
+import "megaparsec" Text.Megaparsec qualified as MP
 import safe "pathway" Data.Path
   ( Anchored (AbsDir, AbsFile, RelDir, RelFile, ReparentedDir, ReparentedFile),
     Path,
     Relativity (Abs, Rel),
     Type (Dir, File),
+    anchor,
+    forgetType,
     unanchor,
   )
-import safe "pathway-compat-base" Common (InternalFailure (IncorrectResultType))
-import safe "pathway-compat-filepath" Common.OsPath (handleAnchoredPath, toPathRep)
+import "pathway" Data.Path.Parser qualified as Parser
+import safe "pathway-compat-base" Common
+  ( InternalFailure (IncorrectResultType, ParseFailure),
+  )
+import safe "pathway-compat-filepath" Common.OsPath (localFormat, toPathRep)
 
 openFile :: Path 'Abs 'File OsString -> IOMode -> IO Handle
 openFile = FIO.openFile . toPathRep
@@ -82,6 +93,20 @@ appendFile = FIO.appendFile . toPathRep
 
 appendFile' :: Path 'Abs 'File OsString -> Strict.ByteString -> IO ()
 appendFile' = FIO.appendFile' . toPathRep
+
+fromPathRep ::
+  (Ord e) =>
+  OsPath ->
+  Either (MP.ParseErrorBundle OsPath e) (Anchored OsString)
+fromPathRep =
+  fmap (anchor . forgetType) . MP.parse (Parser.directory localFormat) ""
+
+handleAnchoredPath ::
+  (Ord e) =>
+  (Anchored OsString -> Either (InternalFailure OsPath e) a) ->
+  OsPath ->
+  Either (InternalFailure OsPath e) a
+handleAnchoredPath handler = either (Left . ParseFailure) handler . fromPathRep
 
 absFileFromPathRep ::
   (Ord e) =>

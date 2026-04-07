@@ -139,28 +139,30 @@ import safe "base" Data.Void (Void)
 import safe "base" System.IO (FilePath, IO)
 import "directory" System.Directory (XdgDirectory, XdgDirectoryList)
 import "directory" System.Directory qualified as Dir
-import safe "megaparsec" Text.Megaparsec qualified as MP
 import safe "pathway" Data.Path
   ( Anchored (AbsDir, AbsFile, RelDir, RelFile, ReparentedDir, ReparentedFile),
-    AnyPath,
     Path,
     Pathy,
     Relative,
     Relativity (Abs, Rel),
     Type (Dir, File),
     Typey,
-    anchor,
     forgetRelativity,
-    toText,
     unanchor,
     weaken,
   )
-import safe "pathway" Data.Path.Format qualified as Format
-import safe "pathway" Data.Path.Parser qualified as Parser
 import safe "pathway" Data.Path.Relativity qualified as Rel
 import safe "pathway" Data.Path.Type qualified as Type
 import safe "pathway-compat-base" Common
   ( InternalFailure (IncorrectResultType, ParseFailure),
+    absFileFromPathRep,
+    handleAnchoredPath,
+    toPathRep,
+  )
+import safe "pathway-compat-filepath" Common.FilePath
+  ( absDirFromPathRep,
+    anyDirFromPathRep,
+    handleAnchoredDir,
   )
 import safe "time" Data.Time.Clock (UTCTime)
 import safe "this" System.Directory.Common
@@ -171,53 +173,6 @@ import safe "this" System.Directory.Common
     makeRelativeToCurrentDirectory,
   )
 import safe "base" Prelude (Integer)
-
-anyPathFromPathRep ::
-  (Ord e) =>
-  FilePath ->
-  Either (MP.ParseErrorBundle FilePath e) (AnyPath String)
-anyPathFromPathRep = MP.parse (Parser.path Format.local) ""
-
-fromPathRep ::
-  (Ord e) =>
-  FilePath ->
-  Either (MP.ParseErrorBundle FilePath e) (Anchored String)
-fromPathRep = fmap anchor . anyPathFromPathRep
-
-handleAnchoredPath ::
-  (Ord e) =>
-  (Anchored String -> Either (InternalFailure FilePath e) a) ->
-  FilePath ->
-  Either (InternalFailure FilePath e) a
-handleAnchoredPath handler = either (Left . ParseFailure) handler . fromPathRep
-
-absDirFromPathRep ::
-  (Ord e) =>
-  FilePath ->
-  Either (InternalFailure FilePath e) (Path 'Abs 'Dir String)
-absDirFromPathRep =
-  let badType rel typ = Left . IncorrectResultType Abs Dir rel typ
-   in handleAnchoredPath \case
-        AbsDir path -> pure path
-        AbsFile path -> badType Abs File $ unanchor path
-        RelDir path -> badType (Rel False) Dir $ unanchor path
-        RelFile path -> badType (Rel False) File $ unanchor path
-        ReparentedDir path -> badType (Rel True) Dir $ unanchor path
-        ReparentedFile path -> badType (Rel True) File $ unanchor path
-
-absFileFromPathRep ::
-  (Ord e) =>
-  FilePath ->
-  Either (InternalFailure FilePath e) (Path 'Abs 'File String)
-absFileFromPathRep =
-  let badType rel typ = Left . IncorrectResultType Abs File rel typ
-   in handleAnchoredPath \case
-        AbsDir path -> badType Abs Dir $ unanchor path
-        AbsFile path -> pure path
-        RelDir path -> badType (Rel False) Dir $ unanchor path
-        RelFile path -> badType (Rel False) File $ unanchor path
-        ReparentedDir path -> badType (Rel True) Dir $ unanchor path
-        ReparentedFile path -> badType (Rel True) File $ unanchor path
 
 relPathFromPathRep ::
   (Ord e) =>
@@ -244,7 +199,7 @@ repDirFromPathRep ::
   Either (InternalFailure FilePath e) (Path ('Rel 'True) 'Dir String)
 repDirFromPathRep =
   let badType rel typ = Left . IncorrectResultType (Rel True) Dir rel typ
-   in handleAnchoredPath \case
+   in handleAnchoredDir \case
         AbsDir path -> badType Abs Dir $ unanchor path
         AbsFile path -> badType Abs File $ unanchor path
         RelDir path -> pure $ weaken path
@@ -265,20 +220,6 @@ repFileFromPathRep =
         RelFile path -> pure $ weaken path
         ReparentedDir path -> badType (Rel True) Dir $ unanchor path
         ReparentedFile path -> pure path
-
-anyDirFromPathRep ::
-  (Ord e) =>
-  FilePath ->
-  Either (InternalFailure FilePath e) (Path 'Rel.Any 'Dir String)
-anyDirFromPathRep =
-  let badType rel typ = Left . IncorrectResultType (Rel True) Dir rel typ
-   in handleAnchoredPath \case
-        AbsDir path -> pure $ forgetRelativity path
-        AbsFile path -> badType Abs File $ unanchor path
-        RelDir path -> pure $ forgetRelativity path
-        RelFile path -> badType (Rel False) File $ unanchor path
-        ReparentedDir path -> pure $ forgetRelativity path
-        ReparentedFile path -> badType (Rel True) File $ unanchor path
 
 anyFileFromPathRep ::
   (Ord e) =>
@@ -312,9 +253,6 @@ mixedPathFromPathRep =
         RelFile path -> pure $ pure path
         ReparentedDir path -> pure $ Left path
         ReparentedFile path -> badType (Rel True) File $ unanchor path
-
-toPathRep :: (Pathy rel typ) => Path rel typ String -> FilePath
-toPathRep = toText Format.local
 
 -- * Above here needs to be moved
 

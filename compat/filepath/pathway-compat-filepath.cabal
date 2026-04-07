@@ -205,6 +205,7 @@ library
     pathway-compat-base ^>= {0.0.1},
     pathway-internal ^>= {0.0.1},
   exposed-modules:
+    Common.FilePath
     Common.OsPath
     System.FilePath.Overlay
     System.FilePath.Pathway
@@ -212,8 +213,6 @@ library
     System.OsPath.Overlay
     System.OsPath.Pathway
     System.OsPath.Thin
-  other-modules:
-    Common.FilePath
 
 test-suite doctests
   import: defaults

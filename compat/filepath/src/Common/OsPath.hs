@@ -30,8 +30,8 @@
 module Common.OsPath
   ( localFormat,
     toPathRep,
-    fromPathRep,
-    handleAnchoredPath,
+    fromPathRepDir,
+    handleAnchoredDir,
     absDirFromPathRep,
     anyDirFromPathRep,
   )
@@ -104,19 +104,19 @@ instance MP.Stream OsString where
   takeN_ n = fmap (bimap O.pack O.pack) . MP.takeN_ n . O.unpack
   takeWhile_ p = bimap O.pack O.pack . MP.takeWhile_ p . O.unpack
 
-fromPathRep ::
+fromPathRepDir ::
   (Ord e) =>
   OsPath ->
   Either (MP.ParseErrorBundle OsPath e) (Anchored OsString)
-fromPathRep =
+fromPathRepDir =
   fmap (anchor . forgetType) . MP.parse (Parser.directory localFormat) ""
 
-handleAnchoredPath ::
+handleAnchoredDir ::
   (Ord e) =>
   (Anchored OsString -> Either (InternalFailure OsPath e) a) ->
   OsPath ->
   Either (InternalFailure OsPath e) a
-handleAnchoredPath handler = either (Left . ParseFailure) handler . fromPathRep
+handleAnchoredDir handler = either (Left . ParseFailure) handler . fromPathRepDir
 
 absDirFromPathRep ::
   (Ord e) =>
@@ -124,7 +124,7 @@ absDirFromPathRep ::
   Either (InternalFailure OsPath e) (Path 'Abs 'Dir OsString)
 absDirFromPathRep =
   let badType rel typ = Left . IncorrectResultType Abs Dir rel typ
-   in handleAnchoredPath \case
+   in handleAnchoredDir \case
         AbsDir path -> pure path
         AbsFile path -> badType Abs File $ unanchor path
         RelDir path -> badType (Rel False) Dir $ unanchor path
@@ -138,7 +138,7 @@ anyDirFromPathRep ::
   Either (InternalFailure OsPath e) (Path 'Rel.Any 'Dir OsString)
 anyDirFromPathRep =
   let badType rel typ = Left . IncorrectResultType Rel.Any Dir rel typ
-   in handleAnchoredPath \case
+   in handleAnchoredDir \case
         AbsDir path -> pure $ forgetRelativity path
         AbsFile path -> badType Abs File $ unanchor path
         RelDir path -> pure $ forgetRelativity path
