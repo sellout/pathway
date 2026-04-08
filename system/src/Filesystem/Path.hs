@@ -77,7 +77,7 @@ module Filesystem.Path
   )
 where
 
-import safe "base" Control.Applicative (pure, Applicative ((<*>)))
+import safe "base" Control.Applicative (Applicative ((<*>)), pure)
 import safe "base" Control.Category ((.))
 import safe "base" Control.Exception (Exception, throwIO)
 import safe "base" Control.Monad ((=<<))
