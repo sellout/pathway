@@ -77,7 +77,7 @@ module Filesystem.Path
   )
 where
 
-import safe "base" Control.Applicative (pure)
+import safe "base" Control.Applicative (Applicative ((<*>)), pure)
 import safe "base" Control.Category ((.))
 import safe "base" Control.Exception (Exception, throwIO)
 import safe "base" Control.Monad ((=<<))
@@ -140,10 +140,10 @@ handleAnchoredPath ::
   (Anchored PathComponent -> Either (InternalFailure PathRep e) a) ->
   PathRep ->
   IO (Either (InternalFailure PathRep e) a)
-handleAnchoredPath base handler rep =
-  either (Left . ParseFailure) handler
-    . bool (fromPathRep rep) (dirFromPathRep' rep)
+handleAnchoredPath base handler rep = do
+  bool (handleAnchoredFile handler) (handleAnchoredDir handler)
     <$> Dir.doesDirectoryExist (base <> "/" <> rep)
+    <*> pure rep
 
 handleAnchoredDir ::
   (Ord e) =>
