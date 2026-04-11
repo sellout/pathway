@@ -19,7 +19,12 @@
         "${dir}/LICENSE.commercial".source = ../../LICENSE.commercial;
       };
     in
-      copyLicenses "internal"
+      copyLicenses "compat/base"
+      // copyLicenses "compat/directory"
+      // copyLicenses "compat/file-io"
+      // copyLicenses "compat/filepath"
+      // copyLicenses "compat/temporary"
+      // copyLicenses "internal"
       // copyLicenses "path"
       // copyLicenses "pathway"
       // copyLicenses "quickcheck"
@@ -84,6 +89,11 @@
       pathway-internal = "internal";
       pathway-quickcheck = "quickcheck";
       pathway = "pathway";
+      pathway-compat-base = "compat/base";
+      pathway-compat-directory = "compat/directory";
+      pathway-compat-file-io = "compat/file-io";
+      pathway-compat-filepath = "compat/filepath";
+      pathway-compat-temporary = "compat/temporary";
       pathway-path = "path";
       pathway-system = "system";
     };

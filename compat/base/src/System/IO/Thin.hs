@@ -53,18 +53,30 @@ openBinaryFile :: Path 'Abs 'File String -> IOMode -> IO Handle
 openBinaryFile = IO.openBinaryFile . toPathRep
 
 openTempFile ::
-  (Ord e) =>
+  (Ord void) =>
+  -- | Directory in which to create the file
   Path 'Abs 'Dir String ->
+  -- | File name template. If the template is "foo.ext" then the created file
+  --   will be "fooXXX.ext" where XXX is some random number. Note that this
+  --   should not contain any path separator characters. On Windows, the
+  --   template prefix may be truncated to 3 chars, e.g. "foobar.ext" will be
+  --   "fooXXX.ext".
   String ->
-  IO (Either (InternalFailure FilePath e) (Path 'Abs 'File String, Handle))
+  IO (Either (InternalFailure FilePath void) (Path 'Abs 'File String, Handle))
 openTempFile tmpDir =
   fmap (bitraverse absFileFromPathRep pure) . IO.openTempFile (toPathRep tmpDir)
 
 openBinaryTempFile ::
-  (Ord e) =>
+  (Ord void) =>
+  -- | Directory in which to create the file
   Path 'Abs 'Dir String ->
+  -- | File name template. If the template is "foo.ext" then the created file
+  --   will be "fooXXX.ext" where XXX is some random number. Note that this
+  --   should not contain any path separator characters. On Windows, the
+  --   template prefix may be truncated to 3 chars, e.g. "foobar.ext" will be
+  --   "fooXXX.ext".
   String ->
-  IO (Either (InternalFailure FilePath e) (Path 'Abs 'File String, Handle))
+  IO (Either (InternalFailure FilePath void) (Path 'Abs 'File String, Handle))
 openBinaryTempFile tmpDir =
   fmap (bitraverse absFileFromPathRep pure)
     . IO.openBinaryTempFile (toPathRep tmpDir)

@@ -55,6 +55,7 @@ packages:
   ./compat/directory/pathway-compat-directory.cabal
   ./compat/file-io/pathway-compat-file-io.cabal
   ./compat/filepath/pathway-compat-filepath.cabal
+  ./compat/temporary/pathway-compat-temporary.cabal
   ./internal/pathway-internal.cabal
   ./path/pathway-path.cabal
   ./pathway/pathway.cabal
