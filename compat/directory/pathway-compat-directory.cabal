@@ -13,9 +13,7 @@ description:
 maintainer: Greg Pfeil <greg@technomadic.org>
 author: Greg Pfeil <greg@technomadic.org>
 copyright: 2024 Greg Pfeil
--- TODO: Remove the redundant `OR AGPL-3.0-only` once
---       haskell/hackage-server#1440 is fixed.
-license: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR AGPL-3.0-only OR LicenseRef-commercial
+license: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-commercial
 license-files:
   LICENSE
   LICENSE.AGPL-3.0-only
@@ -46,12 +44,12 @@ bug-reports: https://github.com/sellout/pathway/issues
 source-repository head
   type: git
   location: https://github.com/sellout/pathway.git
-  subdir: compat/base
+  subdir: compat/directory
 
 source-repository this
   type: git
   location: https://github.com/sellout/pathway.git
-  subdir: compat/base
+  subdir: compat/directory
   -- NB: This is the repo version, which is distinct from the package version.
   tag: v0.1.0
 
