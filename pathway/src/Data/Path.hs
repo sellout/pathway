@@ -241,6 +241,28 @@ class RelOps rel where
   --   You can see that the directory “b” is in the result, but isn’t present in
   --   the original relative paths, so there is no way to produce the desired
   --   result without adding more context to the arguments.
+  --
+  --   In support of the example above, here's a ASCII art diagram representing
+  --   the directory structure relative to the example above, with "?" being a
+  --   directory which we don't know the name of, and "cwd" being the current
+  --   working directory:
+  --
+  --   >       ?
+  --   > ┌─────┤
+  --   > d     ?
+  --   > │     ├─────┐
+  --   > e    cwd    f
+  --   >             │
+  --   >             g
+  --
+  --   From the diagram, the issue of rerouting should be clearer:
+  --
+  -- - rerouting from @g@ to @e@ (or, more accurately, from @..\/f\/g\/@ to
+  --   @..\/..\/d\/e\/@) requires going /up from/ an unknown directory, which
+  --   is done via @..@, that is not needing the name of such unknown
+  --   directory;
+  -- - going from @e@ to @g@, instead, entails going /down into/ a directory,
+  --   which obviously requires knowing the name of such a directory.
   maybeRoute ::
     Path ('Rel 'True) 'Dir rep ->
     Path rel typ rep ->
