@@ -3,7 +3,7 @@ cabal-version: 3.0
 --   exception.
 
 name: pathway-internal
-version: 0.0.1.0
+version: 1.0.0.0
 synopsis: Type-safe system-independent file path library
 description: Type-safe system-independent file path library.
 maintainer: Greg Pfeil <greg@technomadic.org>
@@ -193,7 +193,7 @@ library
   hs-source-dirs:
     src
   build-depends:
-    yaya ^>= {0.6.2, 0.7.0},
+    yaya ^>= {0.6.2, 0.7.0, 1.0.0},
   exposed-modules:
     Data.Path.Internal
     Data.Path.Internal.Relativity

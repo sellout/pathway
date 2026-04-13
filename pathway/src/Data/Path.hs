@@ -99,7 +99,7 @@ import safe "yaya" Yaya.Pattern
     maybe,
     xnor,
   )
-import safe "yaya-containers" Yaya.Containers.Pattern.Map (MapF (BinF, TipF))
+import safe "yaya-containers" Yaya.Containers.Pattern.Map (Map (Bin, Tip))
 import safe "this" Data.Path.Format (Format, parent, root, separator, substitutions)
 import safe "this" Data.Path.Relativity (Relativity (Abs, Any, Rel))
 import safe "this" Data.Path.Type (Type (Dir, File))
@@ -603,10 +603,10 @@ instance Substible String where
 instance Substible Text where
   replace = Text.replace
 
-escape' :: (Substible a) => MapF a a (a -> a) -> a -> a
+escape' :: (Substible a) => Map a a (a -> a) -> a -> a
 escape' = \case
-  TipF -> id
-  BinF _ direct escaped fn fn' -> fn' . replace direct escaped . fn
+  Tip -> id
+  Bin _ direct escaped fn fn' -> fn' . replace direct escaped . fn
 
 anyToText :: (IsString a, Semigroup a, Substible a) => Format a -> AnyPath a -> a
 anyToText format path =
