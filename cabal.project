@@ -15,7 +15,7 @@ constraints:
   -- earlier versions don’t have `SomeBase` and other types
   path >= 0.8.0,
   -- earlier versions use -fpackage-trust, which causes no end of trouble
-  yaya >= 0.6.2.2,
+  yaya >= 1.0.0.0,
   -- earlier versions use -fpackage-trust, which causes no end of trouble
   yaya-containers >= 0.1.2.1,
   -- earlier versions use -fpackage-trust, which causes no end of trouble

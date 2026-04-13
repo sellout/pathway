@@ -42,7 +42,7 @@ import "pathway-internal" Data.Path.Internal
 import "yaya" Yaya.Applied (reverse')
 import "yaya" Yaya.Fold (Mu, Projectable, Steppable, cata, embed)
 import "yaya" Yaya.Pattern (Maybe (Nothing), XNor (Both, Neither))
-import "yaya-containers" Yaya.Containers.Pattern.Map (MapF (BinF, TipF))
+import "yaya-containers" Yaya.Containers.Pattern.Map (Map (Bin, Tip))
 import "yaya-unsafe" Yaya.Unsafe.Fold (unsafeCata)
 import "this" Data.Path (AnyPath)
 import "this" Data.Path.Format
@@ -101,10 +101,10 @@ anchor format =
 
 escapeChar ::
   (MP.MonadParsec v s p) =>
-  MapF (MP.Tokens s) (MP.Tokens s) (p (MP.Tokens s)) -> p (MP.Tokens s)
+  Map (MP.Tokens s) (MP.Tokens s) (p (MP.Tokens s)) -> p (MP.Tokens s)
 escapeChar = \case
-  TipF -> MP.unexpected $ MP.Label ('e' :| "scape character")
-  BinF _ direct escaped fn fn' -> fn' <|> direct <$ MP.chunk escaped <|> fn
+  Tip -> MP.unexpected $ MP.Label ('e' :| "scape character")
+  Bin _ direct escaped fn fn' -> fn' <|> direct <$ MP.chunk escaped <|> fn
 
 standardChar ::
   forall v s p.
