@@ -537,10 +537,22 @@ findFilesWith ::
   IO [Either (InternalFailure FilePath e) (Path 'Abs 'File String)]
 findFilesWith = findFilesWith' Dir.findFilesWith
 
-createFileLink :: (Relative rel) => Path rel 'File String -> Path 'Abs 'File String -> IO ()
+createFileLink ::
+  (Relative rel) =>
+  -- | The target of the link (this may be relative).
+  Path rel 'File String ->
+  -- | The name of the newly-created link.
+  Path 'Abs 'File String ->
+  IO ()
 createFileLink old = Dir.createFileLink (toPathRep old) . toPathRep
 
-createDirectoryLink :: (Relative rel) => Path rel 'Dir String -> Path 'Abs 'Dir String -> IO ()
+createDirectoryLink ::
+  (Relative rel) =>
+  -- | The target of the link (this may be relative).
+  Path rel 'Dir String ->
+  -- | The name of the newly-created link.
+  Path 'Abs 'Dir String ->
+  IO ()
 createDirectoryLink old = Dir.createDirectoryLink (toPathRep old) . toPathRep
 
 removeDirectoryLink :: Path 'Abs 'Dir String -> IO ()

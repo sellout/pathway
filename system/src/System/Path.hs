@@ -213,7 +213,9 @@ type Operations :: Kind.Type -> Type -> Kind.Constraint
 class Operations rep typ where
   createLink ::
     (Relative rel) =>
+    -- | The target of the link (this may be relative).
     Path rel typ rep ->
+    -- | The name of the newly-created link.
     Path 'Abs typ rep ->
     IO (Either (V CreateLinkFailure) ())
   doesExist :: Path 'Abs typ rep -> IO Bool
