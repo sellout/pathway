@@ -16,6 +16,7 @@ import "filepath" System.FilePath (FilePath)
 import "pathway" Data.Path (Path, Pathy)
 import "pathway" Data.Path qualified as Path
 import "pathway" Data.Path.Format qualified as Format
+import "pathway-internal" Data.Path.Internal.Resolution (Resolution (Unres))
 
 -- |
 --
@@ -33,5 +34,5 @@ type PathRep = FilePath
 type PathComponent :: Kind.Type
 type PathComponent = String
 
-toPathRep :: (Pathy rel typ) => Path rel typ PathComponent -> PathRep
+toPathRep :: (Pathy rel typ) => Path 'Unres rel typ PathComponent -> PathRep
 toPathRep = Path.toText Format.local

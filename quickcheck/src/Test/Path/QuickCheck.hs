@@ -39,7 +39,7 @@ arbitraryPath ::
   QC.Gen (Parents rel) ->
   (QC.Gen rep -> QC.Gen (Filename typ rep)) ->
   QC.Gen rep ->
-  QC.Gen (Path rel typ rep)
+  QC.Gen (Path res rel typ rep)
 arbitraryPath rel typ rep =
   Path <$> rel <*> arbitraryDirectories rep <*> typ rep
 
@@ -51,12 +51,12 @@ instance QC.Arbitrary Natural where
 
 instance
   (QC.Arbitrary (Parents rel), QC.Arbitrary1 (Filename typ)) =>
-  QC.Arbitrary1 (Path rel typ)
+  QC.Arbitrary1 (Path res rel typ)
   where
   liftArbitrary = arbitraryPath QC.arbitrary QC.liftArbitrary
 
 instance
-  (QC.Arbitrary1 (Path rel typ), IsString rep) =>
-  QC.Arbitrary (Path rel typ rep)
+  (QC.Arbitrary1 (Path res rel typ), IsString rep) =>
+  QC.Arbitrary (Path res rel typ rep)
   where
   arbitrary = QC.liftArbitrary arbitraryNonEmptyText

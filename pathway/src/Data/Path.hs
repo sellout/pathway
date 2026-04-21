@@ -47,6 +47,9 @@ module Data.Path
   )
 where
 
+-- TODO: `minusNaturalMaybe` is exported from Numeric.Natural starting with base-4.18 (GHC 9.6).
+
+import Data.Path.Internal.Resolution (Resolution (Res, Unres))
 import safe "base" Control.Applicative (pure)
 import safe "base" Control.Category (id, (.))
 import safe "base" Data.Bool (Bool (False, True))
@@ -60,7 +63,6 @@ import safe "base" Data.Maybe qualified as Lazy
 import safe "base" Data.Proxy (Proxy (Proxy))
 import safe "base" Data.Semigroup (Semigroup, (<>))
 import safe "base" Data.String (IsString, String)
--- TODO: `minusNaturalMaybe` is exported from Numeric.Natural starting with base-4.18 (GHC 9.6).
 import "base" GHC.Natural (minusNaturalMaybe)
 import safe "base" Numeric.Natural (Natural)
 import safe "extra" Data.List.Extra qualified as List
@@ -126,9 +128,9 @@ null :: (Projectable (->) t (XNor a)) => t -> Bool
 null = isNeither . project
 
 -- | Convert an arbitrary path value to a specific path type.
-type Pathish :: Kind.Type -> Relativity -> Type -> Kind.Type -> Kind.Constraint
-class Pathish path (rel :: Relativity) (typ :: Type) rep where
-  specializePath :: path -> Path rel typ rep
+type Pathish :: Kind.Type -> Resolution -> Relativity -> Type -> Kind.Type -> Kind.Constraint
+class Pathish path (res :: Resolution) (rel :: Relativity) (typ :: Type) rep where
+  specializePath :: path -> Path res rel typ rep
 
 -- | This does not convert `AnyPath` to a more specific `Path` type (see
 --  `anchor` for that), but converts some path representation to a `Path`. So
@@ -137,7 +139,7 @@ class Pathish path (rel :: Relativity) (typ :: Type) rep where
 --  __NB__: This is the only instance needed by Pathway itself, but the class
 --          exists as an integration point for other libraries that have some
 --          typed path representation.
-instance Pathish (Path rel typ rep) rel typ rep where
+instance Pathish (Path res rel typ rep) res rel typ rep where
   specializePath = id
 
 -- | This is a path where we don’t know (at the type level) whether it’s
@@ -149,7 +151,7 @@ instance Pathish (Path rel typ rep) rel typ rep where
 --   generic operations like parsing and printing, with separate functions (like
 --  `anchor`) to lift the contained information to the type level.
 type AnyPath :: Kind.Type -> Kind.Type
-type AnyPath = Path 'Any 'Type.Any
+type AnyPath = Path 'Unres 'Any 'Type.Any
 
 -- -- | Convert an arbitrary value representing a path to `AnyPath`.
 -- --
@@ -169,11 +171,8 @@ instance Relative 'Abs where
 instance Relative 'Any where
   generalizeRelativity = id
 
-instance Relative ('Rel 'False) where
+instance Relative 'Rel where
   generalizeRelativity Proxy = pure 0
-
-instance Relative ('Rel 'True) where
-  generalizeRelativity = pure
 
 type Typey :: Type -> Kind.Constraint
 class Typey typ where
@@ -213,9 +212,27 @@ type Pathy rel typ = (Relative rel, Typey typ)
 --   generalizePath @(Path rel typ rep) . specializePath
 
 type RelOps :: Relativity -> Kind.Constraint
+
+class RelOps' res where
+  -- | Move up one directory in the file hierarchy.
+  ascendRelative :: Path res 'Rel 'Dir rep -> Path 'Unres 'Rel 'Dir rep
+  reparentBy :: Natural -> Path res rel typ rep -> Path 'Unres 'Rel typ rep
+
+instance RelOps' 'Unres where
+  ascendRelative dir =
+    if null $ directories dir
+      then dir {parents = parents dir + 1}
+      else dir {directories = tail $ directories dir}
+  reparentBy levels path = path {parents = parents path + levels}
+
+instance RelOps' 'Res where
+  ascendRelative dir =
+    if null $ directories dir
+      then dir {parents = 1}
+      else dir {parents = 0, directories = tail $ directories dir}
+  reparentBy levels path = path {parents = levels}
+
 class RelOps rel where
-  ascendRelative :: Path rel 'Dir rep -> Path ('Rel 'True) 'Dir rep
-  reparentBy :: Natural -> Path rel typ rep -> Path ('Rel 'True) typ rep
 
   -- | Like `route`, but for reparented paths. Unlike `route`, this
   --   can fail. If the first argument is reparented more than the second
@@ -224,7 +241,7 @@ class RelOps rel where
   --
   -- -- prop> maybe True ((b ==) . (a </>)) $ maybeRoute @_ @Text @'File a b
   --
-  -- >>> maybeRoute @('Rel 'True) @Text [posix|../../d/e/|] [posix|../f/g/|]
+  -- >>> maybeRoute @('Rel 'True) @Unres @Text [posix|../../d/e/|] [posix|../f/g/|]
   -- Nothing
   --
   --   we can see why if we first convert them to absolute paths
@@ -264,9 +281,9 @@ class RelOps rel where
   -- - going from @e@ to @g@, instead, entails going /down into/ a directory,
   --   which obviously requires knowing the name of such a directory.
   maybeRoute ::
-    Path ('Rel 'True) 'Dir rep ->
-    Path rel typ rep ->
-    Maybe (Path ('Rel 'True) typ rep)
+    Path res ('Rel 'True) 'Dir rep ->
+    Path res rel typ rep ->
+    Maybe (Path res ('Rel 'True) typ rep)
 
   -- | Like `maybeRoute`, but shortens the path as much as possible. This can
   --   only make a difference when both paths have the same amount of
@@ -277,7 +294,7 @@ class RelOps rel where
   --
   --   whereas
   --
-  -- >>> toText Format.posix <$> maybeRoute @('Rel 'True) @Text [posix|../d/e/|] [posix|../d/f/|]
+  -- >>> toText Format.posix <$> maybeRoute @('Rel 'True) @Unres @Text [posix|../d/e/|] [posix|../d/f/|]
   -- Just "../../d/f/"
   --
   --   The thing to consider is that various operations can fail depending on how
@@ -287,16 +304,11 @@ class RelOps rel where
   --   operations to minimize the partiality is worthwhile.
   maybeMinimalRoute ::
     (Eq rep) =>
-    Path ('Rel 'True) 'Dir rep ->
-    Path rel typ rep ->
-    Maybe (Path ('Rel 'True) typ rep)
+    Path res ('Rel 'True) 'Dir rep ->
+    Path res rel typ rep ->
+    Maybe (Path res ('Rel 'True) typ rep)
 
 instance RelOps ('Rel 'False) where
-  ascendRelative dir =
-    if null $ directories dir
-      then dir {parents = 1}
-      else dir {parents = 0, directories = tail $ directories dir}
-  reparentBy levels path = path {parents = levels}
   maybeRoute from to =
     Lazy.maybe
       Nothing
@@ -310,11 +322,11 @@ instance RelOps ('Rel 'False) where
       )
       $ minusNaturalMaybe 0 (parents from)
   maybeMinimalRoute ::
-    forall typ rep.
+    forall typ rep res.
     (Eq rep) =>
-    Path ('Rel 'True) 'Dir rep ->
-    Path ('Rel 'False) typ rep ->
-    Maybe (Path ('Rel 'True) typ rep)
+    Path res ('Rel 'True) 'Dir rep ->
+    Path res ('Rel 'False) typ rep ->
+    Maybe (Path res ('Rel 'True) typ rep)
   maybeMinimalRoute from to =
     if parents from == 0
       then
@@ -330,11 +342,6 @@ instance RelOps ('Rel 'False) where
       else Nothing
 
 instance RelOps ('Rel 'True) where
-  ascendRelative dir =
-    if null $ directories dir
-      then dir {parents = parents dir + 1}
-      else dir {directories = tail $ directories dir}
-  reparentBy levels path = path {parents = parents path + levels}
   maybeRoute from to =
     Lazy.maybe
       Nothing
@@ -348,11 +355,11 @@ instance RelOps ('Rel 'True) where
       )
       $ minusNaturalMaybe (parents to) (parents from)
   maybeMinimalRoute ::
-    forall typ rep.
+    forall typ rep res.
     (Eq rep) =>
-    Path ('Rel 'True) 'Dir rep ->
-    Path ('Rel 'True) typ rep ->
-    Maybe (Path ('Rel 'True) typ rep)
+    Path res ('Rel 'True) 'Dir rep ->
+    Path res ('Rel 'True) typ rep ->
+    Maybe (Path res ('Rel 'True) typ rep)
   maybeMinimalRoute from to =
     if parents from == parents to
       then
@@ -367,7 +374,7 @@ instance RelOps ('Rel 'True) where
                 }
       else maybeRoute from to
 
-reparent :: (RelOps rel) => Path rel typ rep -> Path ('Rel 'True) typ rep
+reparent :: (RelOps rel) => Path res rel typ rep -> Path res ('Rel 'True) typ rep
 reparent = reparentBy 1
 
 partitionCommonPrefix' ::
@@ -413,25 +420,25 @@ class Routable from to where
   -- | Creates a path relative to the first argument that that points to the
   --   same location as the second argument.
   route ::
-    Path from 'Dir rep -> Path to typ rep -> Path ('Rel 'True) typ rep
+    Path res from 'Dir rep -> Path res to typ rep -> Path res ('Rel 'True) typ rep
 
   -- | Creates a path relative to the first argument that that points to the
   --   same location as the second argument.
   minimalRoute ::
     (Eq rep) =>
-    Path from 'Dir rep ->
-    Path to typ rep ->
-    Path ('Rel 'True) typ rep
+    Path res from 'Dir rep ->
+    Path res to typ rep ->
+    Path res ('Rel 'True) typ rep
 
 -- |
 --
--- prop> maybe True (b ==) $ a </?> route  @_ @_ @Text @'File a b
+-- prop> maybe True (b ==) $ a </?> route @_ @_ @Unres @Text @'File a b
 instance Routable 'Abs 'Abs where
   route ::
-    forall typ rep.
-    Path 'Abs 'Dir rep ->
-    Path 'Abs typ rep ->
-    Path ('Rel 'True) typ rep
+    forall typ rep res.
+    Path res 'Abs 'Dir rep ->
+    Path res 'Abs typ rep ->
+    Path res ('Rel 'True) typ rep
   route from to =
     Path
       { parents = length $ directories from,
@@ -439,11 +446,11 @@ instance Routable 'Abs 'Abs where
         filename = filename to
       }
   minimalRoute ::
-    forall typ rep.
+    forall typ rep res.
     (Eq rep) =>
-    Path 'Abs 'Dir rep ->
-    Path 'Abs typ rep ->
-    Path ('Rel 'True) typ rep
+    Path res 'Abs 'Dir rep ->
+    Path res 'Abs typ rep ->
+    Path res ('Rel 'True) typ rep
   minimalRoute from to =
     let (_, (newFrom, newTo)) :: (List rep, (List rep, List rep)) =
           partitionCommonPrefix (reverse $ directories from) . reverse $
@@ -462,11 +469,11 @@ instance Routable ('Rel 'False) ('Rel 'True) where
         filename = filename to
       }
   minimalRoute ::
-    forall typ rep.
+    forall typ rep res.
     (Eq rep) =>
-    Path ('Rel 'False) 'Dir rep ->
-    Path ('Rel 'True) typ rep ->
-    Path ('Rel 'True) typ rep
+    Path res ('Rel 'False) 'Dir rep ->
+    Path res ('Rel 'True) typ rep ->
+    Path res ('Rel 'True) typ rep
   minimalRoute from to =
     let (_, (newFrom, newTo)) :: (List rep, (List rep, List rep)) =
           partitionCommonPrefix (reverse $ directories from) . reverse $
@@ -485,11 +492,11 @@ instance Routable ('Rel 'False) ('Rel 'False) where
         filename = filename to
       }
   minimalRoute ::
-    forall typ rep.
+    forall typ rep res.
     (Eq rep) =>
-    Path ('Rel 'False) 'Dir rep ->
-    Path ('Rel 'False) typ rep ->
-    Path ('Rel 'True) typ rep
+    Path res ('Rel 'False) 'Dir rep ->
+    Path res ('Rel 'False) typ rep ->
+    Path res ('Rel 'True) typ rep
   minimalRoute from to =
     let (_, (newFrom, newTo)) :: (List rep, (List rep, List rep)) =
           partitionCommonPrefix (reverse $ directories from) . reverse $
@@ -513,7 +520,7 @@ class Prefixed rel rel' | rel -> rel' where
   -- | Returns `False` exactly when `routePrefix` would return `Nothing`.
   --
   -- -- prop> isPrefix a b == not (isNothing $ routePrefix a b)
-  isPrefix :: (Eq rep) => Path rel 'Dir rep -> Path rel typ rep -> Bool
+  isPrefix :: (Eq rep) => Path res rel 'Dir rep -> Path res rel typ rep -> Bool
   isPrefix a = isJust . routePrefix a
 
   -- | If the first argument is a prefix of the second argument, it will remove
@@ -521,17 +528,17 @@ class Prefixed rel rel' | rel -> rel' where
   --  `Nothing`.
   routePrefix ::
     (Eq rep) =>
-    Path rel 'Dir rep ->
-    Path rel typ rep ->
-    Maybe (Path rel' typ rep)
+    Path res rel 'Dir rep ->
+    Path res rel typ rep ->
+    Maybe (Path res rel' typ rep)
 
 instance Prefixed 'Abs ('Rel 'False) where
   routePrefix ::
-    forall typ rep.
+    forall typ rep res.
     (Eq rep) =>
-    Path 'Abs 'Dir rep ->
-    Path 'Abs typ rep ->
-    Maybe (Path ('Rel 'False) typ rep)
+    Path res 'Abs 'Dir rep ->
+    Path res 'Abs typ rep ->
+    Maybe (Path res ('Rel 'False) typ rep)
   routePrefix from to =
     let (_, (a, b)) :: (List rep, (List rep, List rep)) =
           partitionCommonPrefix (reverse $ directories from) . reverse $
@@ -548,11 +555,11 @@ instance Prefixed 'Abs ('Rel 'False) where
 
 instance Prefixed ('Rel 'False) ('Rel 'False) where
   routePrefix ::
-    forall typ rep.
+    forall typ rep res.
     (Eq rep) =>
-    Path ('Rel 'False) 'Dir rep ->
-    Path ('Rel 'False) typ rep ->
-    Maybe (Path ('Rel 'False) typ rep)
+    Path res ('Rel 'False) 'Dir rep ->
+    Path res ('Rel 'False) typ rep ->
+    Maybe (Path res ('Rel 'False) typ rep)
   routePrefix from to =
     let (_, (a, b)) :: (List rep, (List rep, List rep)) =
           partitionCommonPrefix (reverse $ directories from) . reverse $
@@ -571,11 +578,11 @@ instance Prefixed ('Rel 'False) ('Rel 'False) where
 --   often than `maybeRoute`, with no improvement in the type.
 instance Prefixed ('Rel 'True) ('Rel 'True) where
   routePrefix ::
-    forall typ rep.
+    forall typ rep res.
     (Eq rep) =>
-    Path ('Rel 'True) 'Dir rep ->
-    Path ('Rel 'True) typ rep ->
-    Maybe (Path ('Rel 'True) typ rep)
+    Path res ('Rel 'True) 'Dir rep ->
+    Path res ('Rel 'True) typ rep ->
+    Maybe (Path res ('Rel 'True) typ rep)
   routePrefix from to =
     if parents from == parents to
       then
@@ -634,22 +641,22 @@ anyToText format path =
 -- >>> toText Format.posix [posix|.be/|]
 -- ".be/"
 toText ::
-  (Pathy rel typ, IsString a, Semigroup a, Substible a) => Format a -> Path rel typ a -> a
+  (Pathy rel typ, IsString a, Semigroup a, Substible a) => Format a -> Path res rel typ a -> a
 toText format = anyToText format . unanchor
 
 -- __TODO__: This forms a `Prism'` with `weaken`.
-strengthen :: Path ('Rel 'True) typ rep -> Maybe (Path ('Rel 'False) typ rep)
+strengthen :: Path res ('Rel 'True) typ rep -> Maybe (Path res ('Rel 'False) typ rep)
 strengthen path =
   if parents path == 0 then pure path {parents = Proxy} else Nothing
 
 type Anchored :: Kind.Type -> Kind.Type
 data Anchored rep
-  = AbsDir (Path 'Abs 'Dir rep)
-  | AbsFile (Path 'Abs 'File rep)
-  | RelDir (Path ('Rel 'False) 'Dir rep)
-  | RelFile (Path ('Rel 'False) 'File rep)
-  | ReparentedDir (Path ('Rel 'True) 'Dir rep)
-  | ReparentedFile (Path ('Rel 'True) 'File rep)
+  = AbsDir (Path 'Res 'Abs 'Dir rep)
+  | AbsFile (Path 'Res 'Abs 'File rep)
+  | RelDir (Path 'Res ('Rel 'False) 'Dir rep)
+  | RelFile (Path 'Res ('Rel 'False) 'File rep)
+  | ReparentedDir (Path 'Unres ('Rel 'True) 'Dir rep)
+  | ReparentedFile (Path 'Unres ('Rel 'True) 'File rep)
 
 -- | Discover the specific type of a `Path`.
 anchor :: AnyPath rep -> Anchored rep
@@ -713,13 +720,13 @@ anchor path =
     )
     $ parents path
 
-forgetRelativity :: (Relative rel) => Path rel typ rep -> Path 'Any typ rep
+forgetRelativity :: (Relative rel) => Path res rel typ rep -> Path res 'Any typ rep
 forgetRelativity path = path {parents = generalizeRelativity $ parents path}
 
-forgetType :: (Typey typ) => Path rel typ rep -> Path rel 'Type.Any rep
+forgetType :: (Typey typ) => Path res rel typ rep -> Path res rel 'Type.Any rep
 forgetType path = path {filename = generalizeType $ filename path}
 
 -- | Forget the specific type of the path (which can be recovered with
 --  `anchor`).
-unanchor :: (Pathy rel typ) => Path rel typ rep -> AnyPath rep
+unanchor :: (Pathy rel typ) => Path res rel typ rep -> AnyPath rep
 unanchor = forgetRelativity . forgetType
