@@ -195,7 +195,7 @@ instance TotalOps 'Unres 'Unres where
 --   from which the program was run or something, but rather the path “./”.
 current :: Path res 'Rel 'Dir rep
 current =
-  Path { directories = embed Neither, filename = Const ()}
+  Path {directories = embed Neither, filename = Const ()}
 
 -- | Forget that a relative path doesn’t have any parents.
 -- weaken :: Path res 'Rel typ rep -> Path res 'Rel typ rep

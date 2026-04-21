@@ -216,6 +216,7 @@ type RelOps :: Relativity -> Kind.Constraint
 class RelOps' res where
   -- | Move up one directory in the file hierarchy.
   ascendRelative :: Path res 'Rel 'Dir rep -> Path 'Unres 'Rel 'Dir rep
+
   reparentBy :: Natural -> Path res rel typ rep -> Path 'Unres 'Rel typ rep
 
 instance RelOps' 'Unres where
@@ -233,7 +234,6 @@ instance RelOps' 'Res where
   reparentBy levels path = path {parents = levels}
 
 class RelOps rel where
-
   -- | Like `route`, but for reparented paths. Unlike `route`, this
   --   can fail. If the first argument is reparented more than the second
   --   argument, then it returns `Nothing`. This is because the result requires
