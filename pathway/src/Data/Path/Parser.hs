@@ -39,6 +39,7 @@ import "pathway-internal" Data.Path.Internal
     filename,
     parents,
   )
+import "pathway-internal" Data.Path.Internal.Resolution (Resolution (Unres))
 import "yaya" Yaya.Applied (reverse')
 import "yaya" Yaya.Fold (Mu, Projectable, Steppable, cata, embed)
 import "yaya" Yaya.Pattern (Maybe (Nothing), XNor (Both, Neither))
@@ -198,7 +199,7 @@ path =
 --   separator on the final component.
 directory ::
   (MP.MonadParsec v s p, MP.Token s ~ Char, Monoid (MP.Tokens s)) =>
-  Format (MP.Tokens s) -> p (Path 'Any 'Dir (MP.Tokens s))
+  Format (MP.Tokens s) -> p (Path 'Unres 'Any 'Dir (MP.Tokens s))
 directory =
   fmap
     ( \(parents, dir, filenm) ->

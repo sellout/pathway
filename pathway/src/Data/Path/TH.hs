@@ -42,6 +42,7 @@ import "base" Prelude (fromIntegral)
 -- >>> :seti -XTypeApplications
 -- >>> import "base" Data.Bool (Bool (False))
 -- >>> import Data.Path (Relativity (Abs, Rel), Type (Dir, File))
+-- >>> import Data.Path.Internal.Resolution (Resolution(Unres))
 
 deconstructXNor :: (a -> TH.Exp) -> (b -> TH.Exp) -> XNor a b -> TH.Exp
 deconstructXNor f g =
@@ -96,17 +97,17 @@ pathQuoter format =
 
 -- |
 --
--- >>> [posix|/usr/bin/env|] :: Path 'Abs 'File String
+-- >>> [posix|/usr/bin/env|] :: Path 'Unres 'Abs 'File String
 -- Path {parents = (), directories = List (embed (Both "bin" (embed (Both "usr" (embed Neither))))), filename = Identity "env"}
 --
--- >>> [posix|.be/|] :: Path ('Rel 'False) ' Dir String
+-- >>> [posix|.be/|] :: Path 'Unres ('Rel 'False) ' Dir String
 -- Path {parents = Proxy, directories = List (embed (Both ".be" (embed Neither))), filename = Const ()}
 posix :: TH.QuasiQuoter
 posix = pathQuoter Format.posix
 
 -- |
 --
--- >>> [windows|\usr\bin\env|] :: Path 'Abs 'File String
+-- >>> [windows|\usr\bin\env|] :: Path 'Unres 'Abs 'File String
 -- Path {parents = (), directories = List (embed (Both "bin" (embed (Both "usr" (embed Neither))))), filename = Identity "env"}
 windows :: TH.QuasiQuoter
 windows = pathQuoter $ Format.windows Nothing

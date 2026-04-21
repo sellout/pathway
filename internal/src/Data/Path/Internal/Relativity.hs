@@ -2,7 +2,6 @@
 
 module Data.Path.Internal.Relativity (Relativity (..)) where
 
-import "base" Data.Bool (Bool ())
 import "base" Data.Eq (Eq)
 import "base" Data.Kind qualified as Kind
 import "base" Data.Ord (Ord)
@@ -30,7 +29,7 @@ data Relativity
   = -- | Absolute path
     Abs
   | -- | Relative path
-    Rel Bool
+    Rel
   | -- | `Relativity` unknown until runtime
     Any
   deriving stock (Eq, Generic, Ord, Read, Show)
