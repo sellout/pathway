@@ -3,7 +3,7 @@ cabal-version: 3.0
 --   exception.
 
 name: pathway-quickcheck
-version: 0.0.1.0
+version: 1.0.0.0
 synopsis: Type-safe system-independent file path library
 description: Type-safe system-independent file path library.
 maintainer: Greg Pfeil <greg@technomadic.org>
@@ -198,10 +198,10 @@ library
 
   build-depends:
     QuickCheck ^>= {2.14.2, 2.15.0, 2.16.0, 2.17.1},
-    pathway-internal ^>= {0.0.1},
+    pathway-internal ^>= {0.0.1, 1.0.0},
     quickcheck-instances ^>= {0.3.26, 0.4},
-    yaya ^>= {0.6.2, 0.7.0},
-    yaya-quickcheck ^>= {0.2.0, 0.3.0},
+    yaya ^>= {0.6.2, 0.7.0, 1.0.0},
+    yaya-quickcheck ^>= {0.2.0, 0.3.0, 1.0.0},
   exposed-modules:
     Test.Path.QuickCheck
 
