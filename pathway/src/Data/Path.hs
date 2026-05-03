@@ -96,8 +96,8 @@ import safe "yaya" Yaya.Pattern
     fromMaybe,
     fst,
     isJust,
+    isNeither,
     maybe,
-    xnor,
   )
 import safe "yaya-containers" Yaya.Containers.Pattern.Map (Map (Bin, Tip))
 import safe "this" Data.Path.Format (Format, parent, root, separator, substitutions)
@@ -117,10 +117,6 @@ import safe "base" Prelude ((+))
 -- >>> import "base" Data.Functor ((<$>))
 -- >>> import "pathway-quickcheck" Test.Path.QuickCheck ()
 -- >>> import "yaya" Yaya.Pattern (fromJust, isNothing)
-
--- | __FIXME__: Move upstream.
-isNeither :: XNor a b -> Bool
-isNeither = xnor True (\_ _ -> False)
 
 null :: (Projectable (->) t (XNor a)) => t -> Bool
 null = isNeither . project
