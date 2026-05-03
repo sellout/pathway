@@ -209,7 +209,7 @@ test-suite doctests
     tests
   main-is: doctests.hs
   build-depends:
-    QuickCheck ^>= {2.14.2, 2.15.0, 2.16.0, 2.17.1},
+    QuickCheck ^>= {2.14.2, 2.15.0, 2.16.0, 2.17.1, 2.18.0},
     doctest ^>= {0.16.3, 0.18.1, 0.20.1, 0.21.1, 0.22.2, 0.24.2},
     pathway-path,
     pathway-quickcheck ^>= {0.0.1, 1.0.0},

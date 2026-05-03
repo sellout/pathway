@@ -17,7 +17,8 @@ constraints:
   -- earlier versions use -fpackage-trust, which causes no end of trouble
   yaya >= 1.0.0.0,
   -- earlier versions use -fpackage-trust, which causes no end of trouble
-  yaya-containers >= 0.1.2.1,
+  -- later versions change constructors and aren’t yet available in Nix
+  yaya-containers >= 0.1.2.1 && <1.0.0.0,
   -- earlier versions use -fpackage-trust, which causes no end of trouble
   yaya-quickcheck >= 0.2.0.2,
   -- earlier versions use -fpackage-trust, which causes no end of trouble
