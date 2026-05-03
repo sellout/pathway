@@ -200,8 +200,8 @@ library
     QuickCheck ^>= {2.14.2, 2.15.0, 2.16.0, 2.17.1, 2.18.0},
     pathway-internal ^>= {0.0.0},
     quickcheck-instances ^>= {0.3.26, 0.4},
-    yaya ^>= {0.6.2, 0.7.0, 1.0.0},
-    yaya-quickcheck ^>= {0.2.0, 0.3.0, 1.0.0},
+    yaya ^>= {1.0.0},
+    yaya-quickcheck ^>= {1.0.0},
   exposed-modules:
     Test.Path.QuickCheck
 
