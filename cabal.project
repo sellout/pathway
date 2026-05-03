@@ -15,7 +15,7 @@ constraints:
   -- earlier versions don’t have `SomeBase` and other types
   path >= 0.8.0,
   -- earlier versions use -fpackage-trust, which causes no end of trouble
-  yaya >= 1.0.0.0,
+  yaya >= 0.6.2.2,
   -- earlier versions use -fpackage-trust, which causes no end of trouble
   -- later versions change constructors and aren’t yet available in Nix
   yaya-containers >= 0.1.2.1,
