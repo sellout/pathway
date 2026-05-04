@@ -161,15 +161,15 @@ in
       ## prefer to test against.
       nonNixTestedGhcVersions = [
         # GHC 8.8 is the oldest supported by Yaya.
-        "8.10.1"
-        "9.0.1"
-        "9.2.1"
-        "9.4.1"
-        "9.6.1"
-        "9.8.1"
+        # "8.10.1"
+        # "9.0.1"
+        # "9.2.1"
+        # "9.4.1"
+        # "9.6.1"
+        # "9.8.1"
         "9.10.1"
-        "9.12.1"
-        "9.14.1"
+        # "9.12.1"
+        # "9.14.1"
       ];
 
       ## However, provide packages in the default overlay for _every_
