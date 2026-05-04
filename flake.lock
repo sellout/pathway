@@ -87,15 +87,16 @@
         "systems": "systems"
       },
       "locked": {
-        "lastModified": 1777701326,
-        "narHash": "sha256-TVqdkvyO4rLuDpmB7WXKjQi3Jxbj41BaxybnxNf0Wjs=",
+        "lastModified": 1777950456,
+        "narHash": "sha256-AYgqAlioMd8iM/1VIsveUpMfalVMREwyoV1m5QjLqQ8=",
         "owner": "sellout",
         "repo": "flaky",
-        "rev": "cb4087c413e0c9f335310d85f1188da4d84814e1",
+        "rev": "58e0c7fc9c151ec0e700e262bcc413daf1fc64c5",
         "type": "github"
       },
       "original": {
         "owner": "sellout",
+        "ref": "fix-haskell-workflow",
         "repo": "flaky",
         "type": "github"
       }
