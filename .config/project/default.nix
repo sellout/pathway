@@ -96,7 +96,7 @@
           ghc = "8.10.1";
           os = "macos-15-intel";
         }
-        ## TODO:  “Failed to build pathway-quickcheck-0.0.1.0. […] terminated with exit code 11”
+        ## TODO:  “Failed to build pathway-quickcheck-0.0.0.0. […] terminated with exit code 11”
         {
           ghc = "8.10.1";
           os = "windows-2025";

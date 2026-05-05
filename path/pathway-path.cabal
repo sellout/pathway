@@ -3,7 +3,7 @@ cabal-version: 3.0
 --   exception.
 
 name: pathway-path
-version: 0.0.1.0
+version: 0.0.0.0
 synopsis: Type-safe system-independent file path library
 description: Type-safe system-independent file path library.
 maintainer: Greg Pfeil <greg@technomadic.org>
@@ -49,7 +49,7 @@ source-repository this
   location: https://github.com/sellout/pathway.git
   subdir: path
   -- NB: This is the repo version, which is distinct from the package version.
-  tag: v0.1.0
+  tag: v0.0.0
 
 custom-setup
   setup-depends:
@@ -195,10 +195,10 @@ library
   build-depends:
     filepath ^>= {1.4.2, 1.5.2},
     path ^>= {0.9.0},
-    pathway ^>= {0.0.1},
-    pathway-internal ^>= {0.0.1},
-    yaya ^>= {0.6.2, 0.7.0},
-    yaya-unsafe ^>= {0.4.1, 0.5.0},
+    pathway ^>= {0.0.0},
+    pathway-internal ^>= {0.0.0},
+    yaya ^>= {1.0.0},
+    yaya-unsafe ^>= {1.0.0},
   exposed-modules:
     Data.Path.Integration.Path
 
@@ -210,9 +210,9 @@ test-suite doctests
   main-is: doctests.hs
   build-depends:
     QuickCheck ^>= {2.14.2, 2.15.0, 2.16.0, 2.17.1, 2.18.0},
-    doctest ^>= {0.16.3, 0.18.1, 0.20.1, 0.21.1, 0.22.2, 0.24.2},
+    doctest ^>= {0.16.3, 0.18.1, 0.20.1, 0.21.1, 0.22.2, 0.24.2, 0.25.0},
     pathway-path,
-    pathway-quickcheck ^>= {0.0.1},
+    pathway-quickcheck ^>= {0.0.0},
   -- TODO: The sections below here are necessary because we don’t have control
   --       over the generated `Build_doctests.hs` file. So we have to silence
   --       all of its warnings one way or another.
