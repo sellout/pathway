@@ -101,6 +101,7 @@ import safe "pathway-compat-filepath" Common.OsPath qualified as OsPath
 import safe "pathway-compat-filepath" System.FilePath.Thin qualified as FP
 import safe "pathway-compat-filepath" System.OsPath.Pathway (OsString)
 import safe "pathway-compat-filepath" System.OsPath.Thin qualified as OP
+import safe "these" Data.These (These)
 import safe "time" Data.Time.Clock (UTCTime)
 import "variant" Data.Variant (V, liftVariant)
 
@@ -154,7 +155,7 @@ class Rep rep where
           (V ListFailure)
           [ Either
               (InternalFailure rep e)
-              ( Either
+              ( These
                   (Path ('Rel 'False) 'Dir rep)
                   (Path ('Rel 'False) 'File rep)
               )

@@ -201,6 +201,7 @@ library
     pathway-compat-base ^>= {0.0.1},
     pathway-compat-file-io ^>= {0.0.1},
     pathway-compat-filepath ^>= {0.0.1},
+    these,
     time ^>= {1.8.0, 1.9.3, 1.11.1, 1.12.2, 1.13, 1.14, 1.15},
     variant,
   exposed-modules:

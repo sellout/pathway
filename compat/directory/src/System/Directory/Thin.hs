@@ -125,16 +125,20 @@ module System.Directory.Thin
 where
 #endif
 
-import safe "base" Control.Applicative (Applicative (pure))
-import safe "base" Control.Category (Category ((.)))
+import safe "base" Control.Applicative (empty, pure, (<*>))
+import safe "base" Control.Category ((.))
 import safe "base" Control.Exception (throwIO)
+import safe "base" Control.Monad ((<=<))
+import safe "base" Data.Bifunctor (bimap, first)
 import safe "base" Data.Bool (Bool (False, True))
 import safe "base" Data.Either (Either (Left), either)
-import safe "base" Data.Function (($))
-import safe "base" Data.Functor (Functor (fmap), (<$>))
-import safe "base" Data.Maybe (Maybe)
+import safe "base" Data.Function (const, ($))
+import safe "base" Data.Functor (Functor, fmap, (<$>))
+import safe "base" Data.Maybe (Maybe, catMaybes)
 import safe "base" Data.Ord (Ord)
 import safe "base" Data.String (String)
+import safe "base" Data.Traversable (sequenceA, traverse)
+import safe "base" Data.Tuple (curry)
 import safe "base" Data.Void (Void)
 import safe "base" System.IO (FilePath, IO)
 import "directory" System.Directory (XdgDirectory, XdgDirectoryList)
@@ -150,7 +154,10 @@ import safe "pathway" Data.Path
     forgetRelativity,
     unanchor,
     weaken,
+    (</>),
   )
+import safe "pathway" Data.Path.Directory qualified as Directory
+import safe "pathway" Data.Path.File qualified as File
 import safe "pathway" Data.Path.Relativity qualified as Rel
 import safe "pathway" Data.Path.Type qualified as Type
 import safe "pathway-compat-base" Common
@@ -164,6 +171,7 @@ import safe "pathway-compat-filepath" Common.FilePath
     anyDirFromPathRep,
     handleAnchoredDir,
   )
+import safe "these" Data.These (These (That, These, This))
 import safe "time" Data.Time.Clock (UTCTime)
 import safe "this" System.Directory.Common
   ( Operations,
@@ -276,6 +284,45 @@ removePathForcibly = Dir.removePathForcibly . toPathRep
 renameDirectory :: Path 'Abs 'Dir String -> Path 'Abs 'Dir String -> IO ()
 renameDirectory source = Dir.renameDirectory (toPathRep source) . toPathRep
 
+-- |
+--
+--  __TODO__: This should be done with @Ambiguous.Path@, once #18 lands.
+disambiguate ::
+  Path 'Abs 'File String ->
+  IO (Maybe (These (Path 'Abs 'Dir String) (Path 'Abs 'File String)))
+disambiguate file =
+  let directory = Directory.descendTo (File.directory file) $ File.basename file
+   in ( curry \case
+          (False, False) -> empty
+          (False, True) -> pure $ That file
+          (True, False) -> pure $ This directory
+          (True, True) -> pure $ These directory file
+      )
+        <$> doesDirectoryExist directory
+        <*> doesFileExist file
+
+disambiguateRelative ::
+  Path 'Abs 'Dir String ->
+  Path ('Rel 'False) 'File String ->
+  IO
+    ( Maybe
+        ( These
+            (Path ('Rel 'False) 'Dir String)
+            (Path ('Rel 'False) 'File String)
+        )
+    )
+disambiguateRelative base rel =
+  fmap
+    ( bimap
+        ( const . Directory.descendTo (File.directory rel) $
+            File.basename rel
+        )
+        (const rel)
+        <$>
+    )
+    . disambiguate
+    $ base </> rel
+
 listDirectory ::
   (Ord e) =>
   Path 'Abs 'Dir String ->
@@ -286,12 +333,20 @@ listDirectory ::
   IO
     [ Either
         (InternalFailure FilePath e)
-        ( Either
+        ( These
             (Path ('Rel 'False) 'Dir String)
             (Path ('Rel 'False) 'File String)
         )
     ]
-listDirectory = fmap (relPathFromPathRep <$>) . Dir.listDirectory . toPathRep
+listDirectory base =
+  fmap catMaybes
+    . traverse
+      ( fmap sequenceA
+          . traverse (either (pure . pure . This) $ disambiguateRelative base)
+          . relPathFromPathRep
+      )
+    <=< Dir.listDirectory
+    $ toPathRep base
 
 getDirectoryContents ::
   (Ord e) =>
@@ -303,13 +358,20 @@ getDirectoryContents ::
   IO
     [ Either
         (InternalFailure FilePath e)
-        ( Either
+        ( These
             (Path ('Rel 'True) 'Dir String)
             (Path ('Rel 'False) 'File String)
         )
     ]
-getDirectoryContents =
-  fmap (mixedPathFromPathRep <$>) . Dir.getDirectoryContents . toPathRep
+getDirectoryContents base =
+  fmap catMaybes
+    . traverse
+      ( fmap sequenceA
+          . traverse (either (pure . pure . This) $ fmap (first weaken <$>) . disambiguateRelative base)
+          . mixedPathFromPathRep
+      )
+    <=< Dir.getDirectoryContents
+    $ toPathRep base
 
 getCurrentDirectory ::
   (Ord e) =>

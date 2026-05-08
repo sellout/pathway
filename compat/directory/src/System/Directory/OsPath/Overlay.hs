@@ -61,7 +61,7 @@ import "base" Control.Exception (throwIO)
 import "base" Control.Monad ((<=<), (=<<))
 import "base" Data.Bool (Bool (False, True))
 import "base" Data.Either (either)
-import "base" Data.Function (($))
+import "base" Data.Foldable (foldrM)
 import "base" Data.Maybe (Maybe)
 import "base" Data.Traversable (Traversable (traverse))
 import "base" Data.Void (Void)
@@ -76,6 +76,7 @@ import "pathway" Data.Path
 import "pathway" Data.Path.Relativity qualified as Rel
 import "pathway" Data.Path.Type qualified as Type
 import "pathway-compat-filepath" System.OsPath.Pathway (OsString)
+import "these" Data.These (these)
 import "this" System.Directory.Common (Operations)
 import "this" System.Directory.OsPath.Thin
   ( XdgDirectory,
@@ -114,13 +115,37 @@ import "this" System.Directory.OsPath.Thin qualified as Thin
 listDirectory ::
   Path 'Abs 'Dir OsString -> IO [Path ('Rel 'False) 'Type.Any OsString]
 listDirectory =
-  traverse (either throwIO $ pure . either forgetType forgetType)
+  foldrM
+    ( \p acc ->
+        either
+          throwIO
+          ( pure
+              . these
+                ((: acc) . forgetType)
+                ((: acc) . forgetType)
+                (\d f -> forgetType d : forgetType f : acc)
+          )
+          p
+    )
+    []
     <=< Thin.listDirectory @Void
 
 getDirectoryContents ::
   Path 'Abs 'Dir OsString -> IO [Path ('Rel 'True) 'Type.Any OsString]
 getDirectoryContents =
-  traverse (either throwIO $ pure . either forgetType (weaken . forgetType))
+  foldrM
+    ( \p acc ->
+        either
+          throwIO
+          ( pure
+              . these
+                ((: acc) . forgetType)
+                ((: acc) . weaken . forgetType)
+                (\d f -> forgetType d : weaken (forgetType f) : acc)
+          )
+          p
+    )
+    []
     <=< Thin.getDirectoryContents @Void
 
 getCurrentDirectory :: IO (Path 'Abs 'Dir OsString)

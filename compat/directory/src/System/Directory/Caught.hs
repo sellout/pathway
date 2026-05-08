@@ -77,6 +77,7 @@ import safe "pathway" Data.Path
     Typey,
   )
 import safe "pathway" Data.Path.Relativity qualified as Rel (Relativity (Any))
+import safe "these" Data.These (These)
 import safe "time" Data.Time.Clock (UTCTime)
 import "variant" Data.Variant (V, liftVariant, toVariant)
 import safe "this" System.Directory.Common (Operations)
@@ -172,7 +173,7 @@ listDirectory ::
         (V ListFailure)
         [ Either
             (InternalFailure FilePath e)
-            ( Either
+            ( These
                 (Path ('Rel 'False) 'Dir String)
                 (Path ('Rel 'False) 'File String)
             )
@@ -192,7 +193,7 @@ getDirectoryContents ::
         (V ListFailure)
         [ Either
             (InternalFailure FilePath e)
-            ( Either
+            ( These
                 (Path ('Rel 'True) 'Dir String)
                 (Path ('Rel 'False) 'File String)
             )
