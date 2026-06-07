@@ -1,5 +1,6 @@
 -- #if MIN_VERSION_filepath(1, 4, 100)
 -- #if MIN_VERSION_directory(1, 3, 8)
+{-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE Trustworthy #-}
 
 -- | There are various ways to use filesystem operations with Pathway. This is
@@ -49,6 +50,7 @@ import safe "base" Data.Kind qualified as Kind
 import safe "base" Data.Maybe (Maybe)
 import safe "base" Data.Ord (Ord)
 import safe "base" Data.String (String)
+import safe "base" Data.Traversable (traverse)
 import safe "base" Data.Void (Void)
 import safe "base" System.IO (Handle, IO, IOMode)
 import safe "exceptions" Control.Monad.Catch (MonadMask, bracket)
@@ -58,7 +60,13 @@ import safe "pathway" Data.Path.Format qualified as Format
 import safe "pathway" Data.Path.Parser qualified as Parser
 import safe "pathway" Data.Path.Relativity qualified as Rel (Relativity (Any))
 import safe "pathway" Data.Path.Type qualified as Type (Type (Any))
-import safe "pathway-compat-base" System.IO.Pathway qualified as F.IO
+import safe "pathway-compat-base" System.IO.Caught qualified as F.IO
+import safe "pathway-compat-base" System.IO.Error.Caught
+  ( AlreadyExistsError,
+    FullError,
+    InvalidArgument,
+  )
+import safe "pathway-compat-base" System.IO.Pathway qualified as F.IO hiding (openFile)
 import safe "pathway-compat-directory" System.Directory.Caught qualified as F.Caught
 import safe "pathway-compat-directory" System.Directory.Common qualified as Dir
 import safe "pathway-compat-directory" System.Directory.Error
@@ -91,12 +99,7 @@ import safe "pathway-compat-directory" System.Directory.Thin qualified as F.Path
     findFiles,
     findFilesWith,
   )
-import safe "pathway-compat-directory" System.IO.Error
-  ( AlreadyExistsError,
-    FullError,
-    InvalidArgument,
-  )
-import safe "pathway-compat-file-io" System.File.OsPath.Pathway qualified as O.IO
+import safe "pathway-compat-file-io" System.File.OsPath.Caught qualified as O.IO
 import safe "pathway-compat-filepath" Common.OsPath qualified as OsPath
 import safe "pathway-compat-filepath" System.FilePath.Thin qualified as FP
 import safe "pathway-compat-filepath" System.OsPath.Pathway (OsString)
@@ -195,18 +198,25 @@ class Rep rep where
     IO [Either (InternalFailure rep e) (Path 'Abs 'File rep)]
   withFile ::
     (MonadIO m, MonadMask m) =>
-    Path 'Abs 'File rep -> IOMode -> (Handle -> m r) -> m r
+    Path 'Abs 'File rep ->
+    IOMode ->
+    (Handle -> m r) ->
+    m (Either (V F.IO.OpenFileFailure) r)
 
 -- | A generalization of `System.IO.withFile` that supports `MonadIO`.
 withFile' ::
   (MonadIO m, MonadMask m) =>
-  (Path 'Abs 'File rep -> IOMode -> IO Handle) ->
+  ( Path 'Abs 'File rep ->
+    IOMode ->
+    IO (Either (V F.IO.OpenFileFailure) Handle)
+  ) ->
   Path 'Abs 'File rep ->
   IOMode ->
   (Handle -> m r) ->
-  m r
+  m (Either (V F.IO.OpenFileFailure) r)
 withFile' openFile filePath mode =
-  bracket (liftIO $ openFile filePath mode) $ liftIO . F.IO.hClose
+  bracket (liftIO $ openFile filePath mode) (liftIO . traverse F.IO.hClose)
+    . traverse
 
 -- | Filesystem operations with corresponding versions for each of `'Dir` and
 --  `'File`.

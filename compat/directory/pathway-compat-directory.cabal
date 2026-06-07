@@ -207,7 +207,6 @@ library
   exposed-modules:
     System.Directory.Common
     System.Directory.Error
-    System.IO.Error
     -- FilePath operations
     System.Directory.Caught
     System.Directory.Overlay

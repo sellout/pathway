@@ -1,6 +1,6 @@
 {-# LANGUAGE Safe #-}
 
-module System.IO.Error
+module System.IO.Error.Caught
   ( PermissionError (PermissionError),
     HardwareFault (HardwareFault),
     InvalidArgument (InvalidArgument),
@@ -8,16 +8,17 @@ module System.IO.Error
     FullError (FullError),
     DoesNotExistError (DoesNotExistError),
     AlreadyExistsError (AlreadyExistsError),
+    AlreadyInUseError (AlreadyInUseError),
     UnsupportedOperation (UnsupportedOperation),
     UnsatisfiedConstraints (UnsatisfiedConstraints),
   )
 where
 
-import safe "base" Data.Eq (Eq)
-import safe "base" Data.Kind qualified as Kind
-import safe "base" GHC.Generics (Generic)
-import safe "base" System.IO.Error (IOError)
-import safe "base" Text.Show (Show)
+import "base" Data.Eq (Eq)
+import "base" Data.Kind qualified as Kind
+import "base" GHC.Generics (Generic)
+import "base" System.IO.Error (IOError)
+import "base" Text.Show (Show)
 
 -- | The process has insufficient privileges to perform the operation.
 --   [EROFS, EACCES]
@@ -56,6 +57,10 @@ newtype DoesNotExistError = DoesNotExistError IOError
 -- | The operand refers to a path that already exists. [EEXIST]
 type AlreadyExistsError :: Kind.Type
 newtype AlreadyExistsError = AlreadyExistsError IOError
+  deriving stock (Eq, Generic, Show)
+
+type AlreadyInUseError :: Kind.Type
+newtype AlreadyInUseError = AlreadyInUseError IOError
   deriving stock (Eq, Generic, Show)
 
 -- | The implementation does not support the operation in this situation.

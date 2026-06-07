@@ -77,6 +77,11 @@ import safe "pathway" Data.Path
     Typey,
   )
 import safe "pathway" Data.Path.Relativity qualified as Rel (Relativity (Any))
+import safe "pathway-compat-base" System.IO.Error.Caught
+  ( AlreadyExistsError (AlreadyExistsError),
+    FullError (FullError),
+    InvalidArgument,
+  )
 import safe "these" Data.These (These)
 import safe "time" Data.Time.Clock (UTCTime)
 import "variant" Data.Variant (V, liftVariant, toVariant)
@@ -115,11 +120,6 @@ import safe "this" System.Directory.Error
     tryWithIF,
   )
 import safe "this" System.Directory.OsPath.Thin qualified as Dir
-import safe "this" System.IO.Error
-  ( AlreadyExistsError (AlreadyExistsError),
-    FullError (FullError),
-    InvalidArgument,
-  )
 import safe "base" Prelude (Integer)
 
 createDirectory :: Path 'Abs 'Dir OsString -> IO (Either (V CreationFailure) ())

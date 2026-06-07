@@ -60,8 +60,7 @@ import safe "base" System.IO.Error qualified as IO
 import safe "pathway-compat-base" Common
   ( InternalFailure (IncorrectResultType, ParseFailure),
   )
-import "variant" Data.Variant (V, liftVariant, toVariant, (:<))
-import safe "this" System.IO.Error
+import safe "pathway-compat-base" System.IO.Error.Caught
   ( AlreadyExistsError (AlreadyExistsError),
     DoesNotExistError (DoesNotExistError),
     FullError (FullError),
@@ -72,6 +71,7 @@ import safe "this" System.IO.Error
     UnsatisfiedConstraints (UnsatisfiedConstraints),
     UnsupportedOperation (UnsupportedOperation),
   )
+import "variant" Data.Variant (V, liftVariant, toVariant, (:<))
 
 type MaybeParentCreationFailure :: [Kind.Type]
 type MaybeParentCreationFailure =

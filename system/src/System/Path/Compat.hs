@@ -13,12 +13,12 @@ import safe "base" Data.Kind qualified as Kind
 import safe "base" Data.String (String)
 import safe "base" System.IO (IO)
 import safe "pathway" Data.Path (Path, Relativity (Abs), Type (Dir))
+import safe "pathway-compat-base" System.IO.Error.Caught (FullError)
 import safe "pathway-compat-directory" System.Directory.Caught qualified as F.Caught
 import safe "pathway-compat-directory" System.Directory.Error
   ( SetCurrentDirectoryFailure,
   )
 import safe "pathway-compat-directory" System.Directory.OsPath.Caught qualified as O.Caught
-import safe "pathway-compat-directory" System.IO.Error (FullError)
 import safe "pathway-compat-filepath" System.OsPath.Pathway (OsString)
 import "variant" Data.Variant (V)
 

@@ -195,17 +195,21 @@ library
   hs-source-dirs:
     src
   build-depends:
+    exceptions,
     -- Should encapsulate our specific failures higher up.
     megaparsec ^>= {9.0.1, 9.2.1, 9.5.0, 9.7.0},
     pathway ^>= {0.0.1},
+    variant,
   exposed-modules:
     Common
     System.Environment.Overlay
     System.Environment.Pathway
     System.Environment.Thin
+    System.IO.Caught
     System.IO.Overlay
     System.IO.Pathway
     System.IO.Thin
+    System.IO.Error.Caught
     System.IO.Error.Overlay
     System.IO.Error.Pathway
     System.IO.Error.Thin
