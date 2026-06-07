@@ -208,11 +208,13 @@ library
     System.Directory.Common
     System.Directory.Error
     -- FilePath operations
+    System.Directory
     System.Directory.Caught
     System.Directory.Overlay
     System.Directory.Pathway
     System.Directory.Thin
     -- OsPath operations
+    System.Directory.OsPath
     System.Directory.OsPath.Caught
     System.Directory.OsPath.Overlay
     System.Directory.OsPath.Pathway

@@ -15,9 +15,9 @@
 --
 -- This is a drop-in replacement for "System.Directory", with
 -- `System.IO.FilePath` replaced by `Data.Path.Path` types.
-module System.Directory.OsPath.Pathway
+module System.Directory.OsPath
   ( module System.Directory.OsPath,
-    module System.Directory.OsPath.Caught,
+    module System.Directory.OsPath.Overlay,
   )
 where
 
@@ -72,4 +72,4 @@ import "directory" System.Directory.OsPath hiding
     setPermissions,
     withCurrentDirectory,
   )
-import safe "this" System.Directory.OsPath.Caught
+import safe "this" System.Directory.OsPath.Overlay

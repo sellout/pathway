@@ -12,7 +12,7 @@
 -- `System.IO.FilePath` replaced by `Data.Path.Path` types.
 module System.IO.Error.Pathway
   ( module System.IO.Error,
-    module System.IO.Error.Overlay,
+    module System.IO.Error.Caught,
   )
 where
 
@@ -22,4 +22,4 @@ import "base" System.IO.Error hiding
     ioeSetFileName,
     mkIOError,
   )
-import "this" System.IO.Error.Overlay
+import "this" System.IO.Error.Caught

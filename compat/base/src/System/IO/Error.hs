@@ -8,13 +8,18 @@
 -- Copyright: 2024 Greg Pfeil
 -- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-proprietary
 --
--- This is a drop-in replacement for "System.Environment", with
+-- This is a drop-in replacement for "System.IO.Error", with
 -- `System.IO.FilePath` replaced by `Data.Path.Path` types.
-module System.Environment.Pathway
-  ( module System.Environment,
-    module System.Environment.Thin,
+module System.IO.Error
+  ( module System.IO.Error,
+    module System.IO.Error.Overlay,
   )
 where
 
-import "base" System.Environment hiding (executablePath, getExecutablePath)
-import "this" System.Environment.Thin
+import "base" System.IO.Error hiding
+  ( annotateIOError,
+    ioeGetFileName,
+    ioeSetFileName,
+    mkIOError,
+  )
+import "this" System.IO.Error.Overlay

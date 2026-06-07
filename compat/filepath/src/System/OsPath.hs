@@ -10,9 +10,9 @@
 --
 -- This is a drop-in replacement for "System.OsPath", with
 -- `System.OsPath.Types.OsPath` replaced by `Data.Path.Path` types.
-module System.OsPath.Pathway
+module System.OsPath
   ( module System.OsPath,
-    module System.OsPath.Thin,
+    module System.OsPath.Overlay,
   )
 where
 
@@ -44,4 +44,4 @@ import "filepath" System.OsPath hiding
     (-<.>),
     (<.>),
   )
-import safe "this" System.OsPath.Thin
+import safe "this" System.OsPath.Overlay

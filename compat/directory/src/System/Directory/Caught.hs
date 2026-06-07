@@ -16,6 +16,11 @@ module System.Directory.Caught
     createDirectory,
     createDirectoryIfMissing,
     createDirectoryWithParentsIfMissing,
+    doesDirectoryExist,
+    doesFileExist,
+    findExecutable,
+    findFiles,
+    findFilesWith,
     removeDirectory,
     removeDirectoryRecursive,
     removePathForcibly,
@@ -118,6 +123,13 @@ import safe "this" System.Directory.Error
     recoverRenameFailure,
     recoverSetCurrentDirectoryFailure,
     tryWithIF,
+  )
+import safe "this" System.Directory.Thin
+  ( doesDirectoryExist,
+    doesFileExist,
+    findExecutable,
+    findFiles,
+    findFilesWith,
   )
 import safe "this" System.Directory.Thin qualified as Dir
 import safe "base" Prelude (Integer)

@@ -1,4 +1,4 @@
-{-# LANGUAGE Trustworthy #-}
+{-# LANGUAGE Safe #-}
 -- This module is intended to provide the full API of the underlying module
 -- across multiple versions of base, so we don't want an explicit import list
 -- there.
@@ -8,20 +8,21 @@
 -- Copyright: 2024 Greg Pfeil
 -- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-proprietary
 --
--- This is a drop-in replacement for "System.OsPath", with
--- `System.OsPath.Types.OsPath` replaced by `Data.Path.Path` types.
-module System.OsPath.Pathway
-  ( module System.OsPath,
-    module System.OsPath.Thin,
+-- This is a drop-in replacement for "System.FilePath", with
+-- `System.IO.FilePath` replaced by `Data.Path.Path` types.
+module System.FilePath
+  ( module System.FilePath,
+    module System.FilePath.Overlay,
   )
 where
 
-import "filepath" System.OsPath hiding
-  ( OsPath,
+import "filepath" System.FilePath hiding
+  ( FilePath,
     addExtension,
     dropExtension,
     dropExtensions,
     dropFileName,
+    getSearchPath,
     hasExtension,
     isAbsolute,
     isExtensionOf,
@@ -44,4 +45,4 @@ import "filepath" System.OsPath hiding
     (-<.>),
     (<.>),
   )
-import safe "this" System.OsPath.Thin
+import "this" System.FilePath.Overlay

@@ -60,14 +60,12 @@ import safe "pathway" Data.Path.Format qualified as Format
 import safe "pathway" Data.Path.Parser qualified as Parser
 import safe "pathway" Data.Path.Relativity qualified as Rel (Relativity (Any))
 import safe "pathway" Data.Path.Type qualified as Type (Type (Any))
-import safe "pathway-compat-base" System.IO.Caught qualified as F.IO
-import safe "pathway-compat-base" System.IO.Error.Caught
+import safe "pathway-compat-base" System.IO.Error.Pathway
   ( AlreadyExistsError,
     FullError,
     InvalidArgument,
   )
-import safe "pathway-compat-base" System.IO.Pathway qualified as F.IO hiding (openFile)
-import safe "pathway-compat-directory" System.Directory.Caught qualified as F.Caught
+import safe "pathway-compat-base" System.IO.Pathway qualified as F.IO
 import safe "pathway-compat-directory" System.Directory.Common qualified as Dir
 import safe "pathway-compat-directory" System.Directory.Error
   ( CreateLinkFailure,
@@ -84,26 +82,14 @@ import safe "pathway-compat-directory" System.Directory.Error
     MetadataFailure,
     RenameFailure,
   )
-import safe "pathway-compat-directory" System.Directory.OsPath.Caught qualified as O.Caught
-import safe "pathway-compat-directory" System.Directory.OsPath.Thin qualified as O.Path
-  ( doesDirectoryExist,
-    doesFileExist,
-    findExecutable,
-    findFiles,
-    findFilesWith,
-  )
-import safe "pathway-compat-directory" System.Directory.Thin qualified as F.Path
-  ( doesDirectoryExist,
-    doesFileExist,
-    findExecutable,
-    findFiles,
-    findFilesWith,
-  )
-import safe "pathway-compat-file-io" System.File.OsPath.Caught qualified as O.IO
+import safe "pathway-compat-directory" System.Directory.OsPath.Pathway qualified as O.Path
+import safe "pathway-compat-directory" System.Directory.Pathway qualified as F.Dir
+import safe "pathway-compat-directory" System.Directory.Pathway qualified as F.Path
+import safe "pathway-compat-file-io" System.File.OsPath.Pathway qualified as O.IO
 import safe "pathway-compat-filepath" Common.OsPath qualified as OsPath
-import safe "pathway-compat-filepath" System.FilePath.Thin qualified as FP
+import safe "pathway-compat-filepath" System.FilePath.Pathway qualified as FP
 import safe "pathway-compat-filepath" System.OsPath.Pathway (OsString)
-import safe "pathway-compat-filepath" System.OsPath.Thin qualified as OP
+import safe "pathway-compat-filepath" System.OsPath.Pathway qualified as OP
 import safe "these" Data.These (These)
 import safe "time" Data.Time.Clock (UTCTime)
 import "variant" Data.Variant (V, liftVariant)
@@ -246,81 +232,81 @@ instance Rep String where
   parseDirectory = MP.parse (Parser.directory Format.local) ""
   parsePath = MP.parse (Parser.path Format.local) ""
   splitSearchPath = FP.splitSearchPath
-  canonicalizePath = F.Caught.canonicalizePath
-  copyPermissions = F.Caught.copyPermissions
-  createDirectory = F.Caught.createDirectory
-  createDirectoryIfMissing = F.Caught.createDirectoryIfMissing
-  createDirectoryWithParentsIfMissing = F.Caught.createDirectoryWithParentsIfMissing
-  getAccessTime = F.Caught.getAccessTime
-  getCurrentDirectory = F.Caught.getCurrentDirectory
-  getHomeDirectory = F.Caught.getHomeDirectory
-  getModificationTime = F.Caught.getModificationTime
-  getPermissions = F.Caught.getPermissions
-  getSymbolicLinkTarget = F.Caught.getSymbolicLinkTarget
-  listDirectory = F.Caught.listDirectory
-  removeDirectoryRecursive = F.Caught.removeDirectoryRecursive
-  removePathForcibly = F.Caught.removePathForcibly
-  setAccessTime = F.Caught.setAccessTime
-  setModificationTime = F.Caught.setModificationTime
-  setPermissions = F.Caught.setPermissions
+  canonicalizePath = F.Dir.canonicalizePath
+  copyPermissions = F.Dir.copyPermissions
+  createDirectory = F.Dir.createDirectory
+  createDirectoryIfMissing = F.Dir.createDirectoryIfMissing
+  createDirectoryWithParentsIfMissing = F.Dir.createDirectoryWithParentsIfMissing
+  getAccessTime = F.Dir.getAccessTime
+  getCurrentDirectory = F.Dir.getCurrentDirectory
+  getHomeDirectory = F.Dir.getHomeDirectory
+  getModificationTime = F.Dir.getModificationTime
+  getPermissions = F.Dir.getPermissions
+  getSymbolicLinkTarget = F.Dir.getSymbolicLinkTarget
+  listDirectory = F.Dir.listDirectory
+  removeDirectoryRecursive = F.Dir.removeDirectoryRecursive
+  removePathForcibly = F.Dir.removePathForcibly
+  setAccessTime = F.Dir.setAccessTime
+  setModificationTime = F.Dir.setModificationTime
+  setPermissions = F.Dir.setPermissions
   findExecutable = F.Path.findExecutable
   findFiles = F.Path.findFiles
   findFilesWith = F.Path.findFilesWith
   withFile = withFile' F.IO.openFile
 
 instance Operations String 'Dir where
-  createLink = F.Caught.createDirectoryLink
+  createLink = F.Dir.createDirectoryLink
   doesExist = F.Path.doesDirectoryExist
-  remove = F.Caught.removeDirectory
-  removeLink = F.Caught.removeDirectoryLink
-  rename old = F.Caught.renameDirectory old
+  remove = F.Dir.removeDirectory
+  removeLink = F.Dir.removeDirectoryLink
+  rename old = F.Dir.renameDirectory old
 
 instance Operations String 'File where
-  createLink = F.Caught.createFileLink
+  createLink = F.Dir.createFileLink
   doesExist = F.Path.doesFileExist
-  remove = fmap (first liftVariant) . F.Caught.removeFile
-  removeLink = fmap (first liftVariant) . F.Caught.removeFile
-  rename old = fmap (first liftVariant) . F.Caught.renameFile old
+  remove = fmap (first liftVariant) . F.Dir.removeFile
+  removeLink = fmap (first liftVariant) . F.Dir.removeFile
+  rename old = fmap (first liftVariant) . F.Dir.renameFile old
 
 instance Rep OsString where
   parseDirectory = MP.parse (Parser.directory OsPath.localFormat) ""
   parsePath = MP.parse (Parser.path OsPath.localFormat) ""
   splitSearchPath = OP.splitSearchPath
-  canonicalizePath = O.Caught.canonicalizePath
-  copyPermissions = O.Caught.copyPermissions
-  createDirectory = O.Caught.createDirectory
-  createDirectoryIfMissing = O.Caught.createDirectoryIfMissing
-  createDirectoryWithParentsIfMissing = O.Caught.createDirectoryWithParentsIfMissing
-  getAccessTime = O.Caught.getAccessTime
-  getCurrentDirectory = O.Caught.getCurrentDirectory
-  getHomeDirectory = O.Caught.getHomeDirectory
-  getModificationTime = O.Caught.getModificationTime
-  getPermissions = O.Caught.getPermissions
-  getSymbolicLinkTarget = O.Caught.getSymbolicLinkTarget
-  listDirectory = O.Caught.listDirectory
-  removeDirectoryRecursive = O.Caught.removeDirectoryRecursive
-  removePathForcibly = O.Caught.removePathForcibly
-  setAccessTime = O.Caught.setAccessTime
-  setModificationTime = O.Caught.setModificationTime
-  setPermissions = O.Caught.setPermissions
+  canonicalizePath = O.Path.canonicalizePath
+  copyPermissions = O.Path.copyPermissions
+  createDirectory = O.Path.createDirectory
+  createDirectoryIfMissing = O.Path.createDirectoryIfMissing
+  createDirectoryWithParentsIfMissing = O.Path.createDirectoryWithParentsIfMissing
+  getAccessTime = O.Path.getAccessTime
+  getCurrentDirectory = O.Path.getCurrentDirectory
+  getHomeDirectory = O.Path.getHomeDirectory
+  getModificationTime = O.Path.getModificationTime
+  getPermissions = O.Path.getPermissions
+  getSymbolicLinkTarget = O.Path.getSymbolicLinkTarget
+  listDirectory = O.Path.listDirectory
+  removeDirectoryRecursive = O.Path.removeDirectoryRecursive
+  removePathForcibly = O.Path.removePathForcibly
+  setAccessTime = O.Path.setAccessTime
+  setModificationTime = O.Path.setModificationTime
+  setPermissions = O.Path.setPermissions
   findExecutable = O.Path.findExecutable
   findFiles = O.Path.findFiles
   findFilesWith = O.Path.findFilesWith
   withFile = withFile' O.IO.openFile
 
 instance Operations OsString 'Dir where
-  createLink = O.Caught.createDirectoryLink
+  createLink = O.Path.createDirectoryLink
   doesExist = O.Path.doesDirectoryExist
-  remove = O.Caught.removeDirectory
-  removeLink = O.Caught.removeDirectoryLink
-  rename old = O.Caught.renameDirectory old
+  remove = O.Path.removeDirectory
+  removeLink = O.Path.removeDirectoryLink
+  rename old = O.Path.renameDirectory old
 
 instance Operations OsString 'File where
-  createLink = O.Caught.createFileLink
+  createLink = O.Path.createFileLink
   doesExist = O.Path.doesFileExist
-  remove = fmap (first liftVariant) . O.Caught.removeFile
-  removeLink = fmap (first liftVariant) . O.Caught.removeFile
-  rename old = fmap (first liftVariant) . O.Caught.renameFile old
+  remove = fmap (first liftVariant) . O.Path.removeFile
+  removeLink = fmap (first liftVariant) . O.Path.removeFile
+  rename old = fmap (first liftVariant) . O.Path.renameFile old
 
 -- -- | Checks the filesystem for an object at the provided path and returns it
 -- --   specialized to the correct type. Returns `Nothing` if no such object

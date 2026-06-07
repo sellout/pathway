@@ -205,9 +205,11 @@ library
   exposed-modules:
     Common.FilePath
     Common.OsPath
+    System.FilePath
     System.FilePath.Overlay
     System.FilePath.Pathway
     System.FilePath.Thin
+    System.OsPath
     System.OsPath.Overlay
     System.OsPath.Pathway
     System.OsPath.Thin

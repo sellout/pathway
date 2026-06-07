@@ -15,13 +15,13 @@
 --
 -- This is a drop-in replacement for "System.Directory", with
 -- `System.IO.FilePath` replaced by `Data.Path.Path` types.
-module System.Directory.OsPath.Pathway
-  ( module System.Directory.OsPath,
-    module System.Directory.OsPath.Caught,
+module System.Directory
+  ( module System.Directory,
+    module System.Directory.Overlay,
   )
 where
 
-import "directory" System.Directory.OsPath hiding
+import "directory" System.Directory hiding
   ( canonicalizePath,
     copyFile,
     copyFileWithMetadata,
@@ -72,4 +72,4 @@ import "directory" System.Directory.OsPath hiding
     setPermissions,
     withCurrentDirectory,
   )
-import safe "this" System.Directory.OsPath.Caught
+import safe "this" System.Directory.Overlay

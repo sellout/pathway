@@ -17,7 +17,7 @@
 -- `System.IO.FilePath` replaced by `Data.Path.Path` types.
 module System.Directory.Pathway
   ( module System.Directory,
-    module System.Directory.Overlay,
+    module System.Directory.Caught,
   )
 where
 
@@ -72,4 +72,4 @@ import "directory" System.Directory hiding
     setPermissions,
     withCurrentDirectory,
   )
-import safe "this" System.Directory.Overlay
+import safe "this" System.Directory.Caught

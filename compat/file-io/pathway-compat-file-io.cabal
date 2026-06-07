@@ -205,6 +205,7 @@ library
     pathway-compat-filepath ^>= {0.0.1},
     variant,
   exposed-modules:
+    System.File.OsPath
     System.File.OsPath.Caught
     System.File.OsPath.Overlay
     System.File.OsPath.Pathway

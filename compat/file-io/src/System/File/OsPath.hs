@@ -7,9 +7,9 @@
 --
 -- This is a drop-in replacement for "System.File.OsPath", with `OsPath`
 -- replaced by `Data.Path.Path` types.
-module System.File.OsPath.Pathway
-  ( module System.File.OsPath.Caught,
+module System.File.OsPath
+  ( module System.File.OsPath.Overlay,
   )
 where
 
-import safe "this" System.File.OsPath.Caught
+import safe "this" System.File.OsPath.Overlay

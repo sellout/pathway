@@ -10,9 +10,9 @@
 --
 -- This is a drop-in replacement for "System.IO", with `System.IO.FilePath`
 -- replaced by `Data.Path.Path` types.
-module System.IO.Pathway
+module System.IO
   ( module System.IO,
-    module System.IO.Caught,
+    module System.IO.Overlay,
   )
 where
 
@@ -31,4 +31,4 @@ import "base" System.IO hiding
     withFile,
     writeFile,
   )
-import "this" System.IO.Caught
+import "this" System.IO.Overlay

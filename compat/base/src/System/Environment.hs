@@ -10,11 +10,11 @@
 --
 -- This is a drop-in replacement for "System.Environment", with
 -- `System.IO.FilePath` replaced by `Data.Path.Path` types.
-module System.Environment.Pathway
+module System.Environment
   ( module System.Environment,
-    module System.Environment.Thin,
+    module System.Environment.Overlay,
   )
 where
 
 import "base" System.Environment hiding (executablePath, getExecutablePath)
-import "this" System.Environment.Thin
+import "this" System.Environment.Overlay
