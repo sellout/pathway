@@ -188,12 +188,15 @@
     ## packages that have them as dependencies. E.g., most packages require
     ## `yaya ^>= 0.5.0`, but `yaya-unsafe` requires `yaya ^>= 0.5.1`, so this
     ## must specify `yaya-0.5.1.0`, not `yaya-0.5.0.0`.
-    extraDependencyVersions = [
+    checkBounds.extraDependencyVersions = [
       "QuickCheck-2.15.0.1" # Used by Nixpkgs 25.11’s haskellPackages
     ];
     latestGhcVersion = "9.10.1";
   };
 
   ## publishing
-  services.github.settings.repository.topics = ["filesystem" "path" "trie"];
+  services.github.settings.repository = {
+    private = false;
+    topics = ["filesystem" "path" "trie"];
+  };
 }

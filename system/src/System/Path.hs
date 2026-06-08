@@ -1,6 +1,5 @@
 -- #if MIN_VERSION_filepath(1, 4, 100)
 -- #if MIN_VERSION_directory(1, 3, 8)
-{-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE Trustworthy #-}
 
 -- | There are various ways to use filesystem operations with Pathway. This is

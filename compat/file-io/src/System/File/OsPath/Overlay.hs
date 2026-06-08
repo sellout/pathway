@@ -28,8 +28,8 @@ import "base" Control.Monad ((<=<))
 import "base" Data.Either (either)
 import "base" Data.Void (Void)
 import "base" System.IO (Handle, IO)
-import "pathway" Data.Path (Path, Relativity (Abs), Type (Dir, File))
 import "filepath" System.OsPath.Types (OsString)
+import "pathway" Data.Path (Path, Relativity (Abs), Type (Dir, File))
 import "this" System.File.OsPath.Thin
   ( appendFile,
     appendFile',

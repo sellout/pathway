@@ -1,7 +1,7 @@
 {-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE Trustworthy #-}
--- TODO: Complains about the following names, which have no way to be silenced
---       yet: $dPopVariant_ad2Z, $dPopVariant_ad3L, $dPopVariant_ad4s
+-- WAIT: "NoRecursion" doesn’t currently provide a way to ignore names like
+--       `$dPopVariant_aei8`, but it should.
 {-# OPTIONS_GHC -fplugin-opt NoRecursion:allow-recursion:true #-}
 
 module System.IO.Caught

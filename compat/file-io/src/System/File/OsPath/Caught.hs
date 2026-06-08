@@ -10,9 +10,9 @@ import safe "base" Control.Category ((.))
 import safe "base" Data.Either (Either)
 import safe "base" System.IO (Handle, IO, IOMode)
 import safe "exceptions" Control.Monad.Catch (tryJust)
-import safe "filepath" System.OsPath.Types (OsString)
+import "filepath" System.OsPath.Types (OsString)
 import safe "pathway" Data.Path (Path, Relativity (Abs), Type (File))
-import "pathway-compat-base" System.IO.Caught
+import safe "pathway-compat-base" System.IO.Caught
   ( OpenFileFailure,
     recoverOpenFileFailure,
   )

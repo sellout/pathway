@@ -81,7 +81,7 @@ See [the README](./README.md#versioning) for more specific information on what k
 
 In the `pathway-compat-*` packages, there are a number of module “groups” that look like
 
-``` mermaid
+```mermaid
 graph BT
   pathway(.Pathway) --> caught(.Caught) --> thin(.Thin)
   dropin() --> overlay(.Overlay) --> thin
