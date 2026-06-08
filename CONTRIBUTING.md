@@ -84,7 +84,7 @@ In the `pathway-compat-*` packages, there are a number of module “groups” th
 ```mermaid
 graph BT
   pathway(.Pathway) --> caught(.Caught) --> thin(.Thin)
-  dropin() --> overlay(.Overlay) --> thin
+  dropin(.DropIn) --> overlay(.Overlay) --> thin
   pathway --> upstream()
   dropin --> upstream
 ```

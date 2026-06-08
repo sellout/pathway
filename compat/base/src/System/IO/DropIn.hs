@@ -10,7 +10,7 @@
 --
 -- This is a drop-in replacement for "System.IO", with `System.IO.FilePath`
 -- replaced by `Data.Path.Path` types.
-module System.IO
+module System.IO.DropIn
   ( module System.IO,
     module System.IO.Overlay,
   )

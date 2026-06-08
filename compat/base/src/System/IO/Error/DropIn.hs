@@ -10,7 +10,7 @@
 --
 -- This is a drop-in replacement for "System.IO.Error", with
 -- `System.IO.FilePath` replaced by `Data.Path.Path` types.
-module System.IO.Error
+module System.IO.Error.DropIn
   ( module System.IO.Error,
     module System.IO.Error.Overlay,
   )

@@ -202,17 +202,17 @@ library
     variant,
   exposed-modules:
     Common
-    System.Environment
+    System.Environment.DropIn
     System.Environment.Overlay
     System.Environment.Pathway
     System.Environment.Thin
-    System.IO
     System.IO.Caught
+    System.IO.DropIn
     System.IO.Overlay
     System.IO.Pathway
     System.IO.Thin
-    System.IO.Error
     System.IO.Error.Caught
+    System.IO.Error.DropIn
     System.IO.Error.Overlay
     System.IO.Error.Pathway
     System.IO.Error.Thin

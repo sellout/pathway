@@ -10,7 +10,7 @@
 --
 -- This is a drop-in replacement for "System.Environment", with
 -- `System.IO.FilePath` replaced by `Data.Path.Path` types.
-module System.Environment
+module System.Environment.DropIn
   ( module System.Environment,
     module System.Environment.Overlay,
   )
