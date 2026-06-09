@@ -13,12 +13,14 @@
 module System.FilePath
   ( module System.FilePath,
     module System.FilePath.Overlay,
+    module System.FilePath.Thin,
   )
 where
 
 import "filepath" System.FilePath hiding
   ( FilePath,
     addExtension,
+    combine,
     dropExtension,
     dropExtensions,
     dropFileName,
@@ -27,14 +29,17 @@ import "filepath" System.FilePath hiding
     isAbsolute,
     isExtensionOf,
     isRelative,
+    isValid,
     replaceBaseName,
     replaceDirectory,
     replaceExtension,
     replaceExtensions,
     replaceFileName,
+    splitDirectories,
     splitExtension,
     splitExtensions,
     splitFileName,
+    splitPath,
     splitSearchPath,
     stripExtension,
     takeBaseName,
@@ -44,5 +49,7 @@ import "filepath" System.FilePath hiding
     takeFileName,
     (-<.>),
     (<.>),
+    (</>),
   )
 import "this" System.FilePath.Overlay
+import "this" System.FilePath.Thin hiding (getSearchPath, splitSearchPath)

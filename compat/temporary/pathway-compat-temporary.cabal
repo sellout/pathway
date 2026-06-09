@@ -201,7 +201,9 @@ library
     pathway-compat-filepath ^>= {0.0.1},
     temporary,
   exposed-modules:
+    System.IO.Temp
     System.IO.Temp.Overlay
+    System.IO.Temp.Pathway
     System.IO.Temp.Thin
 
 test-suite doctests

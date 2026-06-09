@@ -1,4 +1,5 @@
 {-# LANGUAGE Safe #-}
+{-# OPTIONS_GHC -Wno-dodgy-exports -Wno-unused-imports #-}
 -- This module is intended to provide the full API of the underlying module
 -- across multiple versions of base, so we don’t want an explicit import list
 -- there.
@@ -13,8 +14,10 @@
 module System.Environment.DropIn
   ( module System.Environment,
     module System.Environment.Overlay,
+    module System.Environment.Thin,
   )
 where
 
 import "base" System.Environment hiding (executablePath, getExecutablePath)
 import "this" System.Environment.Overlay
+import "this" System.Environment.Thin hiding (executablePath, getExecutablePath)

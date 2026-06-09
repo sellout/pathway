@@ -25,12 +25,12 @@ import safe "base" System.IO (Handle, IO, IOMode)
 import safe "exceptions" Control.Monad.Catch (tryJust)
 import safe "pathway" Data.Path (Path, Relativity (Abs), Type (File))
 import "variant" Data.Variant (V, toVariant)
-import safe "this" System.IO.Error.Caught
+import safe "this" System.IO.Error.Pathway
   ( AlreadyInUseError (AlreadyInUseError),
     DoesNotExistError (DoesNotExistError),
+    IOError,
     PermissionError (PermissionError),
   )
-import safe "this" System.IO.Error.Pathway (IOError)
 import safe "this" System.IO.Error.Pathway qualified as IO
 import safe "this" System.IO.Thin qualified as Thin
 

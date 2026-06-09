@@ -12,8 +12,6 @@ module System.IO.Temp.Thin
     writeSystemTempFile,
     emptyTempFile,
     emptySystemTempFile,
-    IO.openTempFile,
-    IO.openBinaryTempFile,
     getCanonicalTemporaryDirectory,
   )
 where
@@ -36,7 +34,6 @@ import safe "pathway-compat-base" Common
     absFileFromPathRep,
     toPathRep,
   )
-import safe "pathway-compat-base" System.IO.Thin qualified as IO
 import safe "pathway-compat-filepath" Common.FilePath (absDirFromPathRep)
 import "temporary" System.IO.Temp qualified as Temp
 

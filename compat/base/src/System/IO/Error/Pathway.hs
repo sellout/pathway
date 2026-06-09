@@ -13,6 +13,7 @@
 module System.IO.Error.Pathway
   ( module System.IO.Error,
     module System.IO.Error.Caught,
+    module System.IO.Error.Thin,
   )
 where
 
@@ -23,3 +24,4 @@ import "base" System.IO.Error hiding
     mkIOError,
   )
 import "this" System.IO.Error.Caught
+import "this" System.IO.Error.Thin

@@ -13,8 +13,6 @@ module System.IO.Temp.Overlay
     writeSystemTempFile,
     emptyTempFile,
     emptySystemTempFile,
-    IO.openTempFile,
-    IO.openBinaryTempFile,
     getCanonicalTemporaryDirectory,
   )
 where
@@ -28,7 +26,6 @@ import safe "base" Data.Void (Void)
 import safe "base" System.IO (Handle, IO)
 import safe "exceptions" Control.Monad.Catch (MonadMask, throwM)
 import safe "pathway" Data.Path (Path, Relativity (Abs), Type (Dir, File))
-import safe "pathway-compat-base" System.IO.Overlay qualified as IO
 import "this" System.IO.Temp.Thin qualified as Thin
 
 withTempFile ::

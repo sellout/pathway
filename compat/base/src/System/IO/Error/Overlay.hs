@@ -2,10 +2,7 @@
 {-# LANGUAGE TypeApplications #-}
 
 module System.IO.Error.Overlay
-  ( mkIOError,
-    annotateIOError,
-    ioeGetFileName,
-    ioeSetFileName,
+  ( ioeGetFileName,
   )
 where
 
@@ -18,7 +15,6 @@ import "base" Data.String (String)
 import "base" Data.Void (Void)
 import "base" System.IO.Error (IOError)
 import "pathway" Data.Path (Path, Relativity (Abs), Type (File))
-import "this" System.IO.Error.Thin (annotateIOError, ioeSetFileName, mkIOError)
 import "this" System.IO.Error.Thin qualified as Thin
 
 ioeGetFileName :: IOError -> Maybe (Path 'Abs 'File String)

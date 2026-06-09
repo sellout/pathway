@@ -13,6 +13,7 @@
 module System.IO.DropIn
   ( module System.IO,
     module System.IO.Overlay,
+    module System.IO.Thin,
   )
 where
 
@@ -32,3 +33,9 @@ import "base" System.IO hiding
     writeFile,
   )
 import "this" System.IO.Overlay
+import "this" System.IO.Thin hiding
+  ( openBinaryTempFile,
+    openBinaryTempFileWithDefaultPermissions,
+    openTempFile,
+    openTempFileWithDefaultPermissions,
+  )

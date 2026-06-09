@@ -81,7 +81,7 @@ import safe "pathway" Data.Path
     Typey,
   )
 import safe "pathway" Data.Path.Relativity qualified as Rel (Relativity (Any))
-import safe "pathway-compat-base" System.IO.Error.Caught
+import safe "pathway-compat-base" System.IO.Error.Pathway
   ( AlreadyExistsError (AlreadyExistsError),
     FullError (FullError),
     InvalidArgument,

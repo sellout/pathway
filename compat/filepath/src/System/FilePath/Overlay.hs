@@ -10,36 +10,6 @@ module System.FilePath.Overlay
   ( -- * \$PATH methods
     splitSearchPath,
     getSearchPath,
-
-    -- * Extension functions
-    splitExtension,
-    takeExtension,
-    replaceExtension,
-    (-<.>),
-    dropExtension,
-    addExtension,
-    hasExtension,
-    (<.>),
-    splitExtensions,
-    dropExtensions,
-    takeExtensions,
-    replaceExtensions,
-    isExtensionOf,
-    stripExtension,
-
-    -- * Filename/directory functions
-    splitFileName,
-    takeFileName,
-    replaceFileName,
-    dropFileName,
-    takeBaseName,
-    replaceBaseName,
-    takeDirectory,
-    replaceDirectory,
-
-    -- * Type-level path queries
-    IsAbsolute (..),
-    isRelative,
   )
 where
 
@@ -54,32 +24,6 @@ import safe "base" Data.Void (Void)
 import safe "base" System.IO (IO)
 import safe "pathway" Data.Path (Path, Relativity (Abs), Type (Dir))
 import safe "pathway" Data.Path.Relativity qualified as Rel (Relativity (Any))
-import safe "this" System.FilePath.Thin
-  ( IsAbsolute (isAbsolute),
-    addExtension,
-    dropExtension,
-    dropExtensions,
-    dropFileName,
-    hasExtension,
-    isExtensionOf,
-    isRelative,
-    replaceBaseName,
-    replaceDirectory,
-    replaceExtension,
-    replaceExtensions,
-    replaceFileName,
-    splitExtension,
-    splitExtensions,
-    splitFileName,
-    stripExtension,
-    takeBaseName,
-    takeDirectory,
-    takeExtension,
-    takeExtensions,
-    takeFileName,
-    (-<.>),
-    (<.>),
-  )
 import safe "this" System.FilePath.Thin qualified as Thin
 
 -- | Split a string, such as PATH or CDPATH, on the search path separator.

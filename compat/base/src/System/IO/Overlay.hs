@@ -2,15 +2,7 @@
 {-# LANGUAGE TypeApplications #-}
 
 module System.IO.Overlay
-  ( withFile,
-    openFile,
-    readFile,
-    readFile',
-    writeFile,
-    appendFile,
-    withBinaryFile,
-    openBinaryFile,
-    openTempFile,
+  ( openTempFile,
     openBinaryTempFile,
     openTempFileWithDefaultPermissions,
     openBinaryTempFileWithDefaultPermissions,
@@ -25,16 +17,6 @@ import "base" Data.String (String)
 import "base" Data.Void (Void)
 import "base" System.IO (Handle, IO)
 import "pathway" Data.Path (Path, Relativity (Abs), Type (Dir, File))
-import "this" System.IO.Thin
-  ( appendFile,
-    openBinaryFile,
-    openFile,
-    readFile,
-    readFile',
-    withBinaryFile,
-    withFile,
-    writeFile,
-  )
 import "this" System.IO.Thin qualified as Thin
 
 openTempFile ::

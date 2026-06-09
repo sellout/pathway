@@ -60,7 +60,7 @@ import safe "base" System.IO.Error qualified as IO
 import safe "pathway-compat-base" Common
   ( InternalFailure (IncorrectResultType, ParseFailure),
   )
-import safe "pathway-compat-base" System.IO.Error.Caught
+import safe "pathway-compat-base" System.IO.Error.Pathway
   ( AlreadyExistsError (AlreadyExistsError),
     DoesNotExistError (DoesNotExistError),
     FullError (FullError),

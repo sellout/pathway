@@ -13,6 +13,7 @@
 module System.IO.Pathway
   ( module System.IO,
     module System.IO.Caught,
+    module System.IO.Thin,
   )
 where
 
@@ -32,3 +33,4 @@ import "base" System.IO hiding
     writeFile,
   )
 import "this" System.IO.Caught
+import "this" System.IO.Thin hiding (openFile)

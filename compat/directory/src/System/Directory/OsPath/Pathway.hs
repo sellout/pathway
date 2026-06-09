@@ -18,6 +18,7 @@
 module System.Directory.OsPath.Pathway
   ( module System.Directory.OsPath,
     module System.Directory.OsPath.Caught,
+    module System.Directory.OsPath.Thin,
   )
 where
 
@@ -73,3 +74,43 @@ import "directory" System.Directory.OsPath hiding
     withCurrentDirectory,
   )
 import safe "this" System.Directory.OsPath.Caught
+import safe "this" System.Directory.OsPath.Thin hiding
+  ( canonicalizePath,
+    copyFile,
+    copyFileWithMetadata,
+    copyPermissions,
+    createDirectory,
+    createDirectoryIfMissing,
+    createDirectoryLink,
+    createFileLink,
+    getAccessTime,
+    getAppUserDataDirectory,
+    getCurrentDirectory,
+    getDirectoryContents,
+    getFileSize,
+    getHomeDirectory,
+    getModificationTime,
+    getPermissions,
+    getSymbolicLinkTarget,
+    getTemporaryDirectory,
+    getUserDocumentsDirectory,
+    getXdgDirectory,
+    getXdgDirectoryList,
+    listDirectory,
+    makeAbsolute,
+    makeRelativeToCurrentDirectory,
+    pathIsSymbolicLink,
+    removeDirectory,
+    removeDirectoryLink,
+    removeDirectoryRecursive,
+    removeFile,
+    removePathForcibly,
+    renameDirectory,
+    renameFile,
+    renamePath,
+    setAccessTime,
+    setCurrentDirectory,
+    setModificationTime,
+    setPermissions,
+    withCurrentDirectory,
+  )
