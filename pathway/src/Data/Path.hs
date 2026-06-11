@@ -35,6 +35,7 @@ module Data.Path
     Typey,
     anchor,
     current,
+    escapeComponent,
     forgetRelativity,
     forgetType,
     minimalRoute,
@@ -596,9 +597,12 @@ escape' = \case
   TipF -> id
   BinF _ direct escaped fn fn' -> fn' . replace direct escaped . fn
 
+escapeComponent :: (Substible rep) => Format rep -> rep -> rep
+escapeComponent = cata escape' . substitutions
+
 anyToText :: (Monoid a, Substible a) => Format a -> AnyPath a -> a
 anyToText format path =
-  let escapeComponent = cata escape' $ substitutions format
+  let escapeComponent' = escapeComponent format
       prefix =
         maybe
           (root format)
@@ -611,10 +615,10 @@ anyToText format path =
           ( \case
               Neither -> mempty
               Both directoryName pathStr ->
-                pathStr <> escapeComponent directoryName <> separator format
+                pathStr <> escapeComponent' directoryName <> separator format
           )
           $ directories path
-      file = maybe mempty escapeComponent $ filename path
+      file = maybe mempty escapeComponent' $ filename path
    in prefix <> directory <> file
 
 -- |
