@@ -71,10 +71,6 @@ createTempDirectory dir =
 withSystemTempFile ::
   (MonadIO m, MonadMask m) =>
   -- | File name template
-  --
-  --  __TODO__: Determine if this is the correct type, or if it should be
-  --            @`Path` ('`Rel` '`False`) '`File`@ (if intervening directories
-  --            are allowed).
   String ->
   -- | Callback that can use the file
   (Path 'Abs 'File String -> Handle -> m a) ->
@@ -85,10 +81,6 @@ withSystemTempFile template =
 withSystemTempDirectory ::
   (MonadIO m, MonadMask m) =>
   -- | File name template
-  --
-  --  __TODO__: Determine if this is the correct type, or if it should be
-  --            @`Path` ('`Rel` '`False`) '`File`@ (if intervening directories
-  --            are allowed).
   String ->
   -- | Callback that can use the directory
   (Path 'Abs 'Dir String -> m a) ->
