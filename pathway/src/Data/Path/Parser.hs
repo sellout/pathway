@@ -80,6 +80,7 @@ currentDirectory :: (MP.MonadParsec v s p) => Format (MP.Tokens s) -> p ()
 currentDirectory = void . MP.chunk . current
 
 -- |
+--
 -- >>> MP.parse (parents' posix) "" "../"
 -- Right 1
 -- >>> MP.parse (path posix) "" "../"
@@ -87,11 +88,22 @@ currentDirectory = void . MP.chunk . current
 parents' :: (MP.MonadParsec v s p) => Format (MP.Tokens s) -> p Natural
 parents' = fmap (fromIntegral . length) . MP.many . MP.chunk . parent
 
+-- |
+--
+--  __TODO__: This supports redundant path separators, as most filesystems do,
+--            but this should really be part of the format, not the generic
+--            parser. Would help if we had invertible syntax to describe the
+--            reptition easily in the format.
+--
+-- >>> MP.parse (anchor posix) "" ".////"
+-- Right (Just 0)
 anchor :: (MP.MonadParsec v s p) => Format (MP.Tokens s) -> p (Maybe Natural)
 anchor format =
-  Nothing <$ rootDirectory format
-    <|> pure 0 <$ currentDirectory format
-    <|> pure <$> parents' format
+  ( Nothing <$ rootDirectory format
+      <|> pure 0 <$ currentDirectory format
+      <|> pure <$> parents' format
+  )
+    <* MP.many (MP.chunk $ separator format)
 
 escapeChar ::
   (MP.MonadParsec v s p) =>
@@ -132,10 +144,18 @@ component = fmap fold . MP.some . componentChar
 --
 -- >>> MP.parse (path posix) "" "bin/"
 -- Right (Path {parents = Just 0, directories = List (embed (Both "bin" (embed Neither))), filename = Nothing})
+--
+--  __TODO__: This supports redundant path separators, as most filesystems do,
+--            but this should really be part of the format, not the generic
+--            parser. Would help if we had invertible syntax to describe the
+--            reptition easily in the format.
+--
+-- >>> MP.parse (path posix) "" "bin/////"
+-- Right (Path {parents = Just 0, directories = List (embed (Both "bin" (embed Neither))), filename = Nothing})
 directoryName ::
   (MP.MonadParsec v s p, Monoid (MP.Tokens s)) =>
   Format (MP.Tokens s) -> p (MP.Tokens s)
-directoryName format = component format <* MP.chunk (separator format)
+directoryName format = component format <* MP.some (MP.chunk $ separator format)
 
 -- |
 --
