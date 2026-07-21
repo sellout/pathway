@@ -32,7 +32,7 @@ import "pathway-internal" Data.Path.Internal
   )
 import "yaya" Yaya.Applied (drop, length, reverse, tail)
 import "yaya" Yaya.Fold (cata, embed)
-import "yaya" Yaya.Pattern (Maybe (Nothing), XNor (Both, Neither), xnor)
+import "yaya" Yaya.Pattern (Maybe (Nothing), XNor (Both, Neither), isNeither)
 import "this" Data.Path.Relativity (Relativity (Abs, Rel))
 import "this" Data.Path.Type (Type (Dir, File))
 
@@ -43,10 +43,6 @@ import "this" Data.Path.Type (Type (Dir, File))
 -- >>> import Data.Path.TH (posix)
 -- >>> import "base" Data.Functor ((<$>))
 -- >>> import "text" Data.Text (Text)
-
--- | __FIXME__: Move upstream.
-isNeither :: XNor a b -> Bool
-isNeither = xnor True (\_ _ -> False)
 
 -- | Move up one directory in the file hierarchy.
 ascendAbsolute ::

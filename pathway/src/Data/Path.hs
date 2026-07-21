@@ -96,10 +96,10 @@ import safe "yaya" Yaya.Pattern
     fromMaybe,
     fst,
     isJust,
+    isNeither,
     maybe,
-    xnor,
   )
-import safe "yaya-containers" Yaya.Containers.Pattern.Map (MapF (BinF, TipF))
+import safe "yaya-containers" Yaya.Containers.Pattern.Map (Map (Bin, Tip))
 import safe "this" Data.Path.Format (Format, parent, root, separator, substitutions)
 import safe "this" Data.Path.Relativity (Relativity (Abs, Any, Rel))
 import safe "this" Data.Path.Type (Type (Dir, File))
@@ -117,10 +117,6 @@ import safe "base" Prelude ((+))
 -- >>> import "base" Data.Functor ((<$>))
 -- >>> import "pathway-quickcheck" Test.Path.QuickCheck ()
 -- >>> import "yaya" Yaya.Pattern (fromJust, isNothing)
-
--- | __FIXME__: Move upstream.
-isNeither :: XNor a b -> Bool
-isNeither = xnor True (\_ _ -> False)
 
 null :: (Projectable (->) t (XNor a)) => t -> Bool
 null = isNeither . project
@@ -603,10 +599,10 @@ instance Substible String where
 instance Substible Text where
   replace = Text.replace
 
-escape' :: (Substible a) => MapF a a (a -> a) -> a -> a
+escape' :: (Substible a) => Map a a (a -> a) -> a -> a
 escape' = \case
-  TipF -> id
-  BinF _ direct escaped fn fn' -> fn' . replace direct escaped . fn
+  Tip -> id
+  Bin _ direct escaped fn fn' -> fn' . replace direct escaped . fn
 
 anyToText :: (IsString a, Semigroup a, Substible a) => Format a -> AnyPath a -> a
 anyToText format path =

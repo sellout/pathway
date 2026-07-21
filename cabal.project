@@ -16,13 +16,19 @@ constraints:
   path >= 0.8.0,
   -- earlier versions use -fpackage-trust, which causes no end of trouble
   yaya >= 0.6.2.2,
+  -- pathway uses `isNeither`, added in 1.0.0.0
+  pathway:setup.yaya >= 1.0.0.0,
   -- earlier versions use -fpackage-trust, which causes no end of trouble
   -- later versions change constructors and aren’t yet available in Nix
-  yaya-containers >= 0.1.2.1 && <1.0.0.0,
+  yaya-containers >= 0.1.2.1,
   -- earlier versions use -fpackage-trust, which causes no end of trouble
   yaya-quickcheck >= 0.2.0.2,
-  -- earlier versions use -fpackage-trust, which causes no end of trouble
-  yaya-unsafe >= 0.4.1.2,
+  -- 0.4.1.2: earlier versions use -fpackage-trust, which causes no end of
+  --          trouble
+  -- 1.0.0.1: a minor hack to force selecting yaya-1.0.0.0 in _some_cases
+  --          (because we can’t add an explicit `pathway:yaya >= 1.0.0.0`
+  --          constraint)
+  yaya-unsafe >= 1.0.0.1,
 
 allow-newer:
   -- The latest versions of these don’t have bounds that support GHC 9.14.

@@ -87,42 +87,38 @@ in
           }
           else {}
         )
-        // (
-          ## These versions haven’t yet made it into Stackage.
-          if final.lib.versionAtLeast hprev.ghc.version "9.12"
-          then {
-            yaya = hfinal.callHackageDirect {
-              pkg = "yaya";
-              ver = "0.7.0.0";
-              sha256 = "i5YBaKC/30AIj/cSbkEfvYTOfiexD6hoiOOFRVJPJK8=";
-            } {};
+        ## These versions haven’t yet made it into Stackage.
+        // {
+          yaya = hfinal.callHackageDirect {
+            pkg = "yaya";
+            ver = "1.0.0.0";
+            sha256 = "a1mtw4vnUePF9biXnrOPhQkXp/ltny2zpTlAriCuC1w=";
+          } {};
 
-            yaya-containers = hfinal.callHackageDirect {
-              pkg = "yaya-containers";
-              ver = "0.2.0.0";
-              sha256 = "5q61J7IAfGkOUFJSwU4Leqa/+z7vFdeAOsWXrsuXw1k=";
-            } {};
+          yaya-containers = hfinal.callHackageDirect {
+            pkg = "yaya-containers";
+            ver = "1.0.0.0";
+            sha256 = "QYTvRBR9UQP/3ANs/E0jQ9dHK+7NTpyrhm8nn20OFKs=";
+          } {};
 
-            yaya-hedgehog = hfinal.callHackageDirect {
-              pkg = "yaya-hedgehog";
-              ver = "0.4.0.0";
-              sha256 = "NIZVfKf2WscmnxDTBgRVZZIQ+Bpzg2mZO9VKOzt5V5w=";
-            } {};
+          yaya-hedgehog = hfinal.callHackageDirect {
+            pkg = "yaya-hedgehog";
+            ver = "1.0.0.0";
+            sha256 = "KnGL9qzJuQb1reYoE37IHXn+uYr6gMn76pEJLJnwUss=";
+          } {};
 
-            yaya-quickcheck = hfinal.callHackageDirect {
-              pkg = "yaya-quickcheck";
-              ver = "0.3.0.0";
-              sha256 = "Z0OPGZmJ1YnMkud5Y4yC6vud+pl1GgRX1/m2ZiQiLGA=";
-            } {};
+          yaya-quickcheck = hfinal.callHackageDirect {
+            pkg = "yaya-quickcheck";
+            ver = "1.0.0.0";
+            sha256 = "jLRVhFy1Vkl4jEEcjkhf60jKn6/mjgzHZxm8hiuYsVQ=";
+          } {};
 
-            yaya-unsafe = hfinal.callHackageDirect {
-              pkg = "yaya-unsafe";
-              ver = "0.5.0.0";
-              sha256 = "Xy+ptpJTHyD0+0lvQ9shm4tB/q86tHIF15vCez/jxL0=";
-            } {};
-          }
-          else {}
-        );
+          yaya-unsafe = hfinal.callHackageDirect {
+            pkg = "yaya-unsafe";
+            ver = "1.0.0.1";
+            sha256 = "wR1wYttQcOZSNAHKUrO+dfyZ4ijWhorBzHaUuPPm5hY=";
+          } {};
+        };
     };
 
     homeConfigurations =
