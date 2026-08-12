@@ -114,6 +114,7 @@ import safe "pathway" Data.Path.Parser qualified as Parser
 import safe "pathway" Data.Path.Relativity (Relativity (Abs, Any, Rel))
 import safe "pathway" Data.Path.Type (Type (Dir, File))
 import safe "pathway" Data.Path.Type qualified as Type (Type (Any))
+import safe "pathway-internal" Data.Path.Internal.Resolution (Resolution (Unres))
 import safe "time" Data.Time.Clock (UTCTime)
 import safe "transformers" Control.Monad.Trans.Class (lift)
 import safe "transformers" Control.Monad.Trans.Except (ExceptT (ExceptT))
@@ -162,7 +163,7 @@ handleAnchoredFile handler = either (Left . ParseFailure) handler . fromPathRep
 absDirFromPathRep ::
   (Ord e) =>
   PathRep ->
-  Either (InternalFailure PathRep e) (Path 'Abs 'Dir PathComponent)
+  Either (InternalFailure PathRep e) (Path 'Unres 'Abs 'Dir PathComponent)
 absDirFromPathRep =
   let badType rel typ = Left . IncorrectResultType Abs Dir rel typ
    in handleAnchoredDir \case
@@ -180,8 +181,8 @@ dirFromPathRep ::
   Either
     (InternalFailure PathRep e)
     ( Either
-        (Path 'Abs 'Dir PathComponent)
-        (Path ('Rel 'False) 'Dir PathComponent)
+        (Path 'Unres 'Abs 'Dir PathComponent)
+        (Path 'Unres ('Rel 'False) 'Dir PathComponent)
     )
 dirFromPathRep =
   let badType rel typ = Left . IncorrectResultType Any Dir rel typ
@@ -197,7 +198,7 @@ dirFromPathRep =
 absFileFromPathRep ::
   (Ord e) =>
   PathRep ->
-  Either (InternalFailure PathRep e) (Path 'Abs 'File PathComponent)
+  Either (InternalFailure PathRep e) (Path 'Unres 'Abs 'File PathComponent)
 absFileFromPathRep =
   let badType rel typ = Left . IncorrectResultType Abs File rel typ
    in handleAnchoredFile \case
@@ -214,8 +215,8 @@ fileFromPathRep ::
   Either
     (InternalFailure PathRep e)
     ( Either
-        (Path 'Abs 'File PathComponent)
-        (Path ('Rel 'False) 'File PathComponent)
+        (Path 'Unres 'Abs 'File PathComponent)
+        (Path 'Unres ('Rel 'False) 'File PathComponent)
     )
 fileFromPathRep =
   let badType rel typ = Left . IncorrectResultType Abs File rel typ
@@ -233,7 +234,7 @@ fileFromPathRep =
 --   ExceptT
 --     (InternalFailure PathRep e)
 --     IO
---     (Either (Path 'Abs 'Dir PathComponent) (Path 'Abs 'File PathComponent))
+--     (Either (Path res 'Abs 'Dir PathComponent) (Path res 'Abs 'File PathComponent))
 -- absPathFromPathRep =
 --   let badType rel typ = Left . IncorrectResultType Abs Pathic rel typ
 --    in handleAnchoredPath \case
@@ -252,8 +253,8 @@ relPathFromPathRep ::
     ( Either
         (InternalFailure PathRep e)
         ( Either
-            (Path ('Rel 'False) 'Dir PathComponent)
-            (Path ('Rel 'False) 'File PathComponent)
+            (Path 'Unres ('Rel 'False) 'Dir PathComponent)
+            (Path 'Unres ('Rel 'False) 'File PathComponent)
         )
     )
 relPathFromPathRep base =
@@ -398,35 +399,35 @@ data ListFailure
   | LFAF ArgumentFailure
   deriving stock (Eq, Generic, Ord, Read, Show)
 
-createDirectory :: Path 'Abs 'Dir PathComponent -> ExceptT CreationFailure IO ()
+createDirectory :: Path 'Unres 'Abs 'Dir PathComponent -> ExceptT CreationFailure IO ()
 createDirectory = lift . Dir.createDirectory . toPathRep
 
 -- | Can perhaps unify this and the following definition depending on how we
 --   handle errors.
 createDirectoryIfMissing ::
-  Path 'Abs 'Dir PathComponent -> ExceptT MaybeCreationFailure IO ()
+  Path 'Unres 'Abs 'Dir PathComponent -> ExceptT MaybeCreationFailure IO ()
 createDirectoryIfMissing = lift . Dir.createDirectoryIfMissing False . toPathRep
 
 createDirectoryWithParentsIfMissing ::
-  Path 'Abs 'Dir PathComponent -> ExceptT MaybeParentCreationFailure IO ()
+  Path 'Unres 'Abs 'Dir PathComponent -> ExceptT MaybeParentCreationFailure IO ()
 createDirectoryWithParentsIfMissing =
   lift . Dir.createDirectoryIfMissing True . toPathRep
 
-removeDirectoryRecursive :: Path 'Abs 'Dir PathComponent -> IO ()
+removeDirectoryRecursive :: Path 'Unres 'Abs 'Dir PathComponent -> IO ()
 removeDirectoryRecursive = Dir.removeDirectoryRecursive . toPathRep
 
-removePathForcibly :: Path 'Abs 'Dir PathComponent -> IO ()
+removePathForcibly :: Path 'Unres 'Abs 'Dir PathComponent -> IO ()
 removePathForcibly = Dir.removePathForcibly . toPathRep
 
 listDirectory ::
   (Ord e) =>
-  Path 'Abs 'Dir PathComponent ->
+  Path 'Unres 'Abs 'Dir PathComponent ->
   ExceptT
     ListFailure
     IO
     ( [InternalFailure PathRep e],
-      ( [Path ('Rel 'False) 'Dir PathComponent],
-        [Path ('Rel 'False) 'File PathComponent]
+      ( [Path 'Unres ('Rel 'False) 'Dir PathComponent],
+        [Path 'Unres ('Rel 'False) 'File PathComponent]
       )
     )
 listDirectory dir =
@@ -447,15 +448,15 @@ listDirectory dir =
 --            which should be only that case)
 getDirectoryContents ::
   (Ord e) =>
-  Path 'Abs 'Dir PathComponent ->
+  Path 'Unres 'Abs 'Dir PathComponent ->
   ExceptT
     ListFailure
     IO
     ( [InternalFailure PathRep e],
       -- FIXME: The first element should be `Rel` `True`, but don’t yet have a
       --        function for that.
-      ( [Path ('Rel 'False) 'Dir PathComponent],
-        [Path ('Rel 'False) 'File PathComponent]
+      ( [Path 'Unres ('Rel 'False) 'Dir PathComponent],
+        [Path 'Unres ('Rel 'False) 'File PathComponent]
       )
     )
 getDirectoryContents dir =
@@ -474,12 +475,12 @@ getDirectoryContents dir =
 --  __TODO__: This should include `GetFailure`.
 getCurrentDirectory ::
   (Ord e) =>
-  ExceptT (InternalFailure PathRep e) IO (Path 'Abs 'Dir PathComponent)
+  ExceptT (InternalFailure PathRep e) IO (Path 'Unres 'Abs 'Dir PathComponent)
 getCurrentDirectory = ExceptT $ absDirFromPathRep <$> Dir.getCurrentDirectory
 
 getHomeDirectory ::
   (Ord e) =>
-  ExceptT (InternalFailure PathRep e) IO (Path 'Abs 'Dir PathComponent)
+  ExceptT (InternalFailure PathRep e) IO (Path 'Unres 'Abs 'Dir PathComponent)
 getHomeDirectory = ExceptT $ absDirFromPathRep <$> Dir.getHomeDirectory
 
 -- __TODO__: Fill in a lot of stuff
@@ -490,16 +491,16 @@ getHomeDirectory = ExceptT $ absDirFromPathRep <$> Dir.getHomeDirectory
 --   function).
 findExecutable ::
   (Ord e) =>
-  Path ('Rel 'True) 'File PathComponent ->
-  ExceptT (InternalFailure PathRep e) IO (Maybe (Path 'Abs 'File PathComponent))
+  Path 'Unres ('Rel 'True) 'File PathComponent ->
+  ExceptT (InternalFailure PathRep e) IO (Maybe (Path 'Unres 'Abs 'File PathComponent))
 findExecutable =
   ExceptT . fmap (traverse absFileFromPathRep) . Dir.findExecutable . toPathRep
 
 findFiles ::
   (Ord e) =>
-  [Path 'Abs 'Dir PathComponent] ->
-  Path ('Rel 'True) 'File PathComponent ->
-  IO [Either (InternalFailure PathRep e) (Path 'Abs 'File PathComponent)]
+  [Path 'Unres 'Abs 'Dir PathComponent] ->
+  Path 'Unres ('Rel 'True) 'File PathComponent ->
+  IO [Either (InternalFailure PathRep e) (Path 'Unres 'Abs 'File PathComponent)]
 findFiles dirs =
   fmap (fmap absFileFromPathRep)
     . Dir.findFiles (toPathRep <$> dirs)
@@ -519,10 +520,10 @@ findFiles dirs =
 findFilesWith ::
   forall e.
   (Ord e, Show e, Typeable e) =>
-  (Path 'Abs 'File PathComponent -> IO Bool) ->
-  [Path 'Abs 'Dir PathComponent] ->
-  Path ('Rel 'True) 'File PathComponent ->
-  ExceptT [InternalFailure PathRep e] IO [Path 'Abs 'File PathComponent]
+  (Path 'Unres 'Abs 'File PathComponent -> IO Bool) ->
+  [Path 'Unres 'Abs 'Dir PathComponent] ->
+  Path 'Unres ('Rel 'True) 'File PathComponent ->
+  ExceptT [InternalFailure PathRep e] IO [Path 'Unres 'Abs 'File PathComponent]
 findFilesWith pred dirs =
   ExceptT
     . fmap
@@ -539,31 +540,31 @@ findFilesWith pred dirs =
     . toPathRep
 
 getPermissions ::
-  (Typey typ) => Path 'Abs typ PathComponent -> IO Dir.Permissions
+  (Typey typ) => Path 'Unres 'Abs typ PathComponent -> IO Dir.Permissions
 getPermissions = Dir.getPermissions . toPathRep
 
 setPermissions ::
-  (Typey typ) => Path 'Abs typ PathComponent -> Dir.Permissions -> IO ()
+  (Typey typ) => Path 'Unres 'Abs typ PathComponent -> Dir.Permissions -> IO ()
 setPermissions = Dir.setPermissions . toPathRep
 
 copyPermissions ::
   (Typey typ, Typey typ') =>
-  Path 'Abs typ PathComponent ->
-  Path 'Abs typ' PathComponent ->
+  Path 'Unres 'Abs typ PathComponent ->
+  Path 'Unres 'Abs typ' PathComponent ->
   IO ()
 copyPermissions from = Dir.copyPermissions (toPathRep from) . toPathRep
 
-getAccessTime :: (Typey typ) => Path 'Abs typ PathComponent -> IO UTCTime
+getAccessTime :: (Typey typ) => Path 'Unres 'Abs typ PathComponent -> IO UTCTime
 getAccessTime = Dir.getAccessTime . toPathRep
 
-getModificationTime :: (Typey typ) => Path 'Abs typ PathComponent -> IO UTCTime
+getModificationTime :: (Typey typ) => Path 'Unres 'Abs typ PathComponent -> IO UTCTime
 getModificationTime = Dir.getModificationTime . toPathRep
 
-setAccessTime :: (Typey typ) => Path 'Abs typ PathComponent -> UTCTime -> IO ()
+setAccessTime :: (Typey typ) => Path 'Unres 'Abs typ PathComponent -> UTCTime -> IO ()
 setAccessTime = Dir.setAccessTime . toPathRep
 
 setModificationTime ::
-  (Typey typ) => Path 'Abs typ PathComponent -> UTCTime -> IO ()
+  (Typey typ) => Path 'Unres 'Abs typ PathComponent -> UTCTime -> IO ()
 setModificationTime = Dir.setModificationTime . toPathRep
 
 -- -- | Checks the filesystem for an object at the provided path and returns it
@@ -579,29 +580,29 @@ type FsOperations :: Type -> Kind.Constraint
 class FsOperations typ where
   canonicalizePath ::
     (Ord e) =>
-    Path 'Abs typ PathComponent ->
-    ExceptT (InternalFailure PathRep e) IO (Path 'Abs typ PathComponent)
+    Path 'Unres 'Abs typ PathComponent ->
+    ExceptT (InternalFailure PathRep e) IO (Path 'Unres 'Abs typ PathComponent)
   createLink ::
     (Relative rel) =>
-    Path rel typ PathComponent ->
-    Path 'Abs typ PathComponent ->
+    Path 'Unres rel typ PathComponent ->
+    Path 'Unres 'Abs typ PathComponent ->
     IO ()
-  doesExist :: Path 'Abs typ PathComponent -> IO Bool
+  doesExist :: Path 'Unres 'Abs typ PathComponent -> IO Bool
   getSymbolicLinkTarget ::
     (Ord e) =>
-    Path 'Abs typ PathComponent ->
+    Path 'Unres 'Abs typ PathComponent ->
     ExceptT
       (InternalFailure PathRep e)
       IO
       ( Either
-          (Path 'Abs typ PathComponent)
-          (Path ('Rel 'False) typ PathComponent)
+          (Path 'Unres 'Abs typ PathComponent)
+          (Path 'Unres ('Rel 'False) typ PathComponent)
       )
-  remove :: Path 'Abs typ PathComponent -> ExceptT DirRemovalFailure IO ()
-  removeLink :: Path 'Abs typ PathComponent -> IO ()
+  remove :: Path 'Unres 'Abs typ PathComponent -> ExceptT DirRemovalFailure IO ()
+  removeLink :: Path 'Unres 'Abs typ PathComponent -> IO ()
   rename ::
-    Path 'Abs typ PathComponent ->
-    Path 'Abs typ PathComponent ->
+    Path 'Unres 'Abs typ PathComponent ->
+    Path 'Unres 'Abs typ PathComponent ->
     ExceptT RenameFailure IO ()
 
 instance FsOperations 'Dir where

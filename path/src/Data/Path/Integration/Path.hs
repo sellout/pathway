@@ -39,6 +39,7 @@ import safe "pathway-internal" Data.Path.Internal
     filename,
     parents,
   )
+import safe "pathway-internal" Data.Path.Internal.Resolution (Resolution (Unres))
 import safe "yaya" Yaya.Fold (Steppable)
 import safe "yaya" Yaya.Pattern (Maybe (Nothing), XNor (Both, Neither))
 import safe "yaya-unsafe" Yaya.Unsafe.Fold (unsafeAna)
@@ -63,7 +64,7 @@ extractDirectories ::
   (Steppable (->) t (XNor FilePath)) => Path.Path rel Path.Dir -> t
 extractDirectories = unsafeAna extractDirectory
 
-instance Pathish (Path.Path Path.Abs Path.Dir) 'Abs 'Dir FilePath where
+instance Pathish (Path.Path Path.Abs Path.Dir) 'Unres 'Abs 'Dir FilePath where
   specializePath path =
     Path
       { parents = (),
@@ -71,7 +72,7 @@ instance Pathish (Path.Path Path.Abs Path.Dir) 'Abs 'Dir FilePath where
         filename = Const ()
       }
 
-instance Pathish (Path.Path Path.Abs Path.File) 'Abs 'File FilePath where
+instance Pathish (Path.Path Path.Abs Path.File) 'Unres 'Abs 'File FilePath where
   specializePath path =
     Path
       { parents = (),
@@ -79,7 +80,7 @@ instance Pathish (Path.Path Path.Abs Path.File) 'Abs 'File FilePath where
         filename = pure . toText $ Path.filename path
       }
 
-instance Pathish (Path.Path Path.Rel Path.Dir) ('Rel 'False) 'Dir FilePath where
+instance Pathish (Path.Path Path.Rel Path.Dir) 'Unres ('Rel 'False) 'Dir FilePath where
   specializePath path =
     Path
       { parents = Proxy,
@@ -87,7 +88,7 @@ instance Pathish (Path.Path Path.Rel Path.Dir) ('Rel 'False) 'Dir FilePath where
         filename = Const ()
       }
 
-instance Pathish (Path.Path Path.Rel Path.File) ('Rel 'False) 'File FilePath where
+instance Pathish (Path.Path Path.Rel Path.File) 'Unres ('Rel 'False) 'File FilePath where
   specializePath path =
     Path
       { parents = Proxy,
@@ -95,7 +96,7 @@ instance Pathish (Path.Path Path.Rel Path.File) ('Rel 'False) 'File FilePath whe
         filename = pure . toText $ Path.filename path
       }
 
-instance Pathish (Path.SomeBase Path.Dir) 'Any 'Dir FilePath where
+instance Pathish (Path.SomeBase Path.Dir) 'Unres 'Any 'Dir FilePath where
   specializePath = \case
     Path.Abs path ->
       Path
@@ -110,7 +111,7 @@ instance Pathish (Path.SomeBase Path.Dir) 'Any 'Dir FilePath where
           filename = Const ()
         }
 
-instance Pathish (Path.SomeBase Path.File) 'Any 'File FilePath where
+instance Pathish (Path.SomeBase Path.File) 'Unres 'Any 'File FilePath where
   specializePath = \case
     Path.Abs path ->
       Path

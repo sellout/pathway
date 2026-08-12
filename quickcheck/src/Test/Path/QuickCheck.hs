@@ -2,7 +2,11 @@
 {-# LANGUAGE Safe #-}
 -- __NB__: Because of the nested `Parents` and `Filename` constraints.
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
+{-# OPTIONS_GHC -Wno-unused-matches #-}
+{-# OPTIONS_GHC -Wno-unused-top-binds #-}
+{-# OPTIONS_GHC -Wno-unused-imports #-}
 
 module Test.Path.QuickCheck
   ( arbitraryNonEmptyText,
@@ -23,6 +27,7 @@ import "pathway-internal" Data.Path.Internal
   )
 import "quickcheck-instances" Test.QuickCheck.Instances.Strict ()
 import "yaya-quickcheck" Yaya.QuickCheck.Fold (arbitrarySteppable)
+import Prelude qualified
 #if !MIN_VERSION_QuickCheck (2, 17, 0)
 import "base" Numeric.Natural (Natural)
 import "yaya" Yaya.Applied (naturals, take)
@@ -39,9 +44,10 @@ arbitraryPath ::
   QC.Gen (Parents rel) ->
   (QC.Gen rep -> QC.Gen (Filename typ rep)) ->
   QC.Gen rep ->
-  QC.Gen (Path rel typ rep)
+  QC.Gen (Path res rel typ rep)
 arbitraryPath rel typ rep =
-  Path <$> rel <*> arbitraryDirectories rep <*> typ rep
+  Prelude.undefined
+  --Path <$> rel <*> arbitraryDirectories rep <*> typ rep
 
 #if !MIN_VERSION_QuickCheck (2, 17, 0)
 instance QC.Arbitrary Natural where
@@ -51,12 +57,12 @@ instance QC.Arbitrary Natural where
 
 instance
   (QC.Arbitrary (Parents rel), QC.Arbitrary1 (Filename typ)) =>
-  QC.Arbitrary1 (Path rel typ)
+  QC.Arbitrary1 (Path res rel typ)
   where
   liftArbitrary = arbitraryPath QC.arbitrary QC.liftArbitrary
 
 instance
-  (QC.Arbitrary1 (Path rel typ), IsString rep) =>
-  QC.Arbitrary (Path rel typ rep)
+  (QC.Arbitrary1 (Path res rel typ), IsString rep) =>
+  QC.Arbitrary (Path res rel typ rep)
   where
   arbitrary = QC.liftArbitrary arbitraryNonEmptyText

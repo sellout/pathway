@@ -17,10 +17,10 @@ import "pathway-internal" Data.Path.Internal
   )
 import "this" Data.Path.Type (Type (Dir, File))
 
-basename :: Path rel 'File rep -> rep
+basename :: Path res rel 'File rep -> rep
 basename = runIdentity . filename
 
-directory :: Path rel 'File rep -> Path rel 'Dir rep
+directory :: Path res rel 'File rep -> Path res rel 'Dir rep
 directory file =
   Path
     { parents = parents file,

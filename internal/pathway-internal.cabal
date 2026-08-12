@@ -196,7 +196,9 @@ library
     yaya ^>= {0.6.2, 0.7.0},
   exposed-modules:
     Data.Path.Internal
+    Data.Path.Internal.List
     Data.Path.Internal.Relativity
+    Data.Path.Internal.Resolution
     Data.Path.Internal.Type
 
 -- NB: This package can’t have any QuickCheck-based doctests, because those

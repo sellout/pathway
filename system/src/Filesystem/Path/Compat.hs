@@ -19,6 +19,7 @@ import "directory" System.Directory qualified as Dir
 import safe "pathway" Data.Path (Path)
 import safe "pathway" Data.Path.Relativity (Relativity (Abs))
 import safe "pathway" Data.Path.Type (Type (Dir))
+import safe "pathway-internal" Data.Path.Internal.Resolution (Resolution (Unres))
 import safe "transformers" Control.Monad.Trans.Class (lift)
 import safe "transformers" Control.Monad.Trans.Except (ExceptT)
 import safe "this" Filesystem.Path qualified as Path
@@ -31,7 +32,7 @@ import safe "this" Filesystem.Path.Internal (PathComponent, toPathRep)
 --
 --  __NB__: Like the underlying `Dir.withCurrentDirectory`, this is _not_ thread-safe.
 withCurrentDirectory ::
-  Path 'Abs 'Dir PathComponent ->
+  Path 'Unres 'Abs 'Dir PathComponent ->
   IO a ->
   ExceptT (Either Path.GetFailure Path.SetFailure) IO a
 withCurrentDirectory newCurDir = lift . Dir.withCurrentDirectory (toPathRep newCurDir)
