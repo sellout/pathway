@@ -140,11 +140,11 @@ openNewBinaryFile dir =
 --   environment set up, but later.
 --
 -- >>> try @SomeException $ Temp.createTempDirectory "/tmp" "/home/me/dir"
--- Left /home/me/dir-...: createDirectory: does not exist (No such file or directory)
+-- Left /home/me/dir...: ...: does not exist (...)
 -- >>> try @SomeException $ Temp.createTempDirectory "/home/me/tmp" "../dir"
--- Left /home/me/tmp/../dir-...: createDirectory: does not exist (No such file or directory)
+-- Left /home/me/tmp.../dir...: ...: does not exist (...)
 -- >>> try @SomeException $ Temp.createTempDirectory "/tmp" "some/dir"
--- Left /tmp/some/dir-...: createDirectory: does not exist (No such file or directory)
+-- Left /tmp...some/dir...: ...: does not exist (...)
 createTempDirectory ::
   (Ord void) =>
   -- | Parent directory to create the directory in
