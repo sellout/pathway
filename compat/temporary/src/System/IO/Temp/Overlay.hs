@@ -2,13 +2,14 @@
 {-# LANGUAGE Safe #-}
 {-# LANGUAGE TypeApplications #-}
 
+#if MIN_VERSION_temporary(1, 2, 1)
 module System.IO.Temp.Overlay
-  ( withSystemTempFile,
-    withSystemTempDirectory,
-    withTempFile,
+  ( withTempFile,
     withTempDirectory,
     openNewBinaryFile,
     createTempDirectory,
+    withSystemTempFile,
+    withSystemTempDirectory,
     writeTempFile,
     writeSystemTempFile,
     emptyTempFile,
@@ -16,9 +17,28 @@ module System.IO.Temp.Overlay
     getCanonicalTemporaryDirectory,
   )
 where
+#elif MIN_VERSION_temporary(1, 1, 1)
+module System.IO.Temp.Overlay
+  ( withTempFile,
+    withTempDirectory,
+    openNewBinaryFile,
+    createTempDirectory,
+    withSystemTempFile,
+    withSystemTempDirectory,
+  )
+where
+#else
+module System.IO.Temp.Overlay
+  ( withTempFile,
+    withTempDirectory,
+    openNewBinaryFile,
+    createTempDirectory,
+  )
+where
+#endif
 
 import safe "base" Control.Applicative (pure)
-import safe "base" Control.Monad ((<=<), (=<<))
+import safe "base" Control.Monad ((<=<))
 import safe "base" Control.Monad.IO.Class (MonadIO)
 import safe "base" Data.Either (either)
 import safe "base" Data.String (String)
@@ -27,6 +47,9 @@ import safe "base" System.IO (Handle, IO)
 import safe "exceptions" Control.Monad.Catch (MonadMask, throwM)
 import safe "pathway" Data.Path (Path, Relativity (Abs), Type (Dir, File))
 import "this" System.IO.Temp.Thin qualified as Thin
+#if MIN_VERSION_temporary(1, 2, 1)
+import safe "base" Control.Monad ((=<<))
+#endif
 
 withTempFile ::
   (MonadIO m, MonadMask m) =>

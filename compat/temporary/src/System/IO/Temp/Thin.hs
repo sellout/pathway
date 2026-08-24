@@ -1,7 +1,8 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE Trustworthy #-}
 
--- |
+-- | A thin wrapper around "System.IO.Temp" that does little more than replace
+--   stringy paths with `Path`.
 --
 --  __NOTE__: There’s a bug in the underlying temporary library
 --            (UnkindPartition/temporary#16) that we avoid here. If the template
@@ -17,13 +18,14 @@
 --            and so Pathway correspondingly escapes the template before passing
 --            it to the underlying operations in temporary, allowing arbitrary
 --            characters to be used in the template.
+#if MIN_VERSION_temporary(1, 2, 1)
 module System.IO.Temp.Thin
-  ( withSystemTempFile,
-    withSystemTempDirectory,
-    withTempFile,
+  ( withTempFile,
     withTempDirectory,
     openNewBinaryFile,
     createTempDirectory,
+    withSystemTempFile,
+    withSystemTempDirectory,
     writeTempFile,
     writeSystemTempFile,
     emptyTempFile,
@@ -31,6 +33,25 @@ module System.IO.Temp.Thin
     getCanonicalTemporaryDirectory,
   )
 where
+#elif MIN_VERSION_temporary(1, 1, 1)
+module System.IO.Temp.Thin
+  ( withTempFile,
+    withTempDirectory,
+    openNewBinaryFile,
+    createTempDirectory,
+    withSystemTempFile,
+    withSystemTempDirectory,
+  )
+where
+#else
+module System.IO.Temp.Thin
+  ( withTempFile,
+    withTempDirectory,
+    openNewBinaryFile,
+    createTempDirectory,
+  )
+where
+#endif
 
 import safe "base" Control.Applicative (liftA2, pure)
 import safe "base" Control.Category ((.))
@@ -38,7 +59,7 @@ import safe "base" Control.Monad.IO.Class (MonadIO)
 import safe "base" Data.Bitraversable (bitraverse)
 import safe "base" Data.Either (Either)
 import safe "base" Data.Function (($))
-import safe "base" Data.Functor (fmap, (<$>))
+import safe "base" Data.Functor (fmap)
 import safe "base" Data.Ord (Ord)
 import safe "base" Data.String (String)
 import safe "base" Data.Traversable (sequenceA, traverse)
@@ -58,6 +79,9 @@ import safe "pathway-compat-base" Common
   )
 import safe "pathway-compat-filepath" Common.FilePath (absDirFromPathRep)
 import "temporary" System.IO.Temp qualified as Temp
+#if MIN_VERSION_temporary(1, 2, 1)
+import safe "base" Data.Functor ((<$>))
+#endif
 
 -- $setup
 -- >>> :seti -XTypeApplications

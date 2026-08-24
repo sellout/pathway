@@ -1,5 +1,7 @@
 {-# LANGUAGE Trustworthy #-}
 {-# OPTIONS_GHC -Wno-dodgy-exports -Wno-unused-imports #-}
+-- Some imports hide identifiers that aren’t defined in some temporary versions.
+{-# OPTIONS_GHC -Wno-dodgy-imports #-}
 {-# OPTIONS_GHC -Wno-missing-import-lists #-}
 
 module System.IO.Temp
