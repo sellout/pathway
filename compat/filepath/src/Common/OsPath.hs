@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE TypeFamilies #-}
 -- __NB__: Because of the nested @`Show` (`MP.Token` rep)@ constraints.
@@ -48,6 +49,7 @@ import safe "base" Data.Functor (fmap, (<$>))
 import safe "base" Data.Monoid (mempty)
 import safe "base" Data.Ord (Ord)
 import safe "base" Data.Proxy (Proxy (Proxy))
+import safe "base" Data.String (String)
 import safe "extra" Data.List.Extra qualified as List
 import "filepath" System.OsPath qualified as O
 import "filepath" System.OsPath.Types (OsChar, OsPath, OsString)
@@ -72,6 +74,23 @@ import safe "pathway" Data.Path.Relativity qualified as Rel (Relativity (Any))
 import safe "pathway-compat-base" Common
   ( InternalFailure (IncorrectResultType, ParseFailure),
   )
+#if !MIN_VERSION_filepath(1, 5, 2)
+import "base" System.IO.Unsafe (unsafePerformIO)
+#endif
+
+-- | Use this to encode strings known to not have surrogate chars (as described
+--   by `O.encodeUtf`).
+--
+--  __WAIT__: `unsafeEncodeUtf` is only added in filepath-1.5.2.0 (GHC 9.10.1),
+--            so we muck it ourselves where we have to. os-string has the same
+--            function, but (prior to filepath-1.5.2.0) filepath and os-string
+--            have different `OsString` types.
+unsafeEncodeUtf :: String -> OsString
+#if MIN_VERSION_filepath(1, 5, 2)
+unsafeEncodeUtf = O.unsafeEncodeUtf
+#else
+unsafeEncodeUtf = unsafePerformIO . O.encodeUtf
+#endif
 
 instance Path.Substible OsString where
   replace i o = O.pack . List.replace (O.unpack i) (O.unpack o) . O.unpack
@@ -84,7 +103,7 @@ localFormat =
     { Format.root = O.pack . pure $ O.pathSeparator,
       Format.current = mempty,
       -- TODO: Make this safe, or eliminate for resolved paths somehow.
-      Format.parent = O.unsafeEncodeUtf "..",
+      Format.parent = unsafeEncodeUtf "..",
       Format.separator = O.pack . pure $ O.pathSeparator,
       Format.substitutions = mempty
     }
