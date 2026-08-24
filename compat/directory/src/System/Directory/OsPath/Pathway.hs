@@ -1,4 +1,6 @@
 {-# LANGUAGE Trustworthy #-}
+-- Some imports hide identifiers that aren’t defined in some directory versions.
+{-# OPTIONS_GHC -Wno-dodgy-imports #-}
 -- This module is intended to provide the full API of the underlying module
 -- across multiple versions of base, so we don’t want an explicit import list
 -- there.
@@ -45,7 +47,7 @@ import "directory" System.Directory.OsPath hiding
     getAppUserDataDirectory,
     getCurrentDirectory,
     getDirectoryContents,
-    -- getExecSearchPath,
+    getExecSearchPath,
     getFileSize,
     getHomeDirectory,
     getModificationTime,

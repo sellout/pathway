@@ -1,5 +1,7 @@
 {-# LANGUAGE Trustworthy #-}
--- This module is intended to provide the full API of the underlying module
+-- Some imports hide identifiers that aren’t defined in some directory versions.
+{-# OPTIONS_GHC -Wno-dodgy-imports #-}
+-- This module is intended to provide the full API of the underlyinag module
 -- across multiple versions of base, so we don’t want an explicit import list
 -- there.
 {-# OPTIONS_GHC -Wno-missing-import-lists #-}
@@ -44,7 +46,7 @@ import "directory" System.Directory hiding
     getAppUserDataDirectory,
     getCurrentDirectory,
     getDirectoryContents,
-    -- getExecSearchPath,
+    getExecSearchPath,
     getFileSize,
     getHomeDirectory,
     getModificationTime,

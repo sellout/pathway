@@ -2,6 +2,7 @@
 {-# LANGUAGE Safe #-}
 {-# LANGUAGE TypeApplications #-}
 
+#if MIN_VERSION_directory(1, 3, 10)
 module System.Directory.Overlay
   ( createDirectory,
     createDirectoryIfMissing,
@@ -20,7 +21,7 @@ module System.Directory.Overlay
     getAppUserDataDirectory,
     getUserDocumentsDirectory,
     getTemporaryDirectory,
-    -- getExecSearchPath,
+    getExecSearchPath,
     removeFile,
     renameFile,
     renamePath,
@@ -54,6 +55,59 @@ module System.Directory.Overlay
     setModificationTime,
   )
 where
+#else
+module System.Directory.Overlay
+  ( createDirectory,
+    createDirectoryIfMissing,
+    removeDirectory,
+    removeDirectoryRecursive,
+    removePathForcibly,
+    renameDirectory,
+    listDirectory,
+    getDirectoryContents,
+    getCurrentDirectory,
+    setCurrentDirectory,
+    withCurrentDirectory,
+    getHomeDirectory,
+    getXdgDirectory,
+    getXdgDirectoryList,
+    getAppUserDataDirectory,
+    getUserDocumentsDirectory,
+    getTemporaryDirectory,
+    removeFile,
+    renameFile,
+    renamePath,
+    copyFile,
+    copyFileWithMetadata,
+    getFileSize,
+    canonicalizePath,
+    makeAbsolute,
+    makeRelativeToCurrentDirectory,
+    doesPathExist,
+    doesFileExist,
+    doesDirectoryExist,
+    findExecutable,
+    findExecutables,
+    findExecutablesInDirectories,
+    findFile,
+    findFiles,
+    findFileWith,
+    findFilesWith,
+    createFileLink,
+    createDirectoryLink,
+    removeDirectoryLink,
+    pathIsSymbolicLink,
+    getSymbolicLinkTarget,
+    getPermissions,
+    setPermissions,
+    copyPermissions,
+    getAccessTime,
+    getModificationTime,
+    setAccessTime,
+    setModificationTime,
+  )
+where
+#endif
 
 import "base" Control.Applicative (Applicative (pure))
 import "base" Control.Category (Category ((.)))
