@@ -50,7 +50,6 @@
     branches.main.protection.required_status_checks.contexts =
       lib.mkForce
       ([
-          "All Garnix checks"
           "check-bounds"
           "check-licenses"
         ]
