@@ -242,7 +242,8 @@ type RenameFailure =
      InvalidArgument,
      InappropriateType,
      PermissionError,
-     HardwareFault
+     HardwareFault,
+     UnsupportedOperation
    ]
 
 recoverRenameFailure :: IOError -> Maybe (V RenameFailure)
@@ -256,6 +257,7 @@ recoverRenameFailure ioe =
         IO.InvalidArgument -> pure . toVariant $ InvalidArgument ioe
         IO.InappropriateType -> pure . toVariant $ InappropriateType ioe
         IO.HardwareFault -> pure . toVariant $ HardwareFault ioe
+        IO.UnsupportedOperation -> pure . toVariant $ UnsupportedOperation ioe
         _ -> empty
 
 type MakeFailure :: Kind.Type -> [Kind.Type]
