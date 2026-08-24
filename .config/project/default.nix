@@ -45,7 +45,6 @@
     branches.main.protection.required_status_checks.contexts =
       lib.mkForce
       ([
-          "All Garnix checks"
           "check-bounds"
           "check-licenses"
         ]
@@ -185,5 +184,8 @@
   };
 
   ## publishing
-  services.github.settings.repository.topics = ["filesystem" "path" "trie"];
+  services.github.settings.repository = {
+    private = false;
+    topics = ["filesystem" "path" "trie"];
+  };
 }

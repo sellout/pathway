@@ -154,11 +154,10 @@ in
           self.lib.defaultGhcVersion
           "9.4.8"
           "9.6.7"
-          "9.10.2"
         ]
         ++ nixpkgs.lib.optionals (system != "i686-linux") [
           "9.8.4" # There are a number of odd dependency compilation fallures
-          "9.12.2" # GHC fails to build on i686-linux
+          "9.12.3" # GHC fails to build on i686-linux
         ];
 
       ## The versions that are older than those supported by Nix that we
@@ -178,7 +177,8 @@ in
 
       ## However, provide packages in the default overlay for _every_
       ## supported version.
-      supportedGhcVersions = self.lib.testedGhcVersions;
+      supportedGhcVersions = system:
+        self.lib.testedGhcVersions system ++ ["9.12.4"];
     };
   }
   // flake-utils.lib.eachSystem supportedSystems
