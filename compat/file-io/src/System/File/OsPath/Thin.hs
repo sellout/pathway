@@ -1,5 +1,7 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE Trustworthy #-}
 
+#if MIN_VERSION_file_io(0, 1, 3)
 module System.File.OsPath.Thin
   ( openFile,
     openBinaryFile,
@@ -25,10 +27,32 @@ module System.File.OsPath.Thin
     absFileFromPathRep,
   )
 where
+#else
+module System.File.OsPath.Thin
+  ( openFile,
+    openBinaryFile,
+    openExistingFile,
+    withFile,
+    withBinaryFile,
+    withFile',
+    withBinaryFile',
+    readFile,
+    readFile',
+    writeFile,
+    writeFile',
+    appendFile,
+    appendFile',
+
+    -- * utils
+    fromPathRep,
+    handleAnchoredPath,
+    absFileFromPathRep,
+  )
+where
+#endif
 
 import safe "base" Control.Applicative (pure)
 import safe "base" Control.Category ((.))
-import safe "base" Data.Bitraversable (bitraverse)
 import safe "base" Data.Bool (Bool (False, True))
 import safe "base" Data.Either (Either (Left), either)
 import safe "base" Data.Function (($))
@@ -54,6 +78,9 @@ import safe "pathway-compat-base" Common
   ( InternalFailure (IncorrectResultType, ParseFailure),
   )
 import safe "pathway-compat-filepath" Common.OsPath (localFormat, toPathRep)
+#if MIN_VERSION_file_io(0, 1, 3)
+import safe "base" Data.Bitraversable (bitraverse)
+#endif
 
 openFile :: Path 'Abs 'File OsString -> IOMode -> IO Handle
 openFile = FIO.openFile . toPathRep
@@ -122,6 +149,7 @@ absFileFromPathRep =
         ReparentedDir path -> badType (Rel True) Dir $ unanchor path
         ReparentedFile path -> badType (Rel True) File $ unanchor path
 
+#if MIN_VERSION_file_io(0, 1, 3)
 openTempFile ::
   (Ord e) =>
   Path 'Abs 'Dir OsString ->
@@ -156,3 +184,4 @@ openBinaryTempFileWithDefaultPermissions ::
 openBinaryTempFileWithDefaultPermissions tmpDir =
   fmap (bitraverse absFileFromPathRep pure)
     . FIO.openBinaryTempFileWithDefaultPermissions (toPathRep tmpDir)
+#endif

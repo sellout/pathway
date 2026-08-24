@@ -2,6 +2,8 @@
 -- NOTE: This allows us to import/export "System.File.OsPath" on versions that
 --       don’t provide anything other than declarations we’ve overridden.
 {-# OPTIONS_GHC -Wno-dodgy-exports -Wno-unused-imports #-}
+-- Some imports hide identifiers that aren’t defined in some temporary versions.
+{-# OPTIONS_GHC -Wno-dodgy-imports #-}
 {-# OPTIONS_GHC -Wno-missing-import-lists #-}
 
 -- |

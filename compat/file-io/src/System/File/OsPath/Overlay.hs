@@ -1,6 +1,10 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE Trustworthy #-}
+#if MIN_VERSION_file_io (0, 1, 3)
 {-# LANGUAGE TypeApplications #-}
+#endif
 
+#if MIN_VERSION_file_io(0, 1, 3)
 module System.File.OsPath.Overlay
   ( openFile,
     openBinaryFile,
@@ -21,15 +25,25 @@ module System.File.OsPath.Overlay
     openBinaryTempFileWithDefaultPermissions,
   )
 where
+#else
+module System.File.OsPath.Overlay
+  ( openFile,
+    openBinaryFile,
+    openExistingFile,
+    withFile,
+    withBinaryFile,
+    withFile',
+    withBinaryFile',
+    readFile,
+    readFile',
+    writeFile,
+    writeFile',
+    appendFile,
+    appendFile',
+  )
+where
+#endif
 
-import "base" Control.Applicative (pure)
-import "base" Control.Exception (throwIO)
-import "base" Control.Monad ((<=<))
-import "base" Data.Either (either)
-import "base" Data.Void (Void)
-import "base" System.IO (Handle, IO)
-import "filepath" System.OsPath.Types (OsString)
-import "pathway" Data.Path (Path, Relativity (Abs), Type (Dir, File))
 import "this" System.File.OsPath.Thin
   ( appendFile,
     appendFile',
@@ -45,6 +59,15 @@ import "this" System.File.OsPath.Thin
     writeFile,
     writeFile',
   )
+#if MIN_VERSION_file_io (0, 1, 3)
+import "base" Control.Applicative (pure)
+import "base" Control.Exception (throwIO)
+import "base" Control.Monad ((<=<))
+import "base" Data.Either (either)
+import "base" Data.Void (Void)
+import "base" System.IO (Handle, IO)
+import "filepath" System.OsPath.Types (OsString)
+import "pathway" Data.Path (Path, Relativity (Abs), Type (Dir, File))
 import "this" System.File.OsPath.Thin qualified as Thin
 
 openTempFile ::
@@ -73,3 +96,4 @@ openBinaryTempFileWithDefaultPermissions ::
   IO (Path 'Abs 'File OsString, Handle)
 openBinaryTempFileWithDefaultPermissions tmpDir =
   either throwIO pure <=< Thin.openBinaryTempFileWithDefaultPermissions @Void tmpDir
+#endif
