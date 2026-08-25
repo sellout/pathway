@@ -199,9 +199,9 @@ library
     pathway ^>= {0.0.1},
     pathway-compat-base ^>= {0.0.1},
     pathway-compat-filepath ^>= {0.0.1},
-    these,
-    time ^>= {1.8.0, 1.9.3, 1.11.1, 1.12.2, 1.13, 1.14, 1.15},
-    variant,
+    these ^>= {1.1.1, 1.2},
+    time ^>= {1.9.3, 1.11.1, 1.12.2, 1.14, 1.15},
+    variant ^>= {1.0},
   exposed-modules:
     System.Directory.Common
     System.Directory.Error
@@ -214,7 +214,7 @@ library
   -- This is a proxy for directory-1.3.8
   if impl(ghc >= 9.6.1)
     build-depends:
-      filepath ^>= {1.4.2, 1.5.0},
+      filepath ^>= {1.4.100, 1.5.2},
       pathway-compat-file-io ^>= {0.0.1},
     exposed-modules:
       -- OsPath operations
@@ -231,7 +231,7 @@ test-suite doctests
     tests
   main-is: doctests.hs
   build-depends:
-    doctest ^>= {0.16.3, 0.18.1, 0.20.1, 0.21.1, 0.22.2, 0.24.2},
+    doctest ^>= {0.16.3, 0.18.1, 0.20.1, 0.21.1, 0.22.2, 0.24.2, 0.25.0},
     pathway-compat-directory,
   -- TODO: The sections below here are necessary because we don’t have control
   --       over the generated `Build_doctests.hs` file. So we have to silence

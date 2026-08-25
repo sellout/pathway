@@ -195,11 +195,11 @@ library
   hs-source-dirs:
     src
   build-depends:
-    exceptions,
+    exceptions ^>= {0.10.4},
     -- Should encapsulate our specific failures higher up.
-    megaparsec ^>= {9.0.1, 9.2.1, 9.5.0, 9.7.0},
+    megaparsec ^>= {9.0.1, 9.2.1, 9.5.0, 9.7.0, 9.8.1},
     pathway ^>= {0.0.1},
-    variant,
+    variant ^>= {1.0},
   exposed-modules:
     Common
     System.Environment.DropIn
@@ -224,7 +224,7 @@ test-suite doctests
     tests
   main-is: doctests.hs
   build-depends:
-    doctest ^>= {0.16.3, 0.18.1, 0.20.1, 0.21.1, 0.22.2, 0.24.2},
+    doctest ^>= {0.16.3, 0.18.1, 0.20.1, 0.21.1, 0.22.2, 0.24.2, 0.25.0},
     pathway-compat-base,
   -- TODO: The sections below here are necessary because we don’t have control
   --       over the generated `Build_doctests.hs` file. So we have to silence
