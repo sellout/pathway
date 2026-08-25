@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE Safe #-}
 {-# LANGUAGE TypeApplications #-}
 -- __NB__: Because of the nested @`Show` (`MP.Token` rep)@ constraints.
@@ -26,30 +27,40 @@
 --   reported to users, and often without enough context. This tries to ensure
 --   that there is at least a full path available (unless the developer makes an
 --   effort to remove it.
+#if MIN_VERSION_base(4, 17, 0)
 module System.Environment.Overlay
   ( executablePath,
     getExecutablePath,
   )
 where
+#else
+module System.Environment.Overlay
+  ( getExecutablePath,
+  )
+where
+#endif
 
 import "base" Control.Applicative (pure)
 import "base" Control.Category ((.))
 import "base" Control.Exception (throwIO)
 import "base" Control.Monad ((=<<))
 import "base" Data.Either (either)
-import "base" Data.Functor ((<$>))
-import "base" Data.Maybe (Maybe)
 import "base" Data.String (String)
-import "base" Data.Traversable (traverse)
 import "base" Data.Void (Void)
 import "base" System.IO (IO)
 import "pathway" Data.Path (Path, Type (File), forgetRelativity)
-import "pathway" Data.Path.Relativity (Relativity (Abs, Any))
+import "pathway" Data.Path.Relativity (Relativity (Any))
 import "this" System.Environment.Thin qualified as Thin
+#if MIN_VERSION_base(4, 17, 0)
+import "base" Data.Functor ((<$>))
+import "base" Data.Maybe (Maybe)
+import "base" Data.Traversable (traverse)
+import "pathway" Data.Path.Relativity (Relativity (Abs))
 
 executablePath :: Maybe (IO (Maybe (Path 'Abs 'File String)))
 executablePath =
   (traverse (either throwIO pure) =<<) <$> Thin.executablePath @Void
+#endif
 
 getExecutablePath :: IO (Path 'Any 'File String)
 getExecutablePath =

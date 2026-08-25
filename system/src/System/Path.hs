@@ -1,5 +1,4 @@
--- #if MIN_VERSION_filepath(1, 4, 100)
--- #if MIN_VERSION_directory(1, 3, 8)
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE Trustworthy #-}
 
 -- | There are various ways to use filesystem operations with Pathway. This is
@@ -28,7 +27,7 @@
 --   One reason for enforcing the absoluteness of paths, is that paths are often
 --   reported to users, and often without enough context. This tries to ensure
 --   that there is at least a full path available (unless the developer makes an
---   effort to remove it.
+--   effort to remove it).
 module System.Path
   ( module System.Directory.Error,
     ParseFailure,
@@ -81,17 +80,19 @@ import safe "pathway-compat-directory" System.Directory.Error
     MetadataFailure,
     RenameFailure,
   )
-import safe "pathway-compat-directory" System.Directory.OsPath.Pathway qualified as O.Path
 import safe "pathway-compat-directory" System.Directory.Pathway qualified as F.Dir
 import safe "pathway-compat-directory" System.Directory.Pathway qualified as F.Path
-import safe "pathway-compat-file-io" System.File.OsPath.Pathway qualified as O.IO
-import safe "pathway-compat-filepath" Common.OsPath qualified as OsPath
 import safe "pathway-compat-filepath" System.FilePath.Pathway qualified as FP
-import safe "pathway-compat-filepath" System.OsPath.Pathway (OsString)
-import safe "pathway-compat-filepath" System.OsPath.Pathway qualified as OP
 import safe "these" Data.These (These)
 import safe "time" Data.Time.Clock (UTCTime)
 import "variant" Data.Variant (V, liftVariant)
+#if MIN_VERSION_GLASGOW_HASKELL(9, 6, 1, 0)
+import safe "pathway-compat-directory" System.Directory.OsPath.Pathway qualified as O.Path
+import safe "pathway-compat-file-io" System.File.OsPath.Pathway qualified as O.IO
+import safe "pathway-compat-filepath" Common.OsPath qualified as OsPath
+import safe "pathway-compat-filepath" System.OsPath.Pathway (OsString)
+import safe "pathway-compat-filepath" System.OsPath.Pathway qualified as OP
+#endif
 
 type ParseFailure :: Kind.Type -> Kind.Type
 type ParseFailure rep = MP.ParseErrorBundle rep Void
@@ -136,7 +137,7 @@ class Rep rep where
     Path 'Abs 'Dir rep ->
     -- |
     --
-    --  __TODO__: This should be @`Unambiguous` ('`Rel` '`False`) `OsString`@ once #18
+    --  __TODO__: This should be @`Unambiguous` ('`Rel` '`False`) rep@ once #18
     --            lands.
     IO
       ( Either
@@ -267,6 +268,7 @@ instance Operations String 'File where
   removeLink = fmap (first liftVariant) . F.Dir.removeFile
   rename old = fmap (first liftVariant) . F.Dir.renameFile old
 
+#if MIN_VERSION_GLASGOW_HASKELL(9, 6, 1, 0)
 instance Rep OsString where
   parseDirectory = MP.parse (Parser.directory OsPath.localFormat) ""
   parsePath = MP.parse (Parser.path OsPath.localFormat) ""
@@ -306,6 +308,7 @@ instance Operations OsString 'File where
   remove = fmap (first liftVariant) . O.Path.removeFile
   removeLink = fmap (first liftVariant) . O.Path.removeFile
   rename old = fmap (first liftVariant) . O.Path.renameFile old
+#endif
 
 -- -- | Checks the filesystem for an object at the provided path and returns it
 -- --   specialized to the correct type. Returns `Nothing` if no such object

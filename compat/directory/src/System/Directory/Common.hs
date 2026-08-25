@@ -1,4 +1,6 @@
 {-# LANGUAGE Trustworthy #-}
+-- This module is inferred @Safe@ in some dependency solutions.
+{-# OPTIONS_GHC -Wno-safe -Wno-trustworthy-safe #-}
 
 -- | This provides an API similar to "System.Directory", but for Pathway types.
 --

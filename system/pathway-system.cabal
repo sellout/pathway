@@ -191,17 +191,19 @@ library
   hs-source-dirs:
     src
   build-depends:
-    directory ^>= {1.3.6},
-    exceptions,
+    exceptions ^>= {0.10.4},
     megaparsec ^>= {9.0.1, 9.2.1, 9.5.0, 9.7.0, 9.8.1},
     pathway ^>= {0.0.1},
     pathway-compat-base ^>= {0.0.1},
     pathway-compat-directory ^>= {0.0.1},
-    pathway-compat-file-io ^>= {0.0.1},
     pathway-compat-filepath ^>= {0.0.1},
     these,
     time ^>= {1.8.0, 1.9.3, 1.11.1, 1.12.2, 1.13, 1.14, 1.15},
-    variant,
+    variant ^>= {1.0},
+  if impl(ghc >= 9.6.1)
+    build-depends:
+      directory ^>= {1.3.6},
+      pathway-compat-file-io ^>= {0.0.1},
   exposed-modules:
     System.Path
     System.Path.Compat

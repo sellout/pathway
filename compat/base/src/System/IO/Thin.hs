@@ -1,5 +1,7 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE Safe #-}
 
+#if MIN_VERSION_base (4, 15, 0)
 module System.IO.Thin
   ( withFile,
     openFile,
@@ -15,6 +17,22 @@ module System.IO.Thin
     openBinaryTempFileWithDefaultPermissions,
   )
 where
+#else
+module System.IO.Thin
+  ( withFile,
+    openFile,
+    readFile,
+    writeFile,
+    appendFile,
+    withBinaryFile,
+    openBinaryFile,
+    openTempFile,
+    openBinaryTempFile,
+    openTempFileWithDefaultPermissions,
+    openBinaryTempFileWithDefaultPermissions,
+  )
+where
+#endif
 
 import "base" Control.Applicative (pure)
 import "base" Control.Category ((.))
@@ -37,8 +55,10 @@ openFile = IO.openFile . toPathRep
 readFile :: Path 'Abs 'File String -> IO String
 readFile = IO.readFile . toPathRep
 
+#if MIN_VERSION_base (4, 15, 0)
 readFile' :: Path 'Abs 'File String -> IO String
 readFile' = IO.readFile' . toPathRep
+#endif
 
 writeFile :: Path 'Abs 'File String -> String -> IO ()
 writeFile = IO.writeFile . toPathRep

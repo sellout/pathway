@@ -5,6 +5,8 @@
 -- Some imports hide identifiers that aren’t defined in some temporary versions.
 {-# OPTIONS_GHC -Wno-dodgy-imports #-}
 {-# OPTIONS_GHC -Wno-missing-import-lists #-}
+-- This module is inferred @Safe@ in some dependency solutions.
+{-# OPTIONS_GHC -Wno-safe -Wno-trustworthy-safe #-}
 
 module System.IO.Temp.Pathway
   ( module System.IO.Pathway,

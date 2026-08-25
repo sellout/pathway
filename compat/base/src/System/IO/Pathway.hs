@@ -1,4 +1,6 @@
 {-# LANGUAGE Safe #-}
+-- Some imports hide identifiers that aren’t defined in some base versions.
+{-# OPTIONS_GHC -Wno-dodgy-imports #-}
 -- This module is intended to provide the full API of the underlying module
 -- across multiple versions of base, so we don’t want an explicit import list
 -- there.

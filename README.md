@@ -16,6 +16,11 @@ See the documentation for the individual packages:
 - [pathway-path](./path/README.md) - integration with the [path](https://hackage.haskell.org/package/path) library
 - [pathway-system](./system/README.md) - integration with the local filesystem (extremely similar to the [directory](https://hackage.haskell.org/package/directory) package, but with changes to take advantage of the type safety provided by Pathway).
 
+### conditional features
+
+- `OsPath` support (and the `pathway-compat-file-io` package) appears if you are using GHC >= 9.6.1, and
+- various operations in `pathway-compat-*` packages appear at the point the appear in the corresponding `*` package.
+
 ## building
 
 Especially if you are unfamiliar with the Haskell ecosystem, there is a Nix build (both with and without a flake). If you are unfamiliar with Nix, [Nix adjacent](...) can help you get things working in the shortest time and least effort possible.

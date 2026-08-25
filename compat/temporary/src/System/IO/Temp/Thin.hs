@@ -1,5 +1,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE Trustworthy #-}
+-- This module is inferred @Safe@ in some dependency solutions.
+{-# OPTIONS_GHC -Wno-safe -Wno-trustworthy-safe #-}
 
 -- | A thin wrapper around "System.IO.Temp" that does little more than replace
 --   stringy paths with `Path`.

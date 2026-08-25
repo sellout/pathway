@@ -195,7 +195,6 @@ library
   hs-source-dirs:
     src
   build-depends:
-    extra,
     filepath ^>= {1.4.2, 1.5.0},
     -- Should encapsulate our specific failures higher up.
     megaparsec ^>= {9.0.1, 9.2.1, 9.5.0, 9.7.0},
@@ -204,15 +203,20 @@ library
     pathway-internal ^>= {0.0.1},
   exposed-modules:
     Common.FilePath
-    Common.OsPath
     System.FilePath
     System.FilePath.Overlay
     System.FilePath.Pathway
     System.FilePath.Thin
-    System.OsPath
-    System.OsPath.Overlay
-    System.OsPath.Pathway
-    System.OsPath.Thin
+  -- This is a proxy for filepath-1.4.100
+  if impl(ghc >= 9.6.1)
+    build-depends:
+      extra ^>= {1.7.7, 1.8.1},
+    exposed-modules:
+      Common.OsPath
+      System.OsPath
+      System.OsPath.Overlay
+      System.OsPath.Pathway
+      System.OsPath.Thin
 
 test-suite doctests
   import: defaults

@@ -39,16 +39,18 @@ where
 
 import "base" Data.Bool (Bool (False))
 import "base" Data.Either (Either)
-import "base" Data.Functor (fmap, (<$>))
-import "base" Data.Maybe (Maybe)
+import "base" Data.Functor ((<$>))
 import "base" Data.Ord (Ord)
 import "base" Data.String (String)
 import "base" System.Environment qualified as Env
 import "base" System.IO (FilePath, IO)
 import "pathway" Data.Path (Path, Relativity (Abs, Rel), Type (File))
-import "this" Common (InternalFailure, absFileFromPathRep, fileFromPathRep)
-
+import "this" Common (InternalFailure, fileFromPathRep)
 #if MIN_VERSION_base(4, 17, 0)
+import "base" Data.Functor (fmap)
+import "base" Data.Maybe (Maybe)
+import "this" Common (absFileFromPathRep)
+
 executablePath ::
   (Ord e) =>
   Maybe

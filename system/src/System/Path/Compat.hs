@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE Trustworthy #-}
 
 -- | Operations that don’t fit with the philosophy of this library, but that
@@ -17,10 +18,12 @@ import safe "pathway-compat-base" System.IO.Error.Pathway (FullError)
 import safe "pathway-compat-directory" System.Directory.Error
   ( SetCurrentDirectoryFailure,
   )
-import safe "pathway-compat-directory" System.Directory.OsPath.Pathway qualified as O
 import safe "pathway-compat-directory" System.Directory.Pathway qualified as F
-import safe "pathway-compat-filepath" System.OsPath.Pathway (OsString)
 import "variant" Data.Variant (V)
+#if MIN_VERSION_GLASGOW_HASKELL(9, 6, 1, 0)
+import safe "pathway-compat-directory" System.Directory.OsPath.Pathway qualified as O
+import safe "pathway-compat-filepath" System.OsPath.Pathway (OsString)
+#endif
 
 type Rep :: Kind.Type -> Kind.Constraint
 class Rep rep where
@@ -39,5 +42,7 @@ class Rep rep where
 instance Rep String where
   withCurrentDirectory = F.withCurrentDirectory
 
+#if MIN_VERSION_GLASGOW_HASKELL(9, 6, 1, 0)
 instance Rep OsString where
   withCurrentDirectory = O.withCurrentDirectory
+#endif
