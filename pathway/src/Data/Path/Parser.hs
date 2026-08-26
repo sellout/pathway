@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE Safe #-}
 
 -- | Various parsers for paths.
@@ -19,8 +18,6 @@ where
 
 import "base" Control.Applicative (pure, (<*), (<*>), (<|>))
 import "base" Control.Category ((.))
-import "base" Data.Bool ((&&))
-import "base" Data.Char (Char, isPrint)
 import "base" Data.Eq ((/=))
 import "base" Data.Foldable (fold, foldr)
 import "base" Data.Function (flip, ($))
@@ -56,9 +53,6 @@ import "this" Data.Path.Format
 import "this" Data.Path.Relativity (Relativity (Any))
 import "this" Data.Path.Type (Type (Dir))
 import "base" Prelude (fromIntegral)
-#if MIN_VERSION_base(4, 17, 0)
-import "base" Data.Type.Equality (type (~))
-#endif
 
 -- $setup
 -- >>> :seti -XOverloadedStrings
@@ -86,6 +80,7 @@ currentDirectory :: (MP.MonadParsec v s p) => Format (MP.Tokens s) -> p ()
 currentDirectory = void . MP.chunk . current
 
 -- |
+--
 -- >>> MP.parse (parents' posix) "" "../"
 -- Right 1
 -- >>> MP.parse (path posix) "" "../"
@@ -93,11 +88,22 @@ currentDirectory = void . MP.chunk . current
 parents' :: (MP.MonadParsec v s p) => Format (MP.Tokens s) -> p Natural
 parents' = fmap (fromIntegral . length) . MP.many . MP.chunk . parent
 
+-- |
+--
+--  __TODO__: This supports redundant path separators, as most filesystems do,
+--            but this should really be part of the format, not the generic
+--            parser. Would help if we had invertible syntax to describe the
+--            reptition easily in the format.
+--
+-- >>> MP.parse (anchor posix) "" ".////"
+-- Right (Just 0)
 anchor :: (MP.MonadParsec v s p) => Format (MP.Tokens s) -> p (Maybe Natural)
 anchor format =
-  Nothing <$ rootDirectory format
-    <|> pure 0 <$ currentDirectory format
-    <|> pure <$> parents' format
+  ( Nothing <$ rootDirectory format
+      <|> pure 0 <$ currentDirectory format
+      <|> pure <$> parents' format
+  )
+    <* MP.many (MP.chunk $ separator format)
 
 escapeChar ::
   (MP.MonadParsec v s p) =>
@@ -107,20 +113,14 @@ escapeChar = \case
   BinF _ direct escaped fn fn' -> fn' <|> direct <$ MP.chunk escaped <|> fn
 
 standardChar ::
-  forall v s p.
-  (MP.MonadParsec v s p, MP.Token s ~ Char) =>
-  Format (MP.Tokens s) -> p (MP.Token s)
+  forall v s p. (MP.MonadParsec v s p) => Format (MP.Tokens s) -> p (MP.Token s)
 standardChar format =
   MP.satisfy
-    ( \c ->
-        MP.tokenToChunk (Proxy :: Proxy s) c /= separator format && isPrint c
-    )
+    ((separator format /=) . MP.tokenToChunk (Proxy :: Proxy s))
     MP.<?> "standard character"
 
 componentChar ::
-  forall v s p.
-  (MP.MonadParsec v s p, MP.Token s ~ Char) =>
-  Format (MP.Tokens s) -> p (MP.Tokens s)
+  forall v s p. (MP.MonadParsec v s p) => Format (MP.Tokens s) -> p (MP.Tokens s)
 componentChar format =
   cata escapeChar (substitutions format)
     <|> MP.tokenToChunk (Proxy :: Proxy s) <$> standardChar format
@@ -133,7 +133,7 @@ componentChar format =
 -- >>> MP.parse (path posix) "" "env"
 -- Right (Path {parents = Just 0, directories = List (embed Neither), filename = Just "env"})
 component ::
-  (MP.MonadParsec v s p, MP.Token s ~ Char, Monoid (MP.Tokens s)) =>
+  (MP.MonadParsec v s p, Monoid (MP.Tokens s)) =>
   Format (MP.Tokens s) -> p (MP.Tokens s)
 component = fmap fold . MP.some . componentChar
 
@@ -144,10 +144,18 @@ component = fmap fold . MP.some . componentChar
 --
 -- >>> MP.parse (path posix) "" "bin/"
 -- Right (Path {parents = Just 0, directories = List (embed (Both "bin" (embed Neither))), filename = Nothing})
+--
+--  __TODO__: This supports redundant path separators, as most filesystems do,
+--            but this should really be part of the format, not the generic
+--            parser. Would help if we had invertible syntax to describe the
+--            reptition easily in the format.
+--
+-- >>> MP.parse (path posix) "" "bin/////"
+-- Right (Path {parents = Just 0, directories = List (embed (Both "bin" (embed Neither))), filename = Nothing})
 directoryName ::
-  (MP.MonadParsec v s p, MP.Token s ~ Char, Monoid (MP.Tokens s)) =>
+  (MP.MonadParsec v s p, Monoid (MP.Tokens s)) =>
   Format (MP.Tokens s) -> p (MP.Tokens s)
-directoryName format = component format <* MP.chunk (separator format)
+directoryName format = component format <* MP.some (MP.chunk $ separator format)
 
 -- |
 --
@@ -161,12 +169,12 @@ directoryName format = component format <* MP.chunk (separator format)
 --            a directory, even without a trailing slash – also, how portable is
 --            this?).
 directories' ::
-  (MP.MonadParsec v s p, MP.Token s ~ Char, Monoid (MP.Tokens s)) =>
+  (MP.MonadParsec v s p, Monoid (MP.Tokens s)) =>
   Format (MP.Tokens s) -> p (Mu (XNor (MP.Tokens s)))
 directories' = fmap unsafeReverse . MP.many . MP.try . directoryName
 
 protoPath ::
-  (MP.MonadParsec v s p, MP.Token s ~ Char, Monoid (MP.Tokens s)) =>
+  (MP.MonadParsec v s p, Monoid (MP.Tokens s)) =>
   Format (MP.Tokens s) ->
   p (Maybe Natural, Mu (XNor (MP.Tokens s)), Maybe (MP.Tokens s))
 protoPath format =
@@ -184,7 +192,7 @@ protoPath format =
 -- >>> MP.parse (path posix) "" "../../../b/f/g/"
 -- Right (Path {parents = Just 3, directories = List (embed (Both "g" (embed (Both "f" (embed (Both "b" (embed Neither))))))), filename = Nothing})
 path ::
-  (MP.MonadParsec v s p, MP.Token s ~ Char, Monoid (MP.Tokens s)) =>
+  (MP.MonadParsec v s p, Monoid (MP.Tokens s)) =>
   Format (MP.Tokens s) -> p (AnyPath (MP.Tokens s))
 path =
   fmap
@@ -197,7 +205,7 @@ path =
 --   parsing. E.g., this will parse as a directory even without a trailing
 --   separator on the final component.
 directory ::
-  (MP.MonadParsec v s p, MP.Token s ~ Char, Monoid (MP.Tokens s)) =>
+  (MP.MonadParsec v s p, Monoid (MP.Tokens s)) =>
   Format (MP.Tokens s) -> p (Path 'Any 'Dir (MP.Tokens s))
 directory =
   fmap

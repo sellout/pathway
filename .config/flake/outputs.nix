@@ -26,14 +26,37 @@
 
   supportedSystems = import systems;
 
-  cabalPackages = pkgs: hpkgs:
-    flaky-haskell.lib.cabalProject2nix
-    ../../cabal.project
-    pkgs
-    hpkgs
-    (old: {
-      configureFlags = old.configureFlags ++ ["--ghc-options=-Werror"];
-    });
+  ## This duplicates various bits of cabal.project. See flaky-haskell#44.
+  cabalPackages = pkgs: hpkgs: let
+    allPackages =
+      flaky-haskell.lib.cabalProject2nix
+      ../../cabal.project
+      pkgs
+      hpkgs
+      (old: {
+        configureFlags = old.configureFlags ++ ["--ghc-options=-Werror"];
+      });
+  in {
+    inherit
+      (allPackages)
+      pathway
+      pathway-compat-base
+      pathway-compat-directory
+      pathway-compat-filepath
+      pathway-compat-temporary
+      pathway-internal
+      pathway-path
+      pathway-quickcheck
+      pathway-system
+      ;
+    pathway-compat-file-io =
+      if pkgs.lib.versionAtLeast hpkgs.ghc.version "9.6.1"
+      then allPackages.pathway-compat-file-io
+      ## TODO: This shouldn’t be the _wrong_ derivation, but rather _no_
+      ##       derivation. However, my attempts have all run into infinite
+      ##       recursion.
+      else hpkgs.ghc-compat-plugin;
+  };
 in
   {
     schemas = {

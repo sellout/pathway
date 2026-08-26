@@ -13,11 +13,13 @@
 {-# OPTIONS_GHC -fplugin-opt=NoRecursion:ignore-methods:sconcat #-}
 
 module Data.Path.Internal
-  ( List (List),
+  ( TotalOps,
+    List (List),
     Parents,
     Filename,
     Path (..),
     current,
+    weaken,
     (</>),
   )
 where

@@ -76,3 +76,25 @@ then in the breaking change, you remove `Foo.MyAPI`, rename `Foo.MyAPI'` to `Foo
 If there are no conflicts in the changes, simply adding and removing, then there is no need for the third (future) PR. The initial two PRs will suffice.
 
 See [the README](./README.md#versioning) for more specific information on what kind of changes are considered “breaking”.
+
+## module patterns
+
+In the `pathway-compat-*` packages, there are a number of module “groups” that look like
+
+```mermaid
+graph BT
+  pathway(.Pathway) --> caught(.Caught) --> thin(.Thin)
+  dropin(.DropIn) --> overlay(.Overlay) --> thin
+  pathway --> upstream()
+  dropin --> upstream
+```
+
+All of the modules (except the upstream one) use Pathway `Path` in place of `FilePath` or `OsPath`.
+
+- `.Thin` is the simplest wrapper to do that, which means some operations end up returning more complex results (due to path parsing issues, etc.)
+- `.Overlay` throws as necessary to bring the types back in line with the upstream module (modulo the `Path` types)
+- “dropin” overlays `.Overlay` on the upstream module to provide a drop-in replacement for the upstream module
+- `.Caught` goes the opposite direction of `.Overlay` – reifying raised `IOException`s into variants we can handle, filtered by the cases known to be triggered by each operation.
+- `.Pathway` is like “dropin”, but it overlays `.Caught` on the upstream module
+
+“dropin” is useful for minimizing code changes to adopt Pathway, while `.Pathway` is the safer way to do things (but if you are going to use `.Pathway` from the `pathway-compat-*` packages, then you are probably better off using `pathway-system` instead.`
