@@ -10,7 +10,7 @@ Bold-faced **`package-name`**s denote standard libraries bundled with `ghc-9.10.
 | --- | --- | --- | --- | --- |
 | **`base`** | [`4.20.0.0`](http://hackage.haskell.org/package/base-4.20.0.0) | [`BSD-3-Clause`](http://hackage.haskell.org/package/base-4.20.0.0/src/LICENSE) | Core data structures and operations | *(core library)* |
 | **`exceptions`** | [`0.10.7`](http://hackage.haskell.org/package/exceptions-0.10.7) | [`BSD-3-Clause`](http://hackage.haskell.org/package/exceptions-0.10.7/src/LICENSE) | Extensible optionally-pure exceptions | `filepath`, `free`, `ghc`, `kan-extensions`, `lens`, `os-string`, `semaphore-compat`, `variant` |
-| `megaparsec` | [`9.8.1`](http://hackage.haskell.org/package/megaparsec-9.8.1) | [`BSD-2-Clause`](http://hackage.haskell.org/package/megaparsec-9.8.1/src/LICENSE.md) | Monadic parser combinators | `pathway` |
+| `megaparsec` | [`9.8.2`](http://hackage.haskell.org/package/megaparsec-9.8.2) | [`BSD-2-Clause`](http://hackage.haskell.org/package/megaparsec-9.8.2/src/LICENSE.md) | Monadic parser combinators | `pathway` |
 | `no-recursion` | [`0.4.0.1`](http://hackage.haskell.org/package/no-recursion-0.4.0.1) | [`(AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-proprietary)`](http://hackage.haskell.org/package/no-recursion-0.4.0.1/src/LICENSE) | A GHC plugin to remove support for recursion | `pathway`, `pathway-internal` |
 | `pathway` | [`0.0.1.0`](http://hackage.haskell.org/package/pathway-0.0.1.0) |  *MISSING* | *MISSING* |  |
 | `variant` | [`1.0.3`](http://hackage.haskell.org/package/variant-1.0.3) | [`BSD-3-Clause`](http://hackage.haskell.org/package/variant-1.0.3/src/LICENSE) | Variant and EADT |  |
