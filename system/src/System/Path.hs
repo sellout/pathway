@@ -413,7 +413,7 @@ instance Operations String 'Dir where
   doesExist = F.Path.doesDirectoryExist
   remove = F.Dir.removeDirectory
   removeLink = F.Dir.removeDirectoryLink
-  rename old = F.Dir.renameDirectory old
+  rename = F.Dir.renameDirectory
 
 -- | @since 99999
 instance Operations String 'File where

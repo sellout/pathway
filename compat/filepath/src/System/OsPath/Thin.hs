@@ -201,7 +201,7 @@ takeFileName = basename
 -- @since 99999
 replaceFileName ::
   Path rel 'File OsString -> OsString -> Path rel 'File OsString
-replaceFileName path newName = selectFile (directory path) newName
+replaceFileName path = selectFile (directory path)
 
 -- | Drop the filename, returning the directory.
 --
@@ -240,7 +240,7 @@ replaceDirectory path newDir = selectFile newDir (basename path)
 
 -- | Replace the filename in a file path (internal helper).
 replaceBasename :: Path rel 'File OsString -> OsString -> Path rel 'File OsString
-replaceBasename path newName = selectFile (directory path) newName
+replaceBasename path = selectFile (directory path)
 
 -- * Type-level path queries
 

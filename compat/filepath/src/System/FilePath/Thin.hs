@@ -229,7 +229,7 @@ takeFileName = basename
 -- @since 99999
 replaceFileName ::
   Path rel 'File String -> String -> Path rel 'File String
-replaceFileName path newName = selectFile (directory path) newName
+replaceFileName path = selectFile (directory path)
 
 -- | Drop the filename, returning the directory.
 --
@@ -302,7 +302,7 @@ splitDirectories = FP.splitDirectories . toPathRep
 
 -- | Replace the filename in a file path (internal helper).
 replaceBasename :: Path rel 'File String -> String -> Path rel 'File String
-replaceBasename path newName = selectFile (directory path) newName
+replaceBasename path = selectFile (directory path)
 
 -- * Type-level path queries
 

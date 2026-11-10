@@ -520,7 +520,7 @@ copyPermissions ::
   Path 'Abs typ OsString ->
   Path 'Abs typ' OsString ->
   IO ()
-copyPermissions from = Dir.copyPermissions from
+copyPermissions = Dir.copyPermissions
 
 -- | `System.Directory.OsPath.getAccessTime`, on `Path`s, with the
 --   `IOException`s it’s known to raise returned as variants instead.
