@@ -68,6 +68,7 @@ import "base" Prelude (fromIntegral)
 unsafeReverse ::
   (Projectable (->) t (XNor a), Steppable (->) u (XNor a)) => t -> u
 unsafeReverse = embed . flip (unsafeCata reverse') Neither
+{-# INLINEABLE unsafeReverse #-}
 
 -- |
 -- >>> MP.parse (rootDirectory posix) "" "/"
@@ -76,6 +77,7 @@ unsafeReverse = embed . flip (unsafeCata reverse') Neither
 -- Right (Path {parents = Nothing, directories = List (embed Neither), filename = Nothing})
 rootDirectory :: (MP.MonadParsec v s p) => Format (MP.Tokens s) -> p ()
 rootDirectory = void . MP.chunk . root
+{-# INLINEABLE rootDirectory #-}
 
 -- |
 -- >>> MP.parse (currentDirectory posix) "" "./"
@@ -84,6 +86,7 @@ rootDirectory = void . MP.chunk . root
 -- Right (Path {parents = Just 0, directories = List (embed Neither), filename = Nothing})
 currentDirectory :: (MP.MonadParsec v s p) => Format (MP.Tokens s) -> p ()
 currentDirectory = void . MP.chunk . current
+{-# INLINEABLE currentDirectory #-}
 
 -- |
 --
@@ -93,6 +96,7 @@ currentDirectory = void . MP.chunk . current
 -- Right (Path {parents = Just 1, directories = List (embed Neither), filename = Nothing})
 parents' :: (MP.MonadParsec v s p) => Format (MP.Tokens s) -> p Natural
 parents' = fmap (fromIntegral . length) . MP.many . MP.chunk . parent
+{-# INLINEABLE parents' #-}
 
 -- |
 --
@@ -110,6 +114,7 @@ anchor format =
       <|> pure <$> parents' format
   )
     <* MP.many (MP.chunk $ separator format)
+{-# INLINEABLE anchor #-}
 
 escapeChar ::
   (MP.MonadParsec v s p) =>
@@ -117,6 +122,7 @@ escapeChar ::
 escapeChar = \case
   TipF -> MP.unexpected $ MP.Label ('e' :| "scape character")
   BinF _ direct escaped fn fn' -> fn' <|> direct <$ MP.chunk escaped <|> fn
+{-# INLINEABLE escapeChar #-}
 
 standardChar ::
   forall v s p. (MP.MonadParsec v s p) => Format (MP.Tokens s) -> p (MP.Token s)
@@ -124,12 +130,14 @@ standardChar format =
   MP.satisfy
     ((separator format /=) . MP.tokenToChunk (Proxy :: Proxy s))
     MP.<?> "standard character"
+{-# INLINEABLE standardChar #-}
 
 componentChar ::
   forall v s p. (MP.MonadParsec v s p) => Format (MP.Tokens s) -> p (MP.Tokens s)
 componentChar format =
   cata escapeChar (substitutions format)
     <|> MP.tokenToChunk (Proxy :: Proxy s) <$> standardChar format
+{-# INLINEABLE componentChar #-}
 
 -- |
 --
@@ -142,6 +150,7 @@ component ::
   (MP.MonadParsec v s p, Monoid (MP.Tokens s)) =>
   Format (MP.Tokens s) -> p (MP.Tokens s)
 component = fmap fold . MP.some . componentChar
+{-# INLINEABLE component #-}
 
 -- |
 --
@@ -162,6 +171,7 @@ directoryName ::
   (MP.MonadParsec v s p, Monoid (MP.Tokens s)) =>
   Format (MP.Tokens s) -> p (MP.Tokens s)
 directoryName format = component format <* MP.some (MP.chunk $ separator format)
+{-# INLINEABLE directoryName #-}
 
 -- |
 --
@@ -178,6 +188,7 @@ directories' ::
   (MP.MonadParsec v s p, Monoid (MP.Tokens s)) =>
   Format (MP.Tokens s) -> p (Mu (XNor (MP.Tokens s)))
 directories' = fmap unsafeReverse . MP.many . MP.try . directoryName
+{-# INLINEABLE directories' #-}
 
 protoPath ::
   (MP.MonadParsec v s p, Monoid (MP.Tokens s)) =>
@@ -188,6 +199,7 @@ protoPath format =
     <$> anchor format
     <*> directories' format
     <*> MP.option Nothing (pure <$> component format)
+{-# INLINEABLE protoPath #-}
 
 -- | This will parse a path without a trailing separator as a file and one with
 --   a trailing separator as a directory. See `directory` for when you know you
@@ -208,6 +220,7 @@ path =
         Path {parents, directories = List dir, filename}
     )
     . protoPath
+{-# INLINEABLE path #-}
 
 -- | Knowing that we’re parsing a directory, this can be a bit more lax in
 --   parsing. E.g., this will parse as a directory even without a trailing
@@ -227,6 +240,7 @@ directory =
           }
     )
     . protoPath
+{-# INLINEABLE directory #-}
 
 -- -- | When we need lax parsing, but don’t know at the time of parsing whether we
 -- --   have a file or directory, this parses to the more flexible

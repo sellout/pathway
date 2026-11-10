@@ -120,6 +120,7 @@ openTempFile ::
   IO (Either (InternalFailure FilePath void) (Path 'Abs 'File String, Handle))
 openTempFile tmpDir =
   fmap (bitraverse absFileFromPathRep pure) . IO.openTempFile (toPathRep tmpDir)
+{-# INLINEABLE openTempFile #-}
 
 -- | `System.IO.openBinaryTempFile`, on `Path`s.
 --
@@ -141,6 +142,7 @@ openBinaryTempFile ::
 openBinaryTempFile tmpDir =
   fmap (bitraverse absFileFromPathRep pure)
     . IO.openBinaryTempFile (toPathRep tmpDir)
+{-# INLINEABLE openBinaryTempFile #-}
 
 -- | `System.IO.openTempFileWithDefaultPermissions`, on `Path`s.
 --
@@ -156,6 +158,7 @@ openTempFileWithDefaultPermissions ::
 openTempFileWithDefaultPermissions tmpDir =
   fmap (bitraverse absFileFromPathRep pure)
     . IO.openTempFileWithDefaultPermissions (toPathRep tmpDir)
+{-# INLINEABLE openTempFileWithDefaultPermissions #-}
 
 -- | `System.IO.openBinaryTempFileWithDefaultPermissions`, on `Path`s.
 --
@@ -171,3 +174,4 @@ openBinaryTempFileWithDefaultPermissions ::
 openBinaryTempFileWithDefaultPermissions tmpDir =
   fmap (bitraverse absFileFromPathRep pure)
     . IO.openBinaryTempFileWithDefaultPermissions (toPathRep tmpDir)
+{-# INLINEABLE openBinaryTempFileWithDefaultPermissions #-}

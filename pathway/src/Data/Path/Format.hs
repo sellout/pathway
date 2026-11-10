@@ -74,6 +74,7 @@ posix =
       separator = "/",
       substitutions = Map.fromList [("/", "\\/")]
     }
+{-# INLINEABLE posix #-}
 
 -- | Windows paths, like @C:\\Windows\\System32\\@, given the drive (if any)
 --   that absolute paths are on.
@@ -89,6 +90,7 @@ windows device =
       -- __FIXME__: I don’t think this is right.
       substitutions = Map.fromList [("\\\\", "\\\\\\\\")]
     }
+{-# INLINEABLE windows #-}
 
 -- | Represents one of the other formats, depending on what system you’re on.
 --   This is a useful format for reading user-provided paths, and displaying

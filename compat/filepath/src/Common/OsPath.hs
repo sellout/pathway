@@ -145,6 +145,7 @@ fromPathRepDir ::
   Either (MP.ParseErrorBundle OsPath e) (Anchored OsString)
 fromPathRepDir =
   fmap (anchor . forgetType) . MP.parse (Parser.directory localFormat) ""
+{-# INLINEABLE fromPathRepDir #-}
 
 -- | Parse a directory path from the underlying library, and pass it to a
 --   handler that checks it has the expected type.
@@ -174,6 +175,7 @@ absDirFromPathRep =
         RelFile path -> badType (Rel False) File $ unanchor path
         ReparentedDir path -> badType (Rel True) Dir $ unanchor path
         ReparentedFile path -> badType (Rel True) File $ unanchor path
+{-# INLINEABLE absDirFromPathRep #-}
 
 -- | Parse a directory path of any `Relativity` from the underlying library,
 --   failing with `IncorrectResultType` if it’s a file.
@@ -192,3 +194,4 @@ anyDirFromPathRep =
         RelFile path -> badType (Rel False) File $ unanchor path
         ReparentedDir path -> pure $ forgetRelativity path
         ReparentedFile path -> badType (Rel True) File $ unanchor path
+{-# INLINEABLE anyDirFromPathRep #-}
