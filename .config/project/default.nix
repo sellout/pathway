@@ -5,7 +5,9 @@
   lib,
   self,
   ...
-}: {
+}: let
+  runners = config.services.github.runners.latest;
+in {
   project = {
     name = "pathway";
     summary = "Type-safe system-independent file path library";
@@ -109,9 +111,9 @@
               if
                 ## GHC doesn’t support ARM before GHC 9.2.
                 lib.versionOlder ghc "9.2"
-                && builtins.elem sys ["macos-15" "ubuntu-24.04-arm"]
+                && builtins.elem sys [runners.linux-arm64 runners.macos-arm64]
                 ## GHC 9.2.1 relied on libnuma at runtime for aarch64
-                || ghc == "9.2.1" && sys == "ubuntu-24.04-arm"
+                || ghc == "9.2.1" && sys == runners.linux-arm64
               then []
               else [
                 "build (${ghc}, ${sys})"
@@ -150,31 +152,31 @@
         ##       E.g., doctest 0.16.3 vs 0.24.3.
         {
           ghc = "8.10.1";
-          os = "macos-15-intel";
+          os = runners.macos-intel;
         }
         ## TODO:  “Failed to build pathway-quickcheck-0.0.1.0. […] terminated with exit code 11”
         {
           ghc = "8.10.1";
-          os = "windows-2025";
+          os = runners.windows-x64;
         }
         ## TODO: “Failed to build clock-0.7.1. […] 'ffitarget_arm64.h' file not found”
         ##       I wonder if this could have the same cause as the Ubuntu one
         ##       below – an issue with NUMA on ARM around this version.
         {
           ghc = "9.2.1";
-          os = "macos-15";
+          os = runners.macos-arm64;
         }
         ## TODO:  “/usr/bin/ld: cannot find -lnuma: No such file or directory”
         {
           ghc = "9.2.1";
-          os = "ubuntu-24.04-arm";
+          os = runners.linux-arm64;
         }
         ## TODO: “Failed to build ghc-paths-0.1.0.12. […] segfaulted”
         ##       I wonder if this could have the same cause as the Ubuntu one
         ##       above – an issue with NUMA on ARM around this version.
         {
           ghc = "9.4.1";
-          os = "macos-15";
+          os = runners.macos-arm64;
         }
       ]
       ## TODO: “Failed to build Cabal-syntax-3.14.2.0.”
@@ -182,12 +184,12 @@
         inherit os;
         bounds = "";
         ghc = "9.4.1";
-      }) ["macos-15-intel" "ubuntu-24.04" "ubuntu-24.04-arm"]
+      }) [runners.linux-arm64 runners.linux-x64 runners.macos-intel]
       ++ [
         ## TODO: “Failed to build Cabal-syntax-3.16.1.0”
         {
           ghc = "9.4.1";
-          os = "windows-2025";
+          os = runners.windows-x64;
         }
       ];
     ## These just try to build with a newer GHC from the same major version.
@@ -198,33 +200,33 @@
       map (bounds: {
         inherit bounds;
         ghc = "8.10.7";
-        os = "macos-15-intel";
+        os = runners.macos-intel;
       }) ["--prefer-oldest" ""]
       ++ map (bounds: {
         inherit bounds;
         ghc = "8.10.7";
-        os = "windows-2025";
+        os = runners.windows-x64;
       }) ["--prefer-oldest" ""]
       ++ lib.concatMap (ghc:
         map (bounds: {
           inherit bounds ghc;
-          os = "macos-15";
+          os = runners.macos-arm64;
         }) ["--prefer-oldest" ""]) ["9.2.8" "9.4.8"]
       ++ map (bounds: {
         inherit bounds;
         ghc = "9.2.8";
-        os = "ubuntu-24.04-arm";
+        os = runners.linux-arm64;
       }) ["--prefer-oldest" ""]
       ++ map (bounds: {
         inherit bounds;
         ghc = "9.4.8";
-        os = "windows-2025";
+        os = runners.windows-x64;
       }) ["--prefer-oldest" ""]
       ++ map (os: {
         inherit os;
         bounds = "";
         ghc = "9.4.8";
-      }) ["macos-15-intel" "ubuntu-24.04" "ubuntu-24.04-arm"];
+      }) [runners.linux-arm64 runners.linux-x64 runners.macos-intel];
     ## These are versions that we don’t build against, but that we want the
     ## Haskell packages to support anyway. Mostly, this is for local packages
     ## where `--perfer-oldest` and `--allow-newer` have no effect, so reasonable
