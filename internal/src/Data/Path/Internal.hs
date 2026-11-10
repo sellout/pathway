@@ -12,6 +12,11 @@
 {-# OPTIONS_GHC -Wno-safe -Wno-trustworthy-safe #-}
 {-# OPTIONS_GHC -fplugin-opt=NoRecursion:ignore-methods:sconcat #-}
 
+-- |
+-- Copyright: 2024 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-proprietary
+--
+-- @since 99999
 module Data.Path.Internal
   ( TotalOps,
     List (List),
@@ -65,7 +70,9 @@ import "this" Data.Path.Internal.Type qualified as Type (Type (Any))
 import safe "base" Prelude ((+))
 
 -- | The `Parents` closed type family maps `Relativity` to types that encode the
---  number of leading @../@ in the path.
+--   number of leading @../@ in the path.
+--
+-- @since 99999
 type Parents :: Relativity -> Kind.Type
 type family Parents rel = result | result -> rel where
   Parents 'Abs = ()
@@ -73,6 +80,12 @@ type family Parents rel = result | result -> rel where
   Parents ('Rel 'True) = Natural
   Parents 'Any = Maybe Natural
 
+-- | The `Filename` closed type family maps `Type` to the functor that holds the
+--   final component of the path: a directory has none (`Const` @()@), a file
+--   has exactly one (`Identity`), and a path whose `Type` is only known at
+--   runtime may have either (`Maybe`).
+--
+-- @since 99999
 type Filename :: Type -> Kind.Type -> Kind.Type
 type family Filename typ = result | result -> typ where
   Filename 'Dir = Const ()
@@ -82,35 +95,63 @@ type family Filename typ = result | result -> typ where
 -- | A strict sequence.
 --
 --  __TODO__: Move this upstream to Yaya.
+--
+-- @since 99999
 type List :: Kind.Type -> Kind.Type
-newtype List a = List (Mu (XNor a))
-  deriving stock (Eq, Generic, Ord, Read, Show)
+newtype List a
+  = -- |
+    --
+    -- @since 99999
+    List (Mu (XNor a))
+  deriving stock
+    ( -- | @since 99999
+      Eq,
+      -- | @since 99999
+      Generic,
+      -- | @since 99999
+      Ord,
+      -- | @since 99999
+      Read,
+      -- | @since 99999
+      Show
+    )
 
+type role List representational
+
+-- | @since 99999
 instance Projectable (->) (List a) (XNor a) where
   project (List mu) = List <$> project mu
 
+-- | @since 99999
 instance Recursive (->) (List a) (XNor a) where
   cata φ (List mu) = cata φ mu
 
+-- | @since 99999
 instance Steppable (->) (List a) (XNor a) where
   embed = List . embed . fmap (\(List mu) -> mu)
 
+-- | @since 99999
 instance Semigroup (List a) where
   List mu <> List mu' = List $ mu <> mu'
   stimes = stimesMonoid
 
+-- | @since 99999
 instance Monoid (List a) where
   mempty = List mempty
 
+-- | @since 99999
 instance Foldable List where
   foldr f z (List mu) = cata (xnor z f) mu
 
+-- | @since 99999
 instance Functor List where
   fmap f (List mu) = List (firstMap f mu)
 
+-- | @since 99999
 instance Bifoldable XNor where
   bifoldr f g z = xnor z \a -> f a . (`g` z)
 
+-- | @since 99999
 instance Bitraversable XNor where
   bitraverse f g = xnor (pure Neither) \a -> liftA2 Both (f a) . g
 
@@ -129,6 +170,7 @@ firstTraverse ::
   (a -> f c) -> d (b a) -> f u
 firstTraverse f = cata @_ @_ @(b (f c)) (fmap embed . bisequenceA) . firstMap f
 
+-- | @since 99999
 instance Traversable List where
   traverse f (List mu) = List <$> firstTraverse f mu
 
@@ -163,38 +205,76 @@ instance Traversable List where
 --   these paths are ambiguous in any way – it‘s only a matter of which
 --   information is visible at the type level. E.g., `AnyPath` can be inspected
 --   to determine if it’s absolute or relative, file or directory.
+--
+-- @since 99999
 type Path :: Relativity -> Type -> Kind.Type -> Kind.Type
-data Path rel typ rep = Path
-  { parents :: Parents rel,
-    directories :: List rep,
-    filename :: Filename typ rep
-  }
-  deriving stock (Generic)
-  deriving stock (Generic1)
+data Path rel typ rep
+  = -- |
+    --
+    -- @since 99999
+    Path
+    { -- | The leading @../@ components, as encoded by `Parents`.
+      --
+      -- @since 99999
+      parents :: Parents rel,
+      -- | The directory components, innermost first.
+      --
+      -- @since 99999
+      directories :: List rep,
+      -- | The final component, as encoded by `Filename`.
+      --
+      -- @since 99999
+      filename :: Filename typ rep
+    }
+  deriving stock
+    ( -- | @since 99999
+      Generic
+    )
+  deriving stock
+    ( -- | @since 99999
+      Generic1
+    )
 
+type role Path nominal nominal nominal
+
+-- | @since 99999
 deriving stock instance
   (Eq (Parents rel), Eq (Filename typ rep), Eq rep) => Eq (Path rel typ rep)
 
+-- | @since 99999
 deriving stock instance
   (Ord (Parents rel), Ord (Filename typ rep), Ord rep) => Ord (Path rel typ rep)
 
+-- | @since 99999
 deriving stock instance
   (Read (Parents rel), Read (Filename typ rep), Read rep) =>
   Read (Path rel typ rep)
 
+-- | @since 99999
 deriving stock instance
   (Show (Parents rel), Show (Filename typ rep), Show rep) =>
   Show (Path rel typ rep)
 
+-- | @since 99999
 deriving stock instance
   (Foldable (Filename typ)) => Foldable (Path rel typ)
 
+-- | @since 99999
 deriving stock instance
   (Functor (Filename typ)) => Functor (Path rel typ)
 
+-- | @since 99999
 deriving stock instance
   (Traversable (Filename typ)) => Traversable (Path rel typ)
 
+-- | The combinations of `Relativity` for which `</>` is total: @rel@ is the
+--   relativity of the parent, @par@ is whether the child may have leading
+--   @../@, and @rel'@ is the relativity of the result. The missing combinations
+--   (a reparented child under an `Abs` or `Any` parent) are partial, because
+--   the child’s @../@ could ascend past the root of a parent that may be
+--   absolute.
+--
+-- @since 99999
 type TotalOps :: Relativity -> Bool -> Relativity -> Kind.Constraint
 class TotalOps rel par rel' | rel par -> rel' where
   -- | Concatenate two paths.
@@ -215,10 +295,13 @@ class TotalOps rel par rel' | rel par -> rel' where
   --          file)@ or @`toText` `<$>` abs `</?>` (rel1 `</>` rel2 `</>` file)@.
   --          Unless you can mix an associative and non-associative operator of
   --          the same precedence …
+  --
+  -- @since 99999
   (</>) :: Path rel 'Dir rep -> Path ('Rel par) typ rep -> Path rel' typ rep
 
 infixr 5 </>
 
+-- | @since 99999
 instance TotalOps 'Any 'False 'Any where
   parent </> child =
     Path
@@ -227,6 +310,7 @@ instance TotalOps 'Any 'False 'Any where
         filename = filename child
       }
 
+-- | @since 99999
 instance TotalOps ('Rel 'True) 'True ('Rel 'True) where
   parent </> child =
     Path
@@ -240,6 +324,7 @@ instance TotalOps ('Rel 'True) 'True ('Rel 'True) where
         filename = filename child
       }
 
+-- | @since 99999
 instance TotalOps ('Rel 'True) 'False ('Rel 'True) where
   parent </> child =
     Path
@@ -248,6 +333,7 @@ instance TotalOps ('Rel 'True) 'False ('Rel 'True) where
         filename = filename child
       }
 
+-- | @since 99999
 instance TotalOps ('Rel 'False) 'True ('Rel 'True) where
   parent </> child =
     Path
@@ -258,6 +344,7 @@ instance TotalOps ('Rel 'False) 'True ('Rel 'True) where
         filename = filename child
       }
 
+-- | @since 99999
 instance TotalOps ('Rel 'False) 'False ('Rel 'False) where
   parent </> child =
     Path
@@ -266,6 +353,7 @@ instance TotalOps ('Rel 'False) 'False ('Rel 'False) where
         filename = filename child
       }
 
+-- | @since 99999
 instance TotalOps 'Abs 'False 'Abs where
   parent </> child =
     Path
@@ -276,28 +364,40 @@ instance TotalOps 'Abs 'False 'Abs where
 
 -- | This does /not/ represent the “current directory” as in the absolute path
 --   from which the program was run or something, but rather the path “./”.
+--
+-- @since 99999
 current :: Path ('Rel 'False) 'Dir rep
 current =
   Path {parents = Proxy, directories = embed Neither, filename = Const ()}
 
 -- | Forget that a relative path doesn’t have any parents.
+--
+-- @since 99999
 weaken :: Path ('Rel 'False) typ rep -> Path ('Rel 'True) typ rep
 weaken path = path {parents = 0}
 
 -- | Only relative directories form a semigroup under `</>`.
+--
+-- @since 99999
 instance Semigroup (Path ('Rel 'False) 'Dir rep) where
   (<>) = (</>)
   stimes = stimesMonoid
 
 -- | Only relative directories form a semigroup under `</>`.
+--
+-- @since 99999
 instance Semigroup (Path ('Rel 'True) 'Dir rep) where
   (<>) = (</>)
   stimes = stimesMonoid
 
 -- | Only relative directories form a monoid under concatenation.
+--
+-- @since 99999
 instance Monoid (Path ('Rel 'False) 'Dir rep) where
   mempty = current
 
 -- | Only relative directories form a monoid under concatenation.
+--
+-- @since 99999
 instance Monoid (Path ('Rel 'True) 'Dir rep) where
   mempty = weaken current

@@ -1,5 +1,10 @@
 {-# LANGUAGE Safe #-}
 
+-- |
+-- Copyright: 2024 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-proprietary
+--
+-- @since 99999
 module Data.Path.Directory
   ( ascendAbsolute,
     (</>),
@@ -49,6 +54,8 @@ isNeither :: XNor a b -> Bool
 isNeither = xnor True (\_ _ -> False)
 
 -- | Move up one directory in the file hierarchy.
+--
+-- @since 99999
 ascendAbsolute ::
   Path 'Abs 'Dir rep ->
   --  | `Nothing` if the provided directory @`==` `root`.
@@ -71,6 +78,8 @@ ascendAbsolute dir =
 --
 --          Note the four operators used: `<$>`, `</?>`, `</>`, and `<>`. Any
 --          change to fixity would cause this to collapse.
+--
+-- @since 99999
 (</?>) ::
   Path 'Abs 'Dir rep ->
   Path ('Rel 'True) typ rep ->
@@ -90,22 +99,40 @@ parent </?> child =
 
 infixr 5 </?>
 
+-- | Whether this is the path “./”, i.e., `current`.
+--
+-- @since 99999
 isCurrent :: Path ('Rel 'False) 'Dir rep -> Bool
 isCurrent = cata isNeither . directories
 
+-- | Append the given directories (outermost first) to a directory path.
+--
+-- @since 99999
 descendThrough :: Path rel 'Dir rep -> List rep -> Path rel 'Dir rep
 descendThrough directory newComponents =
   directory {directories = reverse newComponents <> directories directory}
 
+-- | Append a single directory to a directory path.
+--
+-- @since 99999
 descendTo :: Path rel 'Dir rep -> rep -> Path rel 'Dir rep
 descendTo directory component =
   descendThrough directory . embed . Both component $ embed Neither
 
+-- | The root directory, “/” in POSIX.
+--
+-- @since 99999
 root :: Path 'Abs 'Dir rep
 root = Path {parents = (), directories = embed Neither, filename = Const ()}
 
+-- | Whether this is the `root` directory.
+--
+-- @since 99999
 isRoot :: Path 'Abs 'Dir rep -> Bool
 isRoot = cata isNeither . directories
 
+-- | The file with the given name in a directory.
+--
+-- @since 99999
 selectFile :: Path rel 'Dir rep -> rep -> Path rel 'File rep
 selectFile path fileName = path {filename = pure fileName}

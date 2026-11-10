@@ -5,7 +5,11 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
--- | This provides an API similar to "System.OsPath", but for Pathway types.
+-- |
+-- Copyright: 2026 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-proprietary
+--
+--   This provides an API similar to "System.OsPath", but for Pathway types.
 --
 --   Some differences:
 -- - operations mostly require absolute paths, the “current directory” is not
@@ -28,6 +32,8 @@
 --   reported to users, and often without enough context. This tries to ensure
 --   that there is at least a full path available (unless the developer makes an
 --   effort to remove it.
+--
+-- @since 99999
 module Common.OsPath
   ( localFormat,
     toPathRep,
@@ -92,11 +98,14 @@ unsafeEncodeUtf = O.unsafeEncodeUtf
 unsafeEncodeUtf = unsafePerformIO . O.encodeUtf
 #endif
 
+-- | @since 99999
 instance Path.Substible OsString where
   replace i o = O.pack . List.replace (O.unpack i) (O.unpack o) . O.unpack
 
 -- | This is different from the standard POSIX format, because it outputs
 --   without `./` for relative directories.
+--
+-- @since 99999
 localFormat :: Format OsString
 localFormat =
   Format
@@ -108,9 +117,13 @@ localFormat =
       Format.substitutions = mempty
     }
 
+-- | Print a `Path` in the local format, as an `OsPath`.
+--
+-- @since 99999
 toPathRep :: (Pathy rel typ) => Path rel typ OsString -> OsPath
 toPathRep = toText localFormat
 
+-- | @since 99999
 instance MP.Stream OsString where
   type Token OsString = OsChar
   type Tokens OsString = OsString
@@ -123,6 +136,9 @@ instance MP.Stream OsString where
   takeN_ n = fmap (bimap O.pack O.pack) . MP.takeN_ n . O.unpack
   takeWhile_ p = bimap O.pack O.pack . MP.takeWhile_ p . O.unpack
 
+-- | Parse a directory path from the underlying library, in the local format.
+--
+-- @since 99999
 fromPathRepDir ::
   (Ord e) =>
   OsPath ->
@@ -130,6 +146,10 @@ fromPathRepDir ::
 fromPathRepDir =
   fmap (anchor . forgetType) . MP.parse (Parser.directory localFormat) ""
 
+-- | Parse a directory path from the underlying library, and pass it to a
+--   handler that checks it has the expected type.
+--
+-- @since 99999
 handleAnchoredDir ::
   (Ord e) =>
   (Anchored OsString -> Either (InternalFailure OsPath e) a) ->
@@ -137,6 +157,10 @@ handleAnchoredDir ::
   Either (InternalFailure OsPath e) a
 handleAnchoredDir handler = either (Left . ParseFailure) handler . fromPathRepDir
 
+-- | Parse an absolute directory path from the underlying library, failing with
+--   `IncorrectResultType` if it’s some other type of path.
+--
+-- @since 99999
 absDirFromPathRep ::
   (Ord e) =>
   OsPath ->
@@ -151,6 +175,10 @@ absDirFromPathRep =
         ReparentedDir path -> badType (Rel True) Dir $ unanchor path
         ReparentedFile path -> badType (Rel True) File $ unanchor path
 
+-- | Parse a directory path of any `Relativity` from the underlying library,
+--   failing with `IncorrectResultType` if it’s a file.
+--
+-- @since 99999
 anyDirFromPathRep ::
   (Ord e) =>
   OsPath ->

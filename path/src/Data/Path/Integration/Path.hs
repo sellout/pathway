@@ -1,7 +1,11 @@
 {-# LANGUAGE Unsafe #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
--- | Compatibility module for the existing "Path" library.
+-- |
+-- Copyright: 2024 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-proprietary
+--
+--   Compatibility module for the existing "Path" library.
 --
 --   There are a number of differences between "Path" and
 --   "Data.Path". Among them are
@@ -15,6 +19,8 @@
 -- - "Data.Path" equivalent of `Path.SomeBase` is `Path 'Any`, but also has
 --  `AmbiguousPath`, where we don’t know whether the path is a file or directory
 --  (as it is common to have to deal with paths where that is unclear).
+--
+-- @since 99999
 module Data.Path.Integration.Path () where
 
 import safe "base" Control.Applicative (pure)
@@ -63,6 +69,7 @@ extractDirectories ::
   (Steppable (->) t (XNor FilePath)) => Path.Path rel Path.Dir -> t
 extractDirectories = unsafeAna extractDirectory
 
+-- | @since 99999
 instance Pathish (Path.Path Path.Abs Path.Dir) 'Abs 'Dir FilePath where
   specializePath path =
     Path
@@ -71,6 +78,7 @@ instance Pathish (Path.Path Path.Abs Path.Dir) 'Abs 'Dir FilePath where
         filename = Const ()
       }
 
+-- | @since 99999
 instance Pathish (Path.Path Path.Abs Path.File) 'Abs 'File FilePath where
   specializePath path =
     Path
@@ -79,6 +87,7 @@ instance Pathish (Path.Path Path.Abs Path.File) 'Abs 'File FilePath where
         filename = pure . toText $ Path.filename path
       }
 
+-- | @since 99999
 instance Pathish (Path.Path Path.Rel Path.Dir) ('Rel 'False) 'Dir FilePath where
   specializePath path =
     Path
@@ -87,6 +96,7 @@ instance Pathish (Path.Path Path.Rel Path.Dir) ('Rel 'False) 'Dir FilePath where
         filename = Const ()
       }
 
+-- | @since 99999
 instance Pathish (Path.Path Path.Rel Path.File) ('Rel 'False) 'File FilePath where
   specializePath path =
     Path
@@ -95,6 +105,7 @@ instance Pathish (Path.Path Path.Rel Path.File) ('Rel 'False) 'File FilePath whe
         filename = pure . toText $ Path.filename path
       }
 
+-- | @since 99999
 instance Pathish (Path.SomeBase Path.Dir) 'Any 'Dir FilePath where
   specializePath = \case
     Path.Abs path ->
@@ -110,6 +121,7 @@ instance Pathish (Path.SomeBase Path.Dir) 'Any 'Dir FilePath where
           filename = Const ()
         }
 
+-- | @since 99999
 instance Pathish (Path.SomeBase Path.File) 'Any 'File FilePath where
   specializePath = \case
     Path.Abs path ->

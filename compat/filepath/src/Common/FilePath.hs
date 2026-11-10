@@ -2,7 +2,11 @@
 -- __NB__: Because of the nested @`Show` (`MP.Token` rep)@ constraints.
 {-# LANGUAGE UndecidableInstances #-}
 
--- | This provides an API similar to "System.FilePath", but for Pathway types.
+-- |
+-- Copyright: 2026 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-proprietary
+--
+--   This provides an API similar to "System.FilePath", but for Pathway types.
 --
 --   Some differences:
 -- - operations mostly require absolute paths, the “current directory” is not
@@ -25,6 +29,8 @@
 --   reported to users, and often without enough context. This tries to ensure
 --   that there is at least a full path available (unless the developer makes an
 --   effort to remove it.
+--
+-- @since 99999
 module Common.FilePath
   ( toPathRep,
     fromPathRepDir,
@@ -62,6 +68,9 @@ import "pathway-compat-base" Common
     toPathRep,
   )
 
+-- | Parse a directory path from the underlying library, in the local format.
+--
+-- @since 99999
 fromPathRepDir ::
   (Ord e) =>
   FilePath ->
@@ -69,6 +78,10 @@ fromPathRepDir ::
 fromPathRepDir =
   fmap (anchor . forgetType) . MP.parse (Parser.directory Format.local) ""
 
+-- | Parse a directory path from the underlying library, and pass it to a
+--   handler that checks it has the expected type.
+--
+-- @since 99999
 handleAnchoredDir ::
   (Ord e) =>
   (Anchored String -> Either (InternalFailure FilePath e) a) ->
@@ -76,6 +89,10 @@ handleAnchoredDir ::
   Either (InternalFailure FilePath e) a
 handleAnchoredDir handler = either (Left . ParseFailure) handler . fromPathRepDir
 
+-- | Parse an absolute directory path from the underlying library, failing with
+--   `IncorrectResultType` if it’s some other type of path.
+--
+-- @since 99999
 absDirFromPathRep ::
   (Ord e) =>
   FilePath ->
@@ -90,6 +107,10 @@ absDirFromPathRep =
         ReparentedDir path -> badType (Rel True) Dir $ unanchor path
         ReparentedFile path -> badType (Rel True) File $ unanchor path
 
+-- | Parse a directory path of any `Relativity` from the underlying library,
+--   failing with `IncorrectResultType` if it’s a file.
+--
+-- @since 99999
 anyDirFromPathRep ::
   (Ord e) =>
   FilePath ->

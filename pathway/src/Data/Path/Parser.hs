@@ -1,6 +1,10 @@
 {-# LANGUAGE Safe #-}
 
--- | Various parsers for paths.
+-- |
+-- Copyright: 2024 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-proprietary
+--
+--   Various parsers for paths.
 --
 --  __NB__: This doesn’t provide parsers for `Path`, only `AnyPath`. If you are
 --          parsing at compile time, "Data.Path.TH" has
@@ -9,6 +13,8 @@
 --          parsing, you are better off using @`anchor` `.` `parse` (`path`
 --         `local`) ""@ and then creating informative failures for the invalid
 --          cases.
+--
+-- @since 99999
 module Data.Path.Parser
   ( -- ambiguousPath,
     directory,
@@ -191,6 +197,8 @@ protoPath format =
 -- Right (Path {parents = Just 2, directories = List (embed (Both "e" (embed (Both "d" (embed Neither))))), filename = Nothing})
 -- >>> MP.parse (path posix) "" "../../../b/f/g/"
 -- Right (Path {parents = Just 3, directories = List (embed (Both "g" (embed (Both "f" (embed (Both "b" (embed Neither))))))), filename = Nothing})
+--
+-- @since 99999
 path ::
   (MP.MonadParsec v s p, Monoid (MP.Tokens s)) =>
   Format (MP.Tokens s) -> p (AnyPath (MP.Tokens s))
@@ -204,6 +212,8 @@ path =
 -- | Knowing that we’re parsing a directory, this can be a bit more lax in
 --   parsing. E.g., this will parse as a directory even without a trailing
 --   separator on the final component.
+--
+-- @since 99999
 directory ::
   (MP.MonadParsec v s p, Monoid (MP.Tokens s)) =>
   Format (MP.Tokens s) -> p (Path 'Any 'Dir (MP.Tokens s))

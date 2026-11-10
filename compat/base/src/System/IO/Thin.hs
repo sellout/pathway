@@ -1,6 +1,11 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE Safe #-}
 
+-- |
+-- Copyright: 2026 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-proprietary
+--
+-- @since 99999
 #if MIN_VERSION_base (4, 15, 0)
 module System.IO.Thin
   ( withFile,
@@ -46,32 +51,62 @@ import "base" System.IO qualified as IO
 import "pathway" Data.Path (Path, Relativity (Abs), Type (Dir, File))
 import "this" Common (InternalFailure, absFileFromPathRep, toPathRep)
 
+-- | `System.IO.withFile`, on `Path`s.
+--
+-- @since 99999
 withFile :: Path 'Abs 'File String -> IOMode -> (Handle -> IO r) -> IO r
 withFile = IO.withFile . toPathRep
 
+-- | `System.IO.openFile`, on `Path`s.
+--
+-- @since 99999
 openFile :: Path 'Abs 'File String -> IOMode -> IO Handle
 openFile = IO.openFile . toPathRep
 
+-- | `System.IO.readFile`, on `Path`s.
+--
+-- @since 99999
 readFile :: Path 'Abs 'File String -> IO String
 readFile = IO.readFile . toPathRep
 
 #if MIN_VERSION_base (4, 15, 0)
+-- | `System.IO.readFile'`, on `Path`s.
+--
+-- @since 99999
 readFile' :: Path 'Abs 'File String -> IO String
 readFile' = IO.readFile' . toPathRep
 #endif
 
+-- | `System.IO.writeFile`, on `Path`s.
+--
+-- @since 99999
 writeFile :: Path 'Abs 'File String -> String -> IO ()
 writeFile = IO.writeFile . toPathRep
 
+-- | `System.IO.appendFile`, on `Path`s.
+--
+-- @since 99999
 appendFile :: Path 'Abs 'File String -> String -> IO ()
 appendFile = IO.appendFile . toPathRep
 
+-- | `System.IO.withBinaryFile`, on `Path`s.
+--
+-- @since 99999
 withBinaryFile :: Path 'Abs 'File String -> IOMode -> (Handle -> IO r) -> IO r
 withBinaryFile = IO.withBinaryFile . toPathRep
 
+-- | `System.IO.openBinaryFile`, on `Path`s.
+--
+-- @since 99999
 openBinaryFile :: Path 'Abs 'File String -> IOMode -> IO Handle
 openBinaryFile = IO.openBinaryFile . toPathRep
 
+-- | `System.IO.openTempFile`, on `Path`s.
+--
+--   Any path it returns that doesn’t parse is returned as an `InternalFailure`
+--   instead.
+--
+-- @since 99999
 openTempFile ::
   (Ord void) =>
   -- | Directory in which to create the file
@@ -86,6 +121,12 @@ openTempFile ::
 openTempFile tmpDir =
   fmap (bitraverse absFileFromPathRep pure) . IO.openTempFile (toPathRep tmpDir)
 
+-- | `System.IO.openBinaryTempFile`, on `Path`s.
+--
+--   Any path it returns that doesn’t parse is returned as an `InternalFailure`
+--   instead.
+--
+-- @since 99999
 openBinaryTempFile ::
   (Ord void) =>
   -- | Directory in which to create the file
@@ -101,6 +142,12 @@ openBinaryTempFile tmpDir =
   fmap (bitraverse absFileFromPathRep pure)
     . IO.openBinaryTempFile (toPathRep tmpDir)
 
+-- | `System.IO.openTempFileWithDefaultPermissions`, on `Path`s.
+--
+--   Any path it returns that doesn’t parse is returned as an `InternalFailure`
+--   instead.
+--
+-- @since 99999
 openTempFileWithDefaultPermissions ::
   (Ord e) =>
   Path 'Abs 'Dir String ->
@@ -110,6 +157,12 @@ openTempFileWithDefaultPermissions tmpDir =
   fmap (bitraverse absFileFromPathRep pure)
     . IO.openTempFileWithDefaultPermissions (toPathRep tmpDir)
 
+-- | `System.IO.openBinaryTempFileWithDefaultPermissions`, on `Path`s.
+--
+--   Any path it returns that doesn’t parse is returned as an `InternalFailure`
+--   instead.
+--
+-- @since 99999
 openBinaryTempFileWithDefaultPermissions ::
   (Ord e) =>
   Path 'Abs 'Dir String ->

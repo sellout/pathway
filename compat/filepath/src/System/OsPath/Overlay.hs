@@ -1,11 +1,17 @@
 {-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE TypeApplications #-}
 
--- | This provides an API similar to "System.OsPath", but for Pathway types.
+-- |
+-- Copyright: 2026 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-proprietary
+--
+--   This provides an API similar to "System.OsPath", but for Pathway types.
 --
 --   Since almost all functions are total (no Either), the Overlay layer mainly:
 --   - Re-exports total functions from Thin unchanged
 --   - Converts 'getSearchPath' Either to exceptions
+--
+-- @since 99999
 module System.OsPath.Overlay
   ( -- * \$PATH methods
     splitSearchPath,
@@ -82,5 +88,7 @@ import safe "this" System.OsPath.Thin qualified as Thin
 --           with values that failed to parse. Since we have no `IO`, `Either`,
 --           or `Maybe`, we just discord them. Returns only the paths that
 --           successfully parse as directories.
+--
+-- @since 99999
 splitSearchPath :: OsString -> [Path 'Rel.Any 'Dir OsString]
 splitSearchPath = rights . Thin.splitSearchPath @Void

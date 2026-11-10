@@ -12,11 +12,13 @@
 {-# OPTIONS_GHC -Wno-safe -Wno-trustworthy-safe #-}
 
 -- |
--- Copyright: 2024 Greg Pfeil
+-- Copyright: 2026 Greg Pfeil
 -- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-proprietary
 --
 -- This is a drop-in replacement for "System.Directory", with
 -- `System.IO.FilePath` replaced by `Data.Path.Path` types.
+--
+-- @since 99999
 module System.Directory.OsPath.Pathway
   ( module System.Directory.OsPath,
     module System.Directory.OsPath.Caught,

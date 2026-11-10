@@ -1,7 +1,11 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE Trustworthy #-}
 
--- | There are various ways to use filesystem operations with Pathway. This is
+-- |
+-- Copyright: 2024 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-proprietary
+--
+--   There are various ways to use filesystem operations with Pathway. This is
 --   the most opinionated. If you want something that is more closely aligned
 --   with existing filesystem libraries, you may want to look at the
 --   [pathway-compat-directory]() package as well as [pathway-compat-base]() and
@@ -28,6 +32,8 @@
 --   reported to users, and often without enough context. This tries to ensure
 --   that there is at least a full path available (unless the developer makes an
 --   effort to remove it).
+--
+-- @since 99999
 module System.Path
   ( module System.Directory.Error,
     ParseFailure,
@@ -94,44 +100,124 @@ import safe "pathway-compat-filepath" System.OsPath.Pathway (OsString)
 import safe "pathway-compat-filepath" System.OsPath.Pathway qualified as OP
 #endif
 
+-- | A failure to parse a path.
+--
+-- @since 99999
 type ParseFailure :: Kind.Type -> Kind.Type
 type ParseFailure rep = MP.ParseErrorBundle rep Void
 
+-- | Filesystem operations, for each representation of path components that the
+--   system supports.
+--
+-- @since 99999
 type Rep :: Kind.Type -> Kind.Constraint
 class Rep rep where
+  -- | Parse a path in the local format, as a directory.
+  --
+  -- @since 99999
   parseDirectory :: rep -> Either (ParseFailure rep) (Path 'Rel.Any 'Dir rep)
+
+  -- | Parse a path in the local format, as a directory if it has a trailing
+  --   separator, and as a file otherwise.
+  --
+  -- @since 99999
   parsePath :: rep -> Either (ParseFailure rep) (Path 'Rel.Any 'Type.Any rep)
+
+  -- | `System.FilePath.splitSearchPath`, on `Path`s, with each directory that
+  --   doesn’t parse returned as an `InternalFailure`.
+  --
+  -- @since 99999
   splitSearchPath ::
     rep -> [Either (InternalFailure rep Void) (Path 'Rel.Any 'Dir rep)]
+
+  -- | `System.Directory.canonicalizePath`, on `Path`s, with failures returned
+  --   as variants.
+  --
+  -- @since 99999
   canonicalizePath ::
     (Dir.Operations rep typ) =>
     Path 'Abs typ rep -> IO (Either (V (MakeFailure rep)) (Path 'Abs typ rep))
+
+  -- | `System.Directory.copyPermissions`, on `Path`s, with failures returned as
+  --   variants.
+  --
+  -- @since 99999
   copyPermissions ::
     (Typey typ, Typey typ') => Path 'Abs typ rep -> Path 'Abs typ' rep -> IO ()
+
+  -- | `System.Directory.createDirectory`, on `Path`s, with failures returned as
+  --   variants.
+  --
+  -- @since 99999
   createDirectory :: Path 'Abs 'Dir rep -> IO (Either (V CreationFailure) ())
+
+  -- | `System.Directory.createDirectoryIfMissing`, on `Path`s, with failures
+  --   returned as variants.
+  --
+  -- @since 99999
   createDirectoryIfMissing ::
     Path 'Abs 'Dir rep -> IO (Either (V MaybeCreationFailure) ())
+
+  -- | `System.Directory.createDirectoryIfMissing` @True@, on `Path`s, with
+  --   failures returned as variants.
+  --
+  -- @since 99999
   createDirectoryWithParentsIfMissing ::
     Path 'Abs 'Dir rep -> IO (Either (V MaybeParentCreationFailure) ())
+
+  -- | `System.Directory.getAccessTime`, on `Path`s, with failures returned as
+  --   variants.
+  --
+  -- @since 99999
   getAccessTime ::
     (Typey typ) => Path 'Abs typ rep -> IO (Either (V MetadataFailure) UTCTime)
+
+  -- | `System.Directory.getCurrentDirectory`, on `Path`s, with failures
+  --   returned as variants.
+  --
+  -- @since 99999
   getCurrentDirectory ::
     IO
       ( Either
           (V (FullError ': InternalFailure rep Void ': CurrentDirectoryFailure))
           (Path 'Abs 'Dir rep)
       )
+
+  -- | `System.Directory.getHomeDirectory`, on `Path`s, with failures returned
+  --   as variants.
+  --
+  -- @since 99999
   getHomeDirectory ::
     IO (Either (V (GetUserDirectoryFailure rep)) (Path 'Abs 'Dir rep))
+
+  -- | `System.Directory.getModificationTime`, on `Path`s, with failures
+  --   returned as variants.
+  --
+  -- @since 99999
   getModificationTime ::
     (Typey typ) => Path 'Abs typ rep -> IO (Either (V MetadataFailure) UTCTime)
+
+  -- | `System.Directory.getPermissions`, on `Path`s, with failures returned as
+  --   variants.
+  --
+  -- @since 99999
   getPermissions ::
     (Typey typ) =>
     Path 'Abs typ rep -> IO (Either (V MetadataFailure) Dir.Permissions)
+
+  -- | `System.Directory.getSymbolicLinkTarget`, on `Path`s, with failures
+  --   returned as variants.
+  --
+  -- @since 99999
   getSymbolicLinkTarget ::
     (Dir.Operations rep typ) =>
     Path 'Abs typ rep ->
     IO (Either (V (GetDirectoryFailure rep)) (Path 'Rel.Any typ rep))
+
+  -- | `System.Directory.listDirectory`, on `Path`s, with failures returned as
+  --   variants.
+  --
+  -- @since 99999
   listDirectory ::
     (Ord e) =>
     Path 'Abs 'Dir rep ->
@@ -150,38 +236,82 @@ class Rep rep where
               )
           ]
       )
+
+  -- | `System.Directory.removeDirectoryRecursive`, on `Path`s, with failures
+  --   returned as variants.
+  --
+  -- @since 99999
   removeDirectoryRecursive ::
     Path 'Abs 'Dir rep -> IO (Either (V DirRemovalFailure) ())
+
+  -- | `System.Directory.removePathForcibly`, on `Path`s, with failures returned
+  --   as variants.
+  --
+  -- @since 99999
   removePathForcibly ::
     (Typey typ) => Path 'Abs typ rep -> IO (Either (V DirRemovalFailure) ())
+
+  -- | `System.Directory.setAccessTime`, on `Path`s, with failures returned as
+  --   variants.
+  --
+  -- @since 99999
   setAccessTime ::
     (Typey typ) =>
     Path 'Abs typ rep -> UTCTime -> IO (Either (V MetadataFailure) ())
+
+  -- | `System.Directory.setModificationTime`, on `Path`s, with failures
+  --   returned as variants.
+  --
+  -- @since 99999
   setModificationTime ::
     (Typey typ) =>
     Path 'Abs typ rep ->
     UTCTime ->
     IO (Either (V (InvalidArgument ': MetadataFailure)) ())
+
+  -- | `System.Directory.setPermissions`, on `Path`s, with failures returned as
+  --   variants.
+  --
+  -- @since 99999
   setPermissions ::
     (Typey typ) =>
     Path 'Abs typ rep ->
     Dir.Permissions ->
     IO (Either (V MetadataFailure) ())
+
+  -- | `System.Directory.findExecutable`, on `Path`s, with failures returned as
+  --   variants.
+  --
+  -- @since 99999
   findExecutable ::
     (Ord e) =>
     Path ('Rel 'True) 'File rep ->
     IO (Maybe (Either (InternalFailure rep e) (Path 'Abs 'File rep)))
+
+  -- | `System.Directory.findFiles`, on `Path`s, with failures returned as
+  --   variants.
+  --
+  -- @since 99999
   findFiles ::
     (Ord e) =>
     [Path 'Abs 'Dir rep] ->
     Path ('Rel 'True) 'File rep ->
     IO [Either (InternalFailure rep e) (Path 'Abs 'File rep)]
+
+  -- | `System.Directory.findFilesWith`, on `Path`s, with failures returned as
+  --   variants.
+  --
+  -- @since 99999
   findFilesWith ::
     (Ord e) =>
     (Path 'Abs 'File rep -> IO Bool) ->
     [Path 'Abs 'Dir rep] ->
     Path ('Rel 'True) 'File rep ->
     IO [Either (InternalFailure rep e) (Path 'Abs 'File rep)]
+
+  -- | `System.IO.withFile`, on `Path`s, with failures returned as variants.
+  --
+  -- @since 99999
   withFile ::
     (MonadIO m, MonadMask m) =>
     Path 'Abs 'File rep ->
@@ -206,8 +336,14 @@ withFile' openFile filePath mode =
 
 -- | Filesystem operations with corresponding versions for each of `'Dir` and
 --  `'File`.
+--
+-- @since 99999
 type Operations :: Kind.Type -> Type -> Kind.Constraint
 class Operations rep typ where
+  -- | Create a symbolic link, using `System.Directory.createFileLink` or
+  --   `System.Directory.createDirectoryLink` as appropriate for the `Type`.
+  --
+  -- @since 99999
   createLink ::
     (Relative rel) =>
     -- | The target of the link (this may be relative).
@@ -215,19 +351,36 @@ class Operations rep typ where
     -- | The name of the newly-created link.
     Path 'Abs typ rep ->
     IO (Either (V CreateLinkFailure) ())
+
+  -- | `System.Directory.doesFileExist` or
+  --   `System.Directory.doesDirectoryExist`, as appropriate for the `Type`.
+  --
+  -- @since 99999
   doesExist :: Path 'Abs typ rep -> IO Bool
+
+  -- | `System.Directory.removeFile` or `System.Directory.removeDirectory`, as
+  --   appropriate for the `Type`, with failures returned as variants.
+  --
+  -- @since 99999
   remove :: Path 'Abs typ rep -> IO (Either (V DirRemovalFailure) ())
 
   -- |
   --
   --  __TODO__: On POSIX, the failure could be restricted to `RemovalFailure`.
+  --
+  -- @since 99999
   removeLink :: Path 'Abs typ rep -> IO (Either (V DirRemovalFailure) ())
 
+  -- | `System.Directory.renameFile` or `System.Directory.renameDirectory`, as
+  --   appropriate for the `Type`, with failures returned as variants.
+  --
+  -- @since 99999
   rename ::
     Path 'Abs typ rep ->
     Path 'Abs typ rep ->
     IO (Either (V (AlreadyExistsError ': RenameFailure)) ())
 
+-- | @since 99999
 instance Rep String where
   parseDirectory = MP.parse (Parser.directory Format.local) ""
   parsePath = MP.parse (Parser.path Format.local) ""
@@ -254,6 +407,7 @@ instance Rep String where
   findFilesWith = F.Path.findFilesWith
   withFile = withFile' F.IO.openFile
 
+-- | @since 99999
 instance Operations String 'Dir where
   createLink = F.Dir.createDirectoryLink
   doesExist = F.Path.doesDirectoryExist
@@ -261,6 +415,7 @@ instance Operations String 'Dir where
   removeLink = F.Dir.removeDirectoryLink
   rename old = F.Dir.renameDirectory old
 
+-- | @since 99999
 instance Operations String 'File where
   createLink = F.Dir.createFileLink
   doesExist = F.Path.doesFileExist
@@ -269,6 +424,7 @@ instance Operations String 'File where
   rename old = fmap (first liftVariant) . F.Dir.renameFile old
 
 #if MIN_VERSION_GLASGOW_HASKELL(9, 6, 1, 0)
+-- | @since 99999
 instance Rep OsString where
   parseDirectory = MP.parse (Parser.directory OsPath.localFormat) ""
   parsePath = MP.parse (Parser.path OsPath.localFormat) ""
@@ -295,6 +451,7 @@ instance Rep OsString where
   findFilesWith = O.Path.findFilesWith
   withFile = withFile' O.IO.openFile
 
+-- | @since 99999
 instance Operations OsString 'Dir where
   createLink = O.Path.createDirectoryLink
   doesExist = O.Path.doesDirectoryExist
@@ -302,6 +459,7 @@ instance Operations OsString 'Dir where
   removeLink = O.Path.removeDirectoryLink
   rename old = O.Path.renameDirectory old
 
+-- | @since 99999
 instance Operations OsString 'File where
   createLink = O.Path.createFileLink
   doesExist = O.Path.doesFileExist

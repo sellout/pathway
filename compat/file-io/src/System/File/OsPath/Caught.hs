@@ -1,5 +1,10 @@
 {-# LANGUAGE Trustworthy #-}
 
+-- |
+-- Copyright: 2026 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-proprietary
+--
+-- @since 99999
 module System.File.OsPath.Caught
   ( OpenFileFailure,
     openFile,
@@ -19,6 +24,10 @@ import safe "pathway-compat-base" System.IO.Caught
 import "variant" Data.Variant (V)
 import safe "this" System.File.OsPath.Thin qualified as Thin
 
+-- | `System.File.OsPath.openFile`, on `Path`s, with the `IOException`s it’s
+--   known to raise returned as variants instead.
+--
+-- @since 99999
 openFile ::
   Path 'Abs 'File OsString -> IOMode -> IO (Either (V OpenFileFailure) Handle)
 openFile filePath = tryJust recoverOpenFileFailure . Thin.openFile filePath

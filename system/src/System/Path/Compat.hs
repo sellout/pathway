@@ -1,8 +1,14 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE Trustworthy #-}
 
--- | Operations that don’t fit with the philosophy of this library, but that
--- help with interoperability with other code.
+-- |
+-- Copyright: 2024 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-proprietary
+--
+-- Operations that don’t fit with the philosophy of this library, but that help
+-- with interoperability with other code.
+--
+-- @since 99999
 module System.Path.Compat
   ( module System.Directory.Error,
     withCurrentDirectory,
@@ -34,15 +40,19 @@ class Rep rep where
   --
   --  __NB__: Like the underlying `System.Directory.withCurrentDirectory`, this
   --          is /not/ thread-safe.
+  --
+  -- @since 99999
   withCurrentDirectory ::
     Path 'Abs 'Dir rep ->
     IO a ->
     IO (Either (V (FullError ': SetCurrentDirectoryFailure)) a)
 
+-- | @since 99999
 instance Rep String where
   withCurrentDirectory = F.withCurrentDirectory
 
 #if MIN_VERSION_GLASGOW_HASKELL(9, 6, 1, 0)
+-- | @since 99999
 instance Rep OsString where
   withCurrentDirectory = O.withCurrentDirectory
 #endif

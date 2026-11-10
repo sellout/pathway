@@ -20,7 +20,7 @@ import "this" Build_doctests (Component (Component), components)
 
 -- | The doctest entry point.
 --
--- @since 0.0.1
+-- @since 99999
 main :: IO ()
 main = fmap fold . for components $ \(Component name flags pkgs sources) -> do
   print name
