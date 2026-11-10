@@ -22,7 +22,7 @@ See the documentation for the individual packages:
 
 ## contributing
 
-- [contributor guide](https://sellout.github.io/flaky/CONTRIBUTING/haskell.html)
+- [contributor guide](./CONTRIBUTING.md)
 
 ## comparisons
 
