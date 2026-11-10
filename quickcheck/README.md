@@ -8,7 +8,7 @@
 
 ## usage
 
-This provides instances for the QuickCheck classes, etc. to make it easy to write tests that involve Pathway.
+This provides instances for the QuickCheck classes, etc. for writing tests that involve Pathway.
 
 ### licensing
 

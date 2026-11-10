@@ -1,5 +1,5 @@
-:seti -XTypeApplications
-:seti -XQuasiQuotes
-:seti -Wwarn
 :seti -XPartialTypeSignatures
+:seti -XQuasiQuotes
+:seti -XTypeApplications
+:seti -Wwarn
 import Data.Text

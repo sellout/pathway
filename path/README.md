@@ -4,7 +4,7 @@
 [![Packaging status](https://repology.org/badge/tiny-repos/haskell:pathway-path.svg)](https://repology.org/project/haskell:pathway-path/versions)
 [![latest packaged versions](https://repology.org/badge/latest-versions/haskell:pathway-path.svg)](https://repology.org/project/haskell:pathway-path/versions)
 
-[Pathway](https://hackage.haskell.org/package/pathway) isn’t a drop-in replacement for `path`, but it’s very similar in a lot of ways. If anything, Pathway carries the baton from `path`.
+[Pathway](https://hackage.haskell.org/package/pathway) isn’t a drop-in replacement for `path`, but it’s similar in a lot of ways. If anything, Pathway carries the baton from `path`.
 
 This package makes it easier to use Pathway and `path` together.
 
@@ -40,7 +40,7 @@ Here we talk about how Pathway compares to `path` (trying to minimize bias).
 
 Pathway also partitions functions to minimize `Maybe` as much as possible. For example, `routeRelative` returns in `Maybe`, but `routeAbsolute` doesn’t. Similarly, `(</?>)` returns in `Maybe`, but `(</>)` doesn’t.
 
-There are richer failures possible in parsing that the libraries also handle differently.
+Parsing can also fail in richer ways, which the libraries handle differently.
 
 ### `stripProperPrefix`
 
@@ -58,7 +58,7 @@ Pathway has no notion of file extension. It’s just part of the filename. `path
 
 Since `path` uses a wrapper over `FilePath`, the distinction between systems is scattered throughout the code, and conditionalized so that the `Path` module represents the current system, while `Path.Posix` and `Path.Windows` are separate modules for when you need them explicitly.
 
-Pathway, however, pushes system-specific notions to the boundaries. All `Path`s are the same. It’s only parsing and printing that cares about the system. There is a `Filesystem.Format.local` that represents the current system.
+Pathway, however, pushes system-specific notions to the boundaries. All `Path`s are the same. It’s only parsing and printing that cares about the system. `Filesystem.Format.local` represents the current system.
 
 ### drives
 
@@ -72,6 +72,6 @@ Pathway doesn’t care about drives outside of parsing/printing. Paths are all a
 
 The `Path` ones don’t really make sense, because they will behave differently based on the system that they’re built on, but there are literal paths in the quotes that _don’t_ change based on the system.
 
-So, that’s 12 `QuasiQuoter`s, the most obvious four to reach for don’t work.
+That’s 12 `QuasiQuoter`s, and the four you’d reach for first don’t work.
 
-Pathway only has two `QuasiQuoter`s – one per format (`posix` and `windows`). The `QuasiQuoter`s parse strictly (for example, with `posix`, no trailing slash indicates that it should be parsed as a file) so it disallows the ambiguities you may need to support if you were to parse a user-supplied path. There is no `local` `QuasiQuoter`, since it would have the same issues as the ones in `path:Path`.
+Pathway only has two `QuasiQuoter`s – one per format (`posix` and `windows`). The `QuasiQuoter`s parse strictly (for example, with `posix`, no trailing slash indicates that it should be parsed as a file) so it disallows the ambiguities you may need to support if you were to parse a user-supplied path. Pathway has no `local` `QuasiQuoter`, since it would have the same issues as the ones in `path:Path`.

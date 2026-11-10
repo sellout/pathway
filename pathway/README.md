@@ -64,7 +64,7 @@ The last case is a bit complicated, but needs to exist that way because 1. some 
 
 #### concatenation
 
-There are various ways to concatenate paths.
+Paths can be concatenated in various ways.
 
 - `Semigroup`/`Monoid` – `<>` only concatenates `Path Rel Dir rep`
 - `</>` concatenates _most_ paths:
@@ -82,7 +82,7 @@ There are various ways to concatenate paths.
 
 #### routing
 
-“Routing” one path to another results in a relative path that tells how to get to the second path starting from the first. There are various ways to accomplish this, according to the type. Routing is restricted to types with “compatible” relativity. That is, you can route `Abs` to `Abs`, or `Rel a` to `Rel b`. The `Rel a` to `Rel True` case is partial, because if the destination has more `..` than the origin, we don’t have enough context to build the route.
+“Routing” one path to another results in a relative path that tells how to get to the second path starting from the first. How to accomplish this depends on the type. Routing is restricted to types with “compatible” relativity. That is, you can route `Abs` to `Abs`, or `Rel a` to `Rel b`. The `Rel a` to `Rel True` case is partial, because if the destination has more `..` than the origin, we don’t have enough context to build the route.
 
 ## internals
 
@@ -130,7 +130,7 @@ Pathway will eventually support `IO` operations like this, but they will be in a
 
 This is a wrapper around Path that adds some features. For example, it allows you to reparent (`../`). It also adds a few other features to the type level that I’m uncertain of.
 
-- You can specify a file type in the type, but it’s simply a phantom type, it doesn’t guarantee anything about the file contents.
+- You can specify a file type in the type, but it’s only a phantom type, it doesn’t guarantee anything about the file contents.
 - It tracks what a relative path is relative _to_, which I don’t understand, because then why not just prefix the path it’s relative to?
 - And it tracks the “standard” (for example, POSIX or Windows), but Pathway explicitly removes this from the structure of the path in its representation, only using this distinction for parsing and printing.
 
