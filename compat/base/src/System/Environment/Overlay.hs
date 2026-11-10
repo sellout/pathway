@@ -4,7 +4,11 @@
 -- __NB__: Because of the nested @`Show` (`MP.Token` rep)@ constraints.
 {-# LANGUAGE UndecidableInstances #-}
 
--- | This provides an API similar to "System.Directory", but for Pathway types.
+-- |
+-- Copyright: 2026 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-proprietary
+--
+--   This provides an API similar to "System.Directory", but for Pathway types.
 --
 --   Some differences:
 -- - operations mostly require absolute paths, the “current directory” is not
@@ -27,6 +31,8 @@
 --   reported to users, and often without enough context. This tries to ensure
 --   that there is at least a full path available (unless the developer makes an
 --   effort to remove it.
+--
+-- @since 99999
 #if MIN_VERSION_base(4, 17, 0)
 module System.Environment.Overlay
   ( executablePath,
@@ -57,11 +63,19 @@ import "base" Data.Maybe (Maybe)
 import "base" Data.Traversable (traverse)
 import "pathway" Data.Path.Relativity (Relativity (Abs))
 
+-- | `System.Environment.executablePath`, on `Path`s, with failures thrown in
+--   `IO` (as the original would) rather than returned.
+--
+-- @since 99999
 executablePath :: Maybe (IO (Maybe (Path 'Abs 'File String)))
 executablePath =
   (traverse (either throwIO pure) =<<) <$> Thin.executablePath @Void
 #endif
 
+-- | `System.Environment.getExecutablePath`, on `Path`s, with failures thrown in
+--   `IO` (as the original would) rather than returned.
+--
+-- @since 99999
 getExecutablePath :: IO (Path 'Any 'File String)
 getExecutablePath =
   either throwIO (pure . either forgetRelativity forgetRelativity)

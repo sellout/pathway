@@ -34,7 +34,14 @@
       pkgs
       hpkgs
       (old: {
-        configureFlags = old.configureFlags ++ ["--ghc-options=-Werror"];
+        ## These should match `program-options` in ../../cabal.project.
+        configureFlags =
+          old.configureFlags
+          ++ [
+            "--ghc-options=-Werror"
+            "--ghc-options=-Wwarn=all-missed-specialisations"
+            "--ghc-options=-Wwarn=missed-specialisations"
+          ];
       });
   in {
     inherit
@@ -192,6 +199,7 @@ in
         "9.2.1"
         "9.4.1"
         "9.6.1"
+        ## since `cabal-plan-bounds` doesn’t work under Nix
         "9.8.1"
         "9.10.1"
         "9.12.1"

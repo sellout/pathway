@@ -3,7 +3,11 @@
 -- This module is inferred @Safe@ in some dependency solutions.
 {-# OPTIONS_GHC -Wno-safe -Wno-trustworthy-safe #-}
 
--- | A thin wrapper around "System.IO.Temp" that does little more than replace
+-- |
+-- Copyright: 2026 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-proprietary
+--
+--   A thin wrapper around "System.IO.Temp" that does little more than replace
 --   stringy paths with `Path`.
 --
 --  __NOTE__: There’s a bug in the underlying temporary library
@@ -20,6 +24,8 @@
 --            and so Pathway correspondingly escapes the template before passing
 --            it to the underlying operations in temporary, allowing arbitrary
 --            characters to be used in the template.
+--
+-- @since 99999
 #if MIN_VERSION_temporary(1, 2, 1)
 module System.IO.Temp.Thin
   ( withTempFile,
@@ -93,6 +99,12 @@ import safe "base" Data.Functor ((<$>))
 escapeTemplate :: String -> String
 escapeTemplate = escapeComponent Format.local
 
+-- | `System.IO.Temp.withTempFile`, on `Path`s.
+--
+--   Any path it returns that doesn’t parse is returned as an `InternalFailure`
+--   instead.
+--
+-- @since 99999
 withTempFile ::
   (MonadIO m, MonadMask m, Ord void) =>
   -- | Parent directory to create the file in
@@ -108,6 +120,12 @@ withTempFile parentDir template action =
     (escapeTemplate template)
     $ \file -> sequenceA . liftA2 action (absFileFromPathRep file) . pure
 
+-- | `System.IO.Temp.withTempDirectory`, on `Path`s.
+--
+--   Any path it returns that doesn’t parse is returned as an `InternalFailure`
+--   instead.
+--
+-- @since 99999
 withTempDirectory ::
   (MonadIO m, MonadMask m, Ord void) =>
   -- | Parent directory to create the file in
@@ -125,6 +143,8 @@ withTempDirectory parentDir template action =
 --   permissions.
 --
 -- Equivalent to `openBinaryTempFileWithDefaultPermissions`.
+--
+-- @since 99999
 openNewBinaryFile ::
   (Ord void) =>
   Path 'Abs 'Dir String ->
@@ -135,7 +155,10 @@ openNewBinaryFile dir =
     . Temp.openNewBinaryFile (toPathRep dir)
     . escapeTemplate
 
--- |
+-- | `System.IO.Temp.createTempDirectory`, on `Path`s.
+--
+--   Any path it returns that doesn’t parse is returned as an `InternalFailure`
+--   instead.
 --
 --   Here are some examples of the UnkindPartition/temporary#16 issue. It could
 --   be useful to have these cases not throw an exception, with a bit of
@@ -147,6 +170,8 @@ openNewBinaryFile dir =
 -- Left /home/me/tmp.../dir...: ...: does not exist (...)
 -- >>> try @SomeException $ Temp.createTempDirectory "/tmp" "some/dir"
 -- Left /tmp...some/dir...: ...: does not exist (...)
+--
+-- @since 99999
 createTempDirectory ::
   (Ord void) =>
   -- | Parent directory to create the directory in
@@ -160,6 +185,12 @@ createTempDirectory dir =
     . escapeTemplate
 
 #if MIN_VERSION_temporary(1, 1, 0)
+-- | `System.IO.Temp.withSystemTempFile`, on `Path`s.
+--
+--   Any path it returns that doesn’t parse is returned as an `InternalFailure`
+--   instead.
+--
+-- @since 99999
 withSystemTempFile ::
   (MonadIO m, MonadMask m, Ord void) =>
   -- | File name template
@@ -171,6 +202,12 @@ withSystemTempFile template action =
   Temp.withSystemTempFile (escapeTemplate template) $
     \file -> sequenceA . liftA2 action (absFileFromPathRep file) . pure
 
+-- | `System.IO.Temp.withSystemTempDirectory`, on `Path`s.
+--
+--   Any path it returns that doesn’t parse is returned as an `InternalFailure`
+--   instead.
+--
+-- @since 99999
 withSystemTempDirectory ::
   (MonadIO m, MonadMask m, Ord void) =>
   -- | File name template
@@ -184,6 +221,12 @@ withSystemTempDirectory template action =
 #endif
 
 #if MIN_VERSION_temporary(1, 2, 1)
+-- | `System.IO.Temp.writeTempFile`, on `Path`s.
+--
+--   Any path it returns that doesn’t parse is returned as an `InternalFailure`
+--   instead.
+--
+-- @since 99999
 writeTempFile ::
   (Ord void) =>
   -- | Parent directory to create the file in
@@ -198,6 +241,12 @@ writeTempFile dir template =
   fmap absFileFromPathRep
     . Temp.writeTempFile (toPathRep dir) (escapeTemplate template)
 
+-- | `System.IO.Temp.writeSystemTempFile`, on `Path`s.
+--
+--   Any path it returns that doesn’t parse is returned as an `InternalFailure`
+--   instead.
+--
+-- @since 99999
 writeSystemTempFile ::
   (Ord void) =>
   -- | File name template
@@ -209,6 +258,12 @@ writeSystemTempFile ::
 writeSystemTempFile template =
   fmap absFileFromPathRep . Temp.writeSystemTempFile (escapeTemplate template)
 
+-- | `System.IO.Temp.emptyTempFile`, on `Path`s.
+--
+--   Any path it returns that doesn’t parse is returned as an `InternalFailure`
+--   instead.
+--
+-- @since 99999
 emptyTempFile ::
   (Ord void) =>
   -- | Parent directory to create the file in
@@ -220,6 +275,12 @@ emptyTempFile ::
 emptyTempFile dir =
   fmap absFileFromPathRep . Temp.emptyTempFile (toPathRep dir) . escapeTemplate
 
+-- | `System.IO.Temp.emptySystemTempFile`, on `Path`s.
+--
+--   Any path it returns that doesn’t parse is returned as an `InternalFailure`
+--   instead.
+--
+-- @since 99999
 emptySystemTempFile ::
   (Ord void) =>
   -- | File name template
@@ -229,6 +290,12 @@ emptySystemTempFile ::
 emptySystemTempFile =
   fmap absFileFromPathRep . Temp.emptySystemTempFile . escapeTemplate
 
+-- | `System.IO.Temp.getCanonicalTemporaryDirectory`, on `Path`s.
+--
+--   Any path it returns that doesn’t parse is returned as an `InternalFailure`
+--   instead.
+--
+-- @since 99999
 getCanonicalTemporaryDirectory ::
   (Ord void) =>
   IO (Either (InternalFailure FilePath void) (Path 'Abs 'Dir String))

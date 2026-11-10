@@ -1,7 +1,11 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE Safe #-}
 
--- | This provides an API similar to "System.Directory", but for Pathway types.
+-- |
+-- Copyright: 2026 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-proprietary
+--
+--   This provides an API similar to "System.Directory", but for Pathway types.
 --
 --   Some differences:
 -- - operations mostly require absolute paths, the “current directory” is not
@@ -24,6 +28,8 @@
 --   reported to users, and often without enough context. This tries to ensure
 --   that there is at least a full path available (unless the developer makes an
 --   effort to remove it.
+--
+-- @since 99999
 #if MIN_VERSION_base(4, 17, 0)
 module System.Environment.Thin
   ( executablePath,
@@ -51,6 +57,12 @@ import "base" Data.Functor (fmap)
 import "base" Data.Maybe (Maybe)
 import "this" Common (absFileFromPathRep)
 
+-- | `System.Environment.executablePath`, on `Path`s.
+--
+--   Any path it returns that doesn’t parse is returned as an `InternalFailure`
+--   instead.
+--
+-- @since 99999
 executablePath ::
   (Ord e) =>
   Maybe
@@ -60,6 +72,12 @@ executablePath ::
 executablePath = fmap (absFileFromPathRep <$>) <$> Env.executablePath
 #endif
 
+-- | `System.Environment.getExecutablePath`, on `Path`s.
+--
+--   Any path it returns that doesn’t parse is returned as an `InternalFailure`
+--   instead.
+--
+-- @since 99999
 getExecutablePath ::
   (Ord e) =>
   -- |

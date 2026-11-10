@@ -2,7 +2,11 @@
 -- This module is inferred @Safe@ in some dependency solutions.
 {-# OPTIONS_GHC -Wno-safe -Wno-trustworthy-safe #-}
 
--- | This provides an API similar to "System.Directory", but for Pathway types.
+-- |
+-- Copyright: 2026 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-proprietary
+--
+--   This provides an API similar to "System.Directory", but for Pathway types.
 --
 --   Some differences:
 -- - operations mostly require absolute paths, the “current directory” is not
@@ -25,6 +29,8 @@
 --   reported to users, and often without enough context. This tries to ensure
 --   that there is at least a full path available (unless the developer makes an
 --   effort to remove it.
+--
+-- @since 99999
 module System.Directory.Common
   ( Operations (..),
     Permissions,
@@ -41,24 +47,39 @@ import safe "pathway" Data.Path (Path, Relativity (Abs, Rel), Type, Typey)
 import safe "pathway" Data.Path.Relativity qualified as Rel
 import safe "pathway-compat-base" Common (InternalFailure)
 
+-- | Operations whose implementation depends on both the representation and the
+--   `Type` of the path.
+--
+-- @since 99999
 type Operations :: Kind.Type -> Type -> Kind.Constraint
 class (Typey typ) => Operations rep typ where
+  -- | `System.Directory.canonicalizePath`, on `Path`s.
+  --
+  -- @since 99999
   canonicalizePath ::
     (Ord e) =>
     Path 'Abs typ rep ->
     IO (Either (InternalFailure rep e) (Path 'Abs typ rep))
 
   -- | Don’t use this. It relies on the “current directory”.
+  --
+  -- @since 99999
   makeAbsolute ::
     (Ord e) =>
     Path ('Rel 'True) typ rep ->
     IO (Either (InternalFailure rep e) (Path 'Abs typ rep))
 
+  -- | Don’t use this. It relies on the “current directory”.
+  --
+  -- @since 99999
   makeRelativeToCurrentDirectory ::
     (Ord e) =>
     Path 'Abs typ rep ->
     IO (Either (InternalFailure rep e) (Path ('Rel 'True) typ rep))
 
+  -- | `System.Directory.getSymbolicLinkTarget`, on `Path`s.
+  --
+  -- @since 99999
   getSymbolicLinkTarget ::
     (Ord e) =>
     Path 'Abs typ rep ->

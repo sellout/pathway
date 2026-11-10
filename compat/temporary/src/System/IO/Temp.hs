@@ -6,6 +6,11 @@
 -- This module is inferred @Safe@ in some dependency solutions.
 {-# OPTIONS_GHC -Wno-safe -Wno-trustworthy-safe #-}
 
+-- |
+-- Copyright: 2026 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-proprietary
+--
+-- @since 99999
 module System.IO.Temp
   ( module System.IO.DropIn,
     module System.IO.Temp,

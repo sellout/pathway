@@ -10,6 +10,11 @@
 -- this module is inferred ‘Safe’ in some configurations.
 {-# OPTIONS_GHC -Wno-safe -Wno-trustworthy-safe #-}
 
+-- |
+-- Copyright: 2026 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-proprietary
+--
+-- @since 99999
 #if MIN_VERSION_directory(1, 3, 10)
 module System.Directory.OsPath.Thin
   ( InternalFailure (..),
@@ -266,23 +271,40 @@ mixedPathFromPathRep =
 
 -- * Above here needs to be moved
 
+-- | `System.Directory.OsPath.createDirectory`, on `Path`s.
+--
+-- @since 99999
 createDirectory :: Path 'Abs 'Dir OsString -> IO ()
 createDirectory = Dir.createDirectory . toPathRep
 
 -- | Can perhaps unify this and the following definition depending on how we
 --   handle errors.
+--
+-- @since 99999
 createDirectoryIfMissing :: Bool -> Path 'Abs 'Dir OsString -> IO ()
 createDirectoryIfMissing cp = Dir.createDirectoryIfMissing cp . toPathRep
 
+-- | `System.Directory.OsPath.removeDirectory`, on `Path`s.
+--
+-- @since 99999
 removeDirectory :: Path 'Abs 'Dir OsString -> IO ()
 removeDirectory = Dir.removeDirectory . toPathRep
 
+-- | `System.Directory.OsPath.removeDirectoryRecursive`, on `Path`s.
+--
+-- @since 99999
 removeDirectoryRecursive :: Path 'Abs 'Dir OsString -> IO ()
 removeDirectoryRecursive = Dir.removeDirectoryRecursive . toPathRep
 
+-- | `System.Directory.OsPath.removePathForcibly`, on `Path`s.
+--
+-- @since 99999
 removePathForcibly :: (Typey typ) => Path 'Abs typ OsString -> IO ()
 removePathForcibly = Dir.removePathForcibly . toPathRep
 
+-- | `System.Directory.OsPath.renameDirectory`, on `Path`s.
+--
+-- @since 99999
 renameDirectory :: Path 'Abs 'Dir OsString -> Path 'Abs 'Dir OsString -> IO ()
 renameDirectory source = Dir.renameDirectory (toPathRep source) . toPathRep
 
@@ -325,6 +347,12 @@ disambiguateRelative base rel =
     . disambiguate
     $ base </> rel
 
+-- | `System.Directory.OsPath.listDirectory`, on `Path`s.
+--
+--   Any path it returns that doesn’t parse is returned as an `InternalFailure`
+--   instead.
+--
+-- @since 99999
 listDirectory ::
   (Ord e) =>
   Path 'Abs 'Dir OsString ->
@@ -350,6 +378,12 @@ listDirectory base =
     <=< Dir.listDirectory
     $ toPathRep base
 
+-- | `System.Directory.OsPath.getDirectoryContents`, on `Path`s.
+--
+--   Any path it returns that doesn’t parse is returned as an `InternalFailure`
+--   instead.
+--
+-- @since 99999
 getDirectoryContents ::
   (Ord e) =>
   Path 'Abs 'Dir OsString ->
@@ -375,6 +409,12 @@ getDirectoryContents base =
     <=< Dir.getDirectoryContents
     $ toPathRep base
 
+-- | `System.Directory.OsPath.getCurrentDirectory`, on `Path`s.
+--
+--   Any path it returns that doesn’t parse is returned as an `InternalFailure`
+--   instead.
+--
+-- @since 99999
 getCurrentDirectory ::
   (Ord e) =>
   IO (Either (InternalFailure OsPath e) (Path 'Abs 'Dir OsString))
@@ -384,12 +424,23 @@ getCurrentDirectory = absDirFromPathRep <$> Dir.getCurrentDirectory
 --   “current directory” (as the pathway-system library encourages), but if you
 --   are using code that expects the current directory to be set, then use
 --   `withCurrentDirectory`.
+--
+-- @since 99999
 setCurrentDirectory :: Path 'Abs 'Dir OsString -> IO ()
 setCurrentDirectory = Dir.setCurrentDirectory . toPathRep
 
+-- | `System.Directory.OsPath.withCurrentDirectory`, on `Path`s.
+--
+-- @since 99999
 withCurrentDirectory :: Path 'Abs 'Dir OsString -> IO a -> IO a
 withCurrentDirectory = Dir.withCurrentDirectory . toPathRep
 
+-- | `System.Directory.OsPath.getHomeDirectory`, on `Path`s.
+--
+--   Any path it returns that doesn’t parse is returned as an `InternalFailure`
+--   instead.
+--
+-- @since 99999
 getHomeDirectory ::
   (Ord e) => IO (Either (InternalFailure OsPath e) (Path 'Abs 'Dir OsString))
 getHomeDirectory = absDirFromPathRep <$> Dir.getHomeDirectory
@@ -402,6 +453,8 @@ overAbsDir ::
 overAbsDir op = fmap absDirFromPathRep . op . toPathRep
 
 -- | Prefer `XDG.BaseDirectory.*Home`.`
+--
+-- @since 99999
 getXdgDirectory ::
   (Ord e) =>
   XdgDirectory ->
@@ -409,6 +462,12 @@ getXdgDirectory ::
   IO (Either (InternalFailure OsPath e) (Path 'Abs 'Dir OsString))
 getXdgDirectory = overAbsDir . Dir.getXdgDirectory
 
+-- | `System.Directory.OsPath.getXdgDirectoryList`, on `Path`s.
+--
+--   Any path it returns that doesn’t parse is returned as an `InternalFailure`
+--   instead.
+--
+-- @since 99999
 getXdgDirectoryList ::
   (Ord e) =>
   XdgDirectoryList ->
@@ -416,6 +475,8 @@ getXdgDirectoryList ::
 getXdgDirectoryList = fmap (absDirFromPathRep <$>) . Dir.getXdgDirectoryList
 
 -- | Prefer `XDG.BaseDirectory.*Home`.
+--
+-- @since 99999
 getAppUserDataDirectory ::
   (Ord e) =>
   Path ('Rel 'False) 'Dir OsString ->
@@ -423,28 +484,47 @@ getAppUserDataDirectory ::
 getAppUserDataDirectory = overAbsDir Dir.getAppUserDataDirectory
 
 -- | Prefer `XDG.UserDirectory.Common.documents`.
+--
+-- @since 99999
 getUserDocumentsDirectory ::
   (Ord e) => IO (Either (InternalFailure OsPath e) (Path 'Abs 'Dir OsString))
 getUserDocumentsDirectory = absDirFromPathRep <$> Dir.getUserDocumentsDirectory
 
 -- | Prefer `XDG.BaseDirectory.runtimeDir`.
+--
+-- @since 99999
 getTemporaryDirectory ::
   (Ord e) => IO (Either (InternalFailure OsPath e) (Path 'Abs 'Dir OsString))
 getTemporaryDirectory = absDirFromPathRep <$> Dir.getTemporaryDirectory
 
 #if MIN_VERSION_directory(1, 3, 10)
+-- | `System.Directory.OsPath.getExecSearchPath`, on `Path`s.
+--
+--   Any path it returns that doesn’t parse is returned as an `InternalFailure`
+--   instead.
+--
+-- @since 99999
 getExecSearchPath ::
   (Ord e) =>
   IO [Either (InternalFailure OsPath e) (Path 'Abs 'Dir OsString)]
 getExecSearchPath = fmap absDirFromPathRep <$> Dir.getExecSearchPath
 #endif
 
+-- | `System.Directory.OsPath.removeFile`, on `Path`s.
+--
+-- @since 99999
 removeFile :: Path 'Abs 'File OsString -> IO ()
 removeFile = Dir.removeFile . toPathRep
 
+-- | `System.Directory.OsPath.renameFile`, on `Path`s.
+--
+-- @since 99999
 renameFile :: Path 'Abs 'File OsString -> Path 'Abs 'File OsString -> IO ()
 renameFile old = Dir.renameFile (toPathRep old) . toPathRep
 
+-- | `System.Directory.OsPath.renamePath`, on `Path`s.
+--
+-- @since 99999
 renamePath ::
   (Typey typ) => Path 'Abs typ OsString -> Path 'Abs typ OsString -> IO ()
 renamePath source = Dir.renamePath (toPathRep source) . toPathRep
@@ -456,17 +536,27 @@ copyFile' ::
   IO ()
 copyFile' op source = op (toPathRep source) . toPathRep
 
+-- | `System.Directory.OsPath.copyFile`, on `Path`s.
+--
+-- @since 99999
 copyFile ::
   Path 'Abs 'File OsString -> Path 'Abs 'File OsString -> IO ()
 copyFile = copyFile' Dir.copyFile
 
+-- | `System.Directory.OsPath.copyFileWithMetadata`, on `Path`s.
+--
+-- @since 99999
 copyFileWithMetadata ::
   Path 'Abs 'File OsString -> Path 'Abs 'File OsString -> IO ()
 copyFileWithMetadata = copyFile' Dir.copyFileWithMetadata
 
+-- | `System.Directory.OsPath.getFileSize`, on `Path`s.
+--
+-- @since 99999
 getFileSize :: Path 'Abs 'File OsString -> IO Integer
 getFileSize = Dir.getFileSize . toPathRep
 
+-- | @since 99999
 instance Operations OsString 'Dir where
   canonicalizePath = fmap absDirFromPathRep . Dir.canonicalizePath . toPathRep
   makeAbsolute = fmap absDirFromPathRep . Dir.makeAbsolute . toPathRep
@@ -475,6 +565,7 @@ instance Operations OsString 'Dir where
   getSymbolicLinkTarget =
     fmap anyDirFromPathRep . Dir.getSymbolicLinkTarget . toPathRep
 
+-- | @since 99999
 instance Operations OsString 'File where
   canonicalizePath = fmap absFileFromPathRep . Dir.canonicalizePath . toPathRep
   makeAbsolute = fmap absFileFromPathRep . Dir.makeAbsolute . toPathRep
@@ -483,12 +574,21 @@ instance Operations OsString 'File where
   getSymbolicLinkTarget =
     fmap anyFileFromPathRep . Dir.getSymbolicLinkTarget . toPathRep
 
+-- | `System.Directory.OsPath.doesPathExist`, on `Path`s.
+--
+-- @since 99999
 doesPathExist :: (Typey typ) => Path 'Abs typ OsString -> IO Bool
 doesPathExist = Dir.doesPathExist . toPathRep
 
+-- | `System.Directory.OsPath.doesFileExist`, on `Path`s.
+--
+-- @since 99999
 doesFileExist :: Path 'Abs 'File OsString -> IO Bool
 doesFileExist = Dir.doesFileExist . toPathRep
 
+-- | `System.Directory.OsPath.doesDirectoryExist`, on `Path`s.
+--
+-- @since 99999
 doesDirectoryExist :: Path 'Abs 'Dir OsString -> IO Bool
 doesDirectoryExist = Dir.doesDirectoryExist . toPathRep
 
@@ -503,12 +603,20 @@ findExecutables' op = fmap (absFileFromPathRep <$>) . op . toPathRep
 --   absolute path, and 2. the paths searched are platform-specific, so
 --   difficult to extract portably (especially when trying to match a search
 --   function).
+--
+-- @since 99999
 findExecutable ::
   (Ord e) =>
   Path ('Rel 'True) 'File OsString ->
   IO (Maybe (Either (InternalFailure OsPath e) (Path 'Abs 'File OsString)))
 findExecutable = findExecutables' Dir.findExecutable
 
+-- | `System.Directory.OsPath.findExecutables`, on `Path`s.
+--
+--   Any path it returns that doesn’t parse is returned as an `InternalFailure`
+--   instead.
+--
+-- @since 99999
 findExecutables ::
   (Ord e) =>
   Path ('Rel 'True) 'File OsString ->
@@ -524,6 +632,12 @@ findFiles' ::
 findFiles' op dirs =
   fmap (absFileFromPathRep <$>) . op (toPathRep <$> dirs) . toPathRep
 
+-- | `System.Directory.OsPath.findExecutablesInDirectories`, on `Path`s.
+--
+--   Any path it returns that doesn’t parse is returned as an `InternalFailure`
+--   instead.
+--
+-- @since 99999
 findExecutablesInDirectories ::
   (Ord e) =>
   [Path 'Abs 'Dir OsString] ->
@@ -542,6 +656,8 @@ findExecutablesInDirectories = findFiles' Dir.findExecutablesInDirectories
 --            `Pathway`, it probably isn’t because we probably want to return a
 --            /parsable/ path if one exists, and this one could return an
 --            unparsable path first.
+--
+-- @since 99999
 findFile ::
   (Ord e) =>
   [Path 'Abs 'Dir OsString] ->
@@ -549,6 +665,12 @@ findFile ::
   IO (Maybe (Either (InternalFailure OsPath e) (Path 'Abs 'File OsString)))
 findFile = findFiles' Dir.findFile
 
+-- | `System.Directory.OsPath.findFiles`, on `Path`s.
+--
+--   Any path it returns that doesn’t parse is returned as an `InternalFailure`
+--   instead.
+--
+-- @since 99999
 findFiles ::
   (Ord e) =>
   [Path 'Abs 'Dir OsString] ->
@@ -583,6 +705,12 @@ findFilesWith' op pred dirs =
     . op (either throwIO pred . absFileFromPathRep @Void) (toPathRep <$> dirs)
     . toPathRep
 
+-- | `System.Directory.OsPath.findFileWith`, on `Path`s.
+--
+--   Any path it returns that doesn’t parse is returned as an `InternalFailure`
+--   instead.
+--
+-- @since 99999
 findFileWith ::
   forall e.
   (Ord e) =>
@@ -592,6 +720,12 @@ findFileWith ::
   IO (Maybe (Either (InternalFailure OsPath e) (Path 'Abs 'File OsString)))
 findFileWith = findFilesWith' Dir.findFileWith
 
+-- | `System.Directory.OsPath.findFilesWith`, on `Path`s.
+--
+--   Any path it returns that doesn’t parse is returned as an `InternalFailure`
+--   instead.
+--
+-- @since 99999
 findFilesWith ::
   (Ord e) =>
   (Path 'Abs 'File OsString -> IO Bool) ->
@@ -600,26 +734,47 @@ findFilesWith ::
   IO [Either (InternalFailure OsPath e) (Path 'Abs 'File OsString)]
 findFilesWith = findFilesWith' Dir.findFilesWith
 
+-- | `System.Directory.OsPath.createFileLink`, on `Path`s.
+--
+-- @since 99999
 createFileLink :: (Relative rel) => Path rel 'File OsString -> Path 'Abs 'File OsString -> IO ()
 createFileLink old = Dir.createFileLink (toPathRep old) . toPathRep
 
+-- | `System.Directory.OsPath.createDirectoryLink`, on `Path`s.
+--
+-- @since 99999
 createDirectoryLink :: (Relative rel) => Path rel 'Dir OsString -> Path 'Abs 'Dir OsString -> IO ()
 createDirectoryLink old = Dir.createDirectoryLink (toPathRep old) . toPathRep
 
+-- | `System.Directory.OsPath.removeDirectoryLink`, on `Path`s.
+--
+-- @since 99999
 removeDirectoryLink :: Path 'Abs 'Dir OsString -> IO ()
 removeDirectoryLink = Dir.removeDirectoryLink . toPathRep
 
+-- | `System.Directory.OsPath.pathIsSymbolicLink`, on `Path`s.
+--
+-- @since 99999
 pathIsSymbolicLink :: (Typey typ) => Path 'Abs typ OsString -> IO Bool
 pathIsSymbolicLink = Dir.pathIsSymbolicLink . toPathRep
 
+-- | `System.Directory.OsPath.getPermissions`, on `Path`s.
+--
+-- @since 99999
 getPermissions ::
   (Typey typ) => Path 'Abs typ OsString -> IO Dir.Permissions
 getPermissions = Dir.getPermissions . toPathRep
 
+-- | `System.Directory.OsPath.setPermissions`, on `Path`s.
+--
+-- @since 99999
 setPermissions ::
   (Typey typ) => Path 'Abs typ OsString -> Dir.Permissions -> IO ()
 setPermissions = Dir.setPermissions . toPathRep
 
+-- | `System.Directory.OsPath.copyPermissions`, on `Path`s.
+--
+-- @since 99999
 copyPermissions ::
   (Typey typ, Typey typ') =>
   Path 'Abs typ OsString ->
@@ -627,15 +782,27 @@ copyPermissions ::
   IO ()
 copyPermissions from = Dir.copyPermissions (toPathRep from) . toPathRep
 
+-- | `System.Directory.OsPath.getAccessTime`, on `Path`s.
+--
+-- @since 99999
 getAccessTime :: (Typey typ) => Path 'Abs typ OsString -> IO UTCTime
 getAccessTime = Dir.getAccessTime . toPathRep
 
+-- | `System.Directory.OsPath.getModificationTime`, on `Path`s.
+--
+-- @since 99999
 getModificationTime :: (Typey typ) => Path 'Abs typ OsString -> IO UTCTime
 getModificationTime = Dir.getModificationTime . toPathRep
 
+-- | `System.Directory.OsPath.setAccessTime`, on `Path`s.
+--
+-- @since 99999
 setAccessTime :: (Typey typ) => Path 'Abs typ OsString -> UTCTime -> IO ()
 setAccessTime = Dir.setAccessTime . toPathRep
 
+-- | `System.Directory.OsPath.setModificationTime`, on `Path`s.
+--
+-- @since 99999
 setModificationTime ::
   (Typey typ) => Path 'Abs typ OsString -> UTCTime -> IO ()
 setModificationTime = Dir.setModificationTime . toPathRep

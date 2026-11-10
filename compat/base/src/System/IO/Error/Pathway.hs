@@ -5,11 +5,13 @@
 {-# OPTIONS_GHC -Wno-missing-import-lists #-}
 
 -- |
--- Copyright: 2024 Greg Pfeil
+-- Copyright: 2026 Greg Pfeil
 -- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-proprietary
 --
 -- This is a drop-in replacement for "System.IO.Error", with
 -- `System.IO.FilePath` replaced by `Data.Path.Path` types.
+--
+-- @since 99999
 module System.IO.Error.Pathway
   ( module System.IO.Error,
     module System.IO.Error.Caught,

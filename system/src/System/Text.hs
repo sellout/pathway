@@ -4,6 +4,11 @@
 -- This module is inferred @Safe@ in some dependency solutions.
 {-# OPTIONS_GHC -Wno-safe -Wno-trustworthy-safe #-}
 
+-- |
+-- Copyright: 2026 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-proprietary
+--
+-- @since 99999
 module System.Text
   ( Rep (..),
   )
@@ -28,14 +33,37 @@ import "pathway-compat-filepath" System.OsPath.Pathway (OsChar, OsString)
 import "pathway-compat-filepath" System.OsPath.Pathway qualified as O.Path
 #endif
 
+-- | The representations of text that the system’s paths can be built from.
+--
+-- @since 99999
 type Rep :: Kind.Type -> Kind.Constraint
 class (Ord a, Generic a, Monoid a, Show a) => Rep (a :: Kind.Type) where
+  -- | The type of the characters of @a@.
+  --
+  -- @since 99999
   type Char a
+
+  -- | Encode a `String` in this representation.
+  --
+  -- @since 99999
   encodeString :: String -> IO a
+
+  -- | `System.Environment.lookupEnv`, in this representation.
+  --
+  -- @since 99999
   lookupEnv :: a -> IO (Maybe a)
+
+  -- | Build a value from its characters.
+  --
+  -- @since 99999
   pack :: [Char a] -> a
+
+  -- | The character that separates path components on this system.
+  --
+  -- @since 99999
   pathSeparator :: proxy a -> Char a
 
+-- | @since 99999
 instance Rep String where
   type Char String = Base.Char
   encodeString = pure
@@ -44,6 +72,7 @@ instance Rep String where
   pathSeparator _ = F.Path.pathSeparator
 
 #if MIN_VERSION_GLASGOW_HASKELL(9, 6, 1, 0)
+-- | @since 99999
 instance Rep OsString where
   type Char OsString = OsChar
   encodeString = O.Path.encodeUtf

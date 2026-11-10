@@ -5,6 +5,11 @@
 --       `$dPopVariant_aei8`, but it should.
 {-# OPTIONS_GHC -fplugin-opt NoRecursion:allow-recursion:true #-}
 
+-- |
+-- Copyright: 2026 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-proprietary
+--
+-- @since 99999
 module System.Directory.Error
   ( InternalFailure (..),
     MaybeParentCreationFailure,
@@ -73,6 +78,10 @@ import safe "pathway-compat-base" System.IO.Error.Pathway
   )
 import "variant" Data.Variant (V, liftVariant, toVariant, (:<))
 
+-- | The errors raised by creating a directory that may already exist, along
+--   with any missing parents.
+--
+-- @since 99999
 type MaybeParentCreationFailure :: [Kind.Type]
 type MaybeParentCreationFailure =
   '[ FullError,
@@ -82,6 +91,10 @@ type MaybeParentCreationFailure =
      HardwareFault
    ]
 
+-- | Classify an `IOError` as one of the `MaybeParentCreationFailure`s, or
+--   `Nothing` if it isn’t one (so `tryJust` rethrows it).
+--
+-- @since 99999
 recoverMaybeParentCreationFailure ::
   IOError -> Maybe (V MaybeParentCreationFailure)
 recoverMaybeParentCreationFailure ioe =
@@ -94,24 +107,43 @@ recoverMaybeParentCreationFailure ioe =
         IO.HardwareFault -> pure . toVariant $ HardwareFault ioe
         _ -> empty
 
+-- | The errors raised by creating a directory that may already exist. This
+--   extends `MaybeParentCreationFailure` with the parent not existing.
+--
+-- @since 99999
 type MaybeCreationFailure :: [Kind.Type]
 type MaybeCreationFailure = DoesNotExistError ': MaybeParentCreationFailure
 
+-- | Classify an `IOError` as one of the `MaybeCreationFailure`s, or `Nothing`
+--   if it isn’t one (so `tryJust` rethrows it).
+--
+-- @since 99999
 recoverMaybeCreationFailure :: IOError -> Maybe (V MaybeCreationFailure)
 recoverMaybeCreationFailure ioe =
   if IO.isDoesNotExistError ioe
     then pure . toVariant $ DoesNotExistError ioe
     else liftVariant <$> recoverMaybeParentCreationFailure ioe
 
+-- | The errors raised by creating a directory. This extends
+--   `MaybeCreationFailure` with the directory already existing.
+--
+-- @since 99999
 type CreationFailure :: [Kind.Type]
 type CreationFailure = AlreadyExistsError ': MaybeCreationFailure
 
+-- | Classify an `IOError` as one of the `CreationFailure`s, or `Nothing` if it
+--   isn’t one (so `tryJust` rethrows it).
+--
+-- @since 99999
 recoverCreationFailure :: IOError -> Maybe (V CreationFailure)
 recoverCreationFailure ioe =
   if IO.isAlreadyExistsError ioe
     then pure . toVariant $ AlreadyExistsError ioe
     else liftVariant <$> recoverMaybeCreationFailure ioe
 
+-- | The errors raised by removing a file.
+--
+-- @since 99999
 type RemovalFailure :: [Kind.Type]
 type RemovalFailure =
   '[ DoesNotExistError,
@@ -122,6 +154,10 @@ type RemovalFailure =
      HardwareFault
    ]
 
+-- | Classify an `IOError` as one of the `RemovalFailure`s, or `Nothing` if it
+--   isn’t one (so `tryJust` rethrows it).
+--
+-- @since 99999
 recoverRemovalFailure :: IOError -> Maybe (V RemovalFailure)
 recoverRemovalFailure ioe =
   if
@@ -134,15 +170,25 @@ recoverRemovalFailure ioe =
         IO.HardwareFault -> pure . toVariant $ HardwareFault ioe
         _ -> empty
 
+-- | The errors raised by removing a directory. This extends `RemovalFailure`.
+--
+-- @since 99999
 type DirRemovalFailure :: [Kind.Type]
 type DirRemovalFailure = UnsupportedOperation ': RemovalFailure
 
+-- | Classify an `IOError` as one of the `DirRemovalFailure`s, or `Nothing` if
+--   it isn’t one (so `tryJust` rethrows it).
+--
+-- @since 99999
 recoverDirRemovalFailure :: IOError -> Maybe (V DirRemovalFailure)
 recoverDirRemovalFailure ioe =
   case IO.ioeGetErrorType ioe of
     IO.UnsupportedOperation -> pure . toVariant $ UnsupportedOperation ioe
     _ -> liftVariant <$> recoverRemovalFailure ioe
 
+-- | The errors raised by listing the contents of a directory.
+--
+-- @since 99999
 type ListFailure :: [Kind.Type]
 type ListFailure =
   '[ DoesNotExistError,
@@ -153,6 +199,10 @@ type ListFailure =
      PermissionError
    ]
 
+-- | Classify an `IOError` as one of the `ListFailure`s, or `Nothing` if it
+--   isn’t one (so `tryJust` rethrows it).
+--
+-- @since 99999
 recoverListFailure :: IOError -> Maybe (V ListFailure)
 recoverListFailure ioe =
   if
@@ -165,18 +215,34 @@ recoverListFailure ioe =
         IO.InappropriateType -> pure . toVariant $ InappropriateType ioe
         _ -> empty
 
+-- | The errors raised by looking up a special directory, including an
+--   `InternalFailure` when the result doesn’t parse.
+--
+-- @since 99999
 type GetDirectoryFailure :: Kind.Type -> [Kind.Type]
 type GetDirectoryFailure rep = '[UnsupportedOperation, InternalFailure rep Void]
 
+-- | Classify an `IOError` as one of the `GetDirectoryFailure`s, or `Nothing` if
+--   it isn’t one (so `tryJust` rethrows it).
+--
+-- @since 99999
 recoverGetDirectoryFailure :: IOError -> Maybe (V (GetDirectoryFailure rep))
 recoverGetDirectoryFailure ioe =
   case IO.ioeGetErrorType ioe of
     IO.UnsupportedOperation -> pure . toVariant $ UnsupportedOperation ioe
     _ -> empty
 
+-- | The errors raised by looking up a user-specific directory. This extends
+--   `GetDirectoryFailure`.
+--
+-- @since 99999
 type GetUserDirectoryFailure :: Kind.Type -> [Kind.Type]
 type GetUserDirectoryFailure rep = DoesNotExistError ': GetDirectoryFailure rep
 
+-- | Classify an `IOError` as one of the `GetUserDirectoryFailure`s, or
+--   `Nothing` if it isn’t one (so `tryJust` rethrows it).
+--
+-- @since 99999
 recoverGetUserDirectoryFailure ::
   forall rep. IOError -> Maybe (V (GetUserDirectoryFailure rep))
 recoverGetUserDirectoryFailure ioe =
@@ -186,9 +252,15 @@ recoverGetUserDirectoryFailure ioe =
 
 -- | `InternalFailure` still occurs in these contexts, but it’s specific to each
 --   directory in the result, so it doesn’t appear in this union.
+--
+-- @since 99999
 type GetUserDirectoriesFailure :: [Kind.Type]
 type GetUserDirectoriesFailure = '[UnsupportedOperation, DoesNotExistError]
 
+-- | Classify an `IOError` as one of the `GetUserDirectoriesFailure`s, or
+--   `Nothing` if it isn’t one (so `tryJust` rethrows it).
+--
+-- @since 99999
 recoverGetUserDirectoriesFailure :: IOError -> Maybe (V GetUserDirectoriesFailure)
 recoverGetUserDirectoriesFailure ioe =
   if IO.isDoesNotExistError ioe
@@ -197,6 +269,9 @@ recoverGetUserDirectoriesFailure ioe =
       IO.UnsupportedOperation -> pure . toVariant $ UnsupportedOperation ioe
       _ -> empty
 
+-- | The errors raised by getting the “current” directory.
+--
+-- @since 99999
 type CurrentDirectoryFailure :: [Kind.Type]
 type CurrentDirectoryFailure =
   '[ PermissionError,
@@ -205,6 +280,10 @@ type CurrentDirectoryFailure =
      HardwareFault
    ]
 
+-- | Classify an `IOError` as one of the `CurrentDirectoryFailure`s, or
+--   `Nothing` if it isn’t one (so `tryJust` rethrows it).
+--
+-- @since 99999
 recoverCurrentDirectoryFailure :: IOError -> Maybe (V CurrentDirectoryFailure)
 recoverCurrentDirectoryFailure ioe =
   if
@@ -215,10 +294,18 @@ recoverCurrentDirectoryFailure ioe =
         IO.HardwareFault -> pure . toVariant $ HardwareFault ioe
         _ -> empty
 
+-- | The errors raised by setting the “current” directory. This extends
+--   `CurrentDirectoryFailure`.
+--
+-- @since 99999
 type SetCurrentDirectoryFailure :: [Kind.Type]
 type SetCurrentDirectoryFailure =
   InvalidArgument ': InappropriateType ': CurrentDirectoryFailure
 
+-- | Classify an `IOError` as one of the `SetCurrentDirectoryFailure`s, or
+--   `Nothing` if it isn’t one (so `tryJust` rethrows it).
+--
+-- @since 99999
 recoverSetCurrentDirectoryFailure ::
   IOError -> Maybe (V SetCurrentDirectoryFailure)
 recoverSetCurrentDirectoryFailure ioe =
@@ -227,6 +314,10 @@ recoverSetCurrentDirectoryFailure ioe =
     IO.InappropriateType -> pure . toVariant $ InappropriateType ioe
     _ -> liftVariant <$> recoverCurrentDirectoryFailure ioe
 
+-- | Like `tryJust`, but also folds an `InternalFailure` returned by the action
+--   into the same variant as the recovered errors.
+--
+-- @since 99999
 tryWithIF ::
   (InternalFailure rep Void :< l) =>
   (IOError -> Maybe (V l)) ->
@@ -234,6 +325,9 @@ tryWithIF ::
   IO (Either (V l) a)
 tryWithIF recover = fmap (first toVariant =<<) . tryJust recover
 
+-- | The errors raised by renaming a file or directory.
+--
+-- @since 99999
 type RenameFailure :: [Kind.Type]
 type RenameFailure =
   '[ DoesNotExistError,
@@ -246,6 +340,10 @@ type RenameFailure =
      UnsupportedOperation
    ]
 
+-- | Classify an `IOError` as one of the `RenameFailure`s, or `Nothing` if it
+--   isn’t one (so `tryJust` rethrows it).
+--
+-- @since 99999
 recoverRenameFailure :: IOError -> Maybe (V RenameFailure)
 recoverRenameFailure ioe =
   if
@@ -260,6 +358,10 @@ recoverRenameFailure ioe =
         IO.UnsupportedOperation -> pure . toVariant $ UnsupportedOperation ioe
         _ -> empty
 
+-- | The errors raised by making a path absolute or canonical, including an
+--   `InternalFailure` when the result doesn’t parse.
+--
+-- @since 99999
 type MakeFailure :: Kind.Type -> [Kind.Type]
 type MakeFailure rep =
   '[ PermissionError,
@@ -269,6 +371,10 @@ type MakeFailure rep =
      InternalFailure rep Void
    ]
 
+-- | Classify an `IOError` as one of the `MakeFailure`s, or `Nothing` if it
+--   isn’t one (so `tryJust` rethrows it).
+--
+-- @since 99999
 recoverMakeFailure :: IOError -> Maybe (V (MakeFailure rep))
 recoverMakeFailure ioe =
   if
@@ -279,9 +385,16 @@ recoverMakeFailure ioe =
         IO.HardwareFault -> pure . toVariant $ HardwareFault ioe
         _ -> empty
 
+-- | The errors raised by creating a symbolic link.
+--
+-- @since 99999
 type CreateLinkFailure :: [Kind.Type]
 type CreateLinkFailure = '[UnsupportedOperation, PermissionError]
 
+-- | Classify an `IOError` as one of the `CreateLinkFailure`s, or `Nothing` if
+--   it isn’t one (so `tryJust` rethrows it).
+--
+-- @since 99999
 recoverCreateLinkFailure :: IOError -> Maybe (V CreateLinkFailure)
 recoverCreateLinkFailure ioe =
   if IO.isPermissionError ioe
@@ -290,9 +403,17 @@ recoverCreateLinkFailure ioe =
       IO.UnsupportedOperation -> pure . toVariant $ UnsupportedOperation ioe
       _ -> empty
 
+-- | The errors raised by reading or writing the metadata of a file or
+--   directory.
+--
+-- @since 99999
 type MetadataFailure :: [Kind.Type]
 type MetadataFailure = '[PermissionError, DoesNotExistError]
 
+-- | Classify an `IOError` as one of the `MetadataFailure`s, or `Nothing` if it
+--   isn’t one (so `tryJust` rethrows it).
+--
+-- @since 99999
 recoverMetadataFailure :: IOError -> Maybe (V MetadataFailure)
 recoverMetadataFailure ioe =
   if

@@ -1,6 +1,11 @@
 {-# LANGUAGE Safe #-}
 {-# LANGUAGE TypeApplications #-}
 
+-- |
+-- Copyright: 2024 Greg Pfeil
+-- License: AGPL-3.0-only WITH Universal-FOSS-exception-1.0 OR LicenseRef-proprietary
+--
+-- @since 99999
 module Data.Path.TH
   ( path,
     posix,
@@ -78,6 +83,10 @@ deconstructAnyPath (Path p d f) =
       ('filename, deconstructMaybe' textLitE f)
     ]
 
+-- | Parse a path at compile time, as the expression of a `TH.QuasiQuoter`,
+--   failing the splice if it doesn’t parse.
+--
+-- @since 99999
 path :: Format String -> String -> TH.Q TH.Exp
 path format =
   either (fail . show) (pure . deconstructAnyPath)
@@ -94,19 +103,23 @@ pathQuoter format =
   where
     invalid = const $ fail "Paths can only be used as expressions."
 
--- |
+-- | Path literals in POSIX format, checked at compile time.
 --
 -- >>> [posix|/usr/bin/env|] :: Path 'Abs 'File String
 -- Path {parents = (), directories = List (embed (Both "bin" (embed (Both "usr" (embed Neither))))), filename = Identity "env"}
 --
 -- >>> [posix|.be/|] :: Path ('Rel 'False) ' Dir String
 -- Path {parents = Proxy, directories = List (embed (Both ".be" (embed Neither))), filename = Const ()}
+--
+-- @since 99999
 posix :: TH.QuasiQuoter
 posix = pathQuoter Format.posix
 
--- |
+-- | Path literals in Windows format, checked at compile time.
 --
 -- >>> [windows|\usr\bin\env|] :: Path 'Abs 'File String
 -- Path {parents = (), directories = List (embed (Both "bin" (embed (Both "usr" (embed Neither))))), filename = Identity "env"}
+--
+-- @since 99999
 windows :: TH.QuasiQuoter
 windows = pathQuoter $ Format.windows Nothing
