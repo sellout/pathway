@@ -197,7 +197,7 @@ library
   build-depends:
     filepath ^>= {1.4.2, 1.5.2},
     -- Should encapsulate our specific failures higher up.
-    megaparsec ^>= {9.0.1, 9.2.1, 9.5.0, 9.7.0, 9.8.1},
+    megaparsec ^>= {9.0.1, 9.2.1, 9.5.0, 9.7.0, 9.8.3},
     pathway ^>= {0.0.1},
     pathway-compat-base ^>= {0.0.1},
     pathway-internal ^>= {0.0.1},

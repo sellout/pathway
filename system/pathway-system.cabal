@@ -193,7 +193,7 @@ library
     src
   build-depends:
     exceptions ^>= {0.10.4},
-    megaparsec ^>= {9.0.1, 9.2.1, 9.5.0, 9.7.0, 9.8.1},
+    megaparsec ^>= {9.0.1, 9.2.1, 9.5.0, 9.7.0, 9.8.3},
     pathway ^>= {0.0.1},
     pathway-compat-base ^>= {0.0.1},
     pathway-compat-directory ^>= {0.0.1},
