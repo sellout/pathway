@@ -1,6 +1,9 @@
 {-# LANGUAGE Safe #-}
 -- __NB__: Because of the nested @`Show` (`MP.Token` rep)@ constraints.
 {-# LANGUAGE UndecidableInstances #-}
+-- WAIT: This is a workaround until sellout/no-recursion#58 is in a release
+--       (likely 0.4.1 or later).
+{-# OPTIONS_GHC -fplugin-opt=NoRecursion:ignore-decls:$s$fExceptionInternalFailure #-}
 
 -- |
 -- Copyright: 2026 Greg Pfeil
