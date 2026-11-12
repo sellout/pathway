@@ -703,12 +703,14 @@ escape' :: (Substible a) => MapF a a (a -> a) -> a -> a
 escape' = \case
   TipF -> id
   BinF _ direct escaped fn fn' -> fn' . replace direct escaped . fn
+{-# INLINEABLE escape' #-}
 
 -- | Apply the `substitutions` of a `Format` to a single path component.
 --
 -- @since 99999
 escapeComponent :: (Substible rep) => Format rep -> rep -> rep
 escapeComponent = cata escape' . substitutions
+{-# INLINEABLE escapeComponent #-}
 
 anyToText :: (Monoid a, Substible a) => Format a -> AnyPath a -> a
 anyToText format path =
@@ -730,6 +732,7 @@ anyToText format path =
           $ directories path
       file = maybe mempty escapeComponent' $ filename path
    in prefix <> directory <> file
+{-# INLINEABLE anyToText #-}
 
 -- |
 --
@@ -740,6 +743,7 @@ anyToText format path =
 toText ::
   (Pathy rel typ, Monoid a, Substible a) => Format a -> Path rel typ a -> a
 toText format = anyToText format . unanchor
+{-# INLINEABLE toText #-}
 
 -- | Recover a relative path that has no leading @../@ components, the inverse
 --   of `weaken`.

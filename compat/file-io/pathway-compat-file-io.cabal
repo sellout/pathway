@@ -150,6 +150,10 @@ common defaults
     -- Warns even when `Unsafe` is explicit, not inferred. See
     -- https://gitlab.haskell.org/ghc/ghc/-/issues/16689
     -Wno-unsafe
+    -- These are re-enabled in cabal.project so we can address them (as much as
+    -- possible) without the remainder worrying users.
+    -Wno-all-missed-specialisations
+    -Wno-missed-specialisations
   default-extensions:
     BlockArguments
     DefaultSignatures

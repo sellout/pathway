@@ -207,6 +207,7 @@ relPathFromPathRep =
         RelFile path -> pure $ pure path
         ReparentedDir path -> badType (Rel True) Dir $ unanchor path
         ReparentedFile path -> badType (Rel True) File $ unanchor path
+{-# INLINEABLE relPathFromPathRep #-}
 
 repDirFromPathRep ::
   (Ord e) =>
@@ -268,6 +269,7 @@ mixedPathFromPathRep =
         RelFile path -> pure $ pure path
         ReparentedDir path -> pure $ Left path
         ReparentedFile path -> badType (Rel True) File $ unanchor path
+{-# INLINEABLE mixedPathFromPathRep #-}
 
 -- * Above here needs to be moved
 
@@ -377,6 +379,7 @@ listDirectory base =
       )
     <=< Dir.listDirectory
     $ toPathRep base
+{-# INLINEABLE listDirectory #-}
 
 -- | `System.Directory.OsPath.getDirectoryContents`, on `Path`s.
 --
@@ -408,6 +411,7 @@ getDirectoryContents base =
       )
     <=< Dir.getDirectoryContents
     $ toPathRep base
+{-# INLINEABLE getDirectoryContents #-}
 
 -- | `System.Directory.OsPath.getCurrentDirectory`, on `Path`s.
 --
@@ -461,6 +465,7 @@ getXdgDirectory ::
   Path ('Rel 'False) 'Dir OsString ->
   IO (Either (InternalFailure OsPath e) (Path 'Abs 'Dir OsString))
 getXdgDirectory = overAbsDir . Dir.getXdgDirectory
+{-# INLINEABLE getXdgDirectory #-}
 
 -- | `System.Directory.OsPath.getXdgDirectoryList`, on `Path`s.
 --
@@ -482,6 +487,7 @@ getAppUserDataDirectory ::
   Path ('Rel 'False) 'Dir OsString ->
   IO (Either (InternalFailure OsPath e) (Path 'Abs 'Dir OsString))
 getAppUserDataDirectory = overAbsDir Dir.getAppUserDataDirectory
+{-# INLINEABLE getAppUserDataDirectory #-}
 
 -- | Prefer `XDG.UserDirectory.Common.documents`.
 --
@@ -610,6 +616,7 @@ findExecutable ::
   Path ('Rel 'True) 'File OsString ->
   IO (Maybe (Either (InternalFailure OsPath e) (Path 'Abs 'File OsString)))
 findExecutable = findExecutables' Dir.findExecutable
+{-# INLINEABLE findExecutable #-}
 
 -- | `System.Directory.OsPath.findExecutables`, on `Path`s.
 --
@@ -622,6 +629,7 @@ findExecutables ::
   Path ('Rel 'True) 'File OsString ->
   IO [Either (InternalFailure OsPath e) (Path 'Abs 'File OsString)]
 findExecutables = findExecutables' Dir.findExecutables
+{-# INLINEABLE findExecutables #-}
 
 findFiles' ::
   (Ord e, Functor f) =>
@@ -631,6 +639,7 @@ findFiles' ::
   IO (f (Either (InternalFailure OsPath e) (Path 'Abs 'File OsString)))
 findFiles' op dirs =
   fmap (absFileFromPathRep <$>) . op (toPathRep <$> dirs) . toPathRep
+{-# INLINEABLE findFiles' #-}
 
 -- | `System.Directory.OsPath.findExecutablesInDirectories`, on `Path`s.
 --
@@ -649,6 +658,7 @@ findExecutablesInDirectories ::
   --   to which search directory.
   IO [Either (InternalFailure OsPath e) (Path 'Abs 'File OsString)]
 findExecutablesInDirectories = findFiles' Dir.findExecutablesInDirectories
+{-# INLINEABLE findExecutablesInDirectories #-}
 
 -- |
 --
@@ -664,6 +674,7 @@ findFile ::
   Path ('Rel 'True) 'File OsString ->
   IO (Maybe (Either (InternalFailure OsPath e) (Path 'Abs 'File OsString)))
 findFile = findFiles' Dir.findFile
+{-# INLINEABLE findFile #-}
 
 -- | `System.Directory.OsPath.findFiles`, on `Path`s.
 --
@@ -682,6 +693,7 @@ findFiles ::
   --   to which search directory.
   IO [Either (InternalFailure OsPath e) (Path 'Abs 'File OsString)]
 findFiles = findFiles' Dir.findFiles
+{-# INLINEABLE findFiles #-}
 
 -- |
 --
@@ -704,6 +716,7 @@ findFilesWith' op pred dirs =
   fmap (absFileFromPathRep <$>)
     . op (either throwIO pred . absFileFromPathRep @Void) (toPathRep <$> dirs)
     . toPathRep
+{-# INLINEABLE findFilesWith' #-}
 
 -- | `System.Directory.OsPath.findFileWith`, on `Path`s.
 --

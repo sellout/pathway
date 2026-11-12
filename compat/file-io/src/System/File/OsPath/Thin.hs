@@ -174,6 +174,7 @@ fromPathRep ::
   Either (MP.ParseErrorBundle OsPath e) (Anchored OsString)
 fromPathRep =
   fmap (anchor . forgetType) . MP.parse (Parser.directory localFormat) ""
+{-# INLINEABLE fromPathRep #-}
 
 -- | Parse a path from the underlying library, and pass it to a handler that
 --   checks it has the expected type.
@@ -203,6 +204,7 @@ absFileFromPathRep =
         RelFile path -> badType (Rel False) File $ unanchor path
         ReparentedDir path -> badType (Rel True) Dir $ unanchor path
         ReparentedFile path -> badType (Rel True) File $ unanchor path
+{-# INLINEABLE absFileFromPathRep #-}
 
 #if MIN_VERSION_file_io(0, 1, 3)
 -- | `System.File.OsPath.openTempFile`, on `Path`s.
@@ -218,6 +220,7 @@ openTempFile ::
   IO (Either (InternalFailure OsPath e) (Path 'Abs 'File OsString, Handle))
 openTempFile tmpDir =
   fmap (bitraverse absFileFromPathRep pure) . FIO.openTempFile (toPathRep tmpDir)
+{-# INLINEABLE openTempFile #-}
 
 -- | `System.File.OsPath.openBinaryTempFile`, on `Path`s.
 --
@@ -233,6 +236,7 @@ openBinaryTempFile ::
 openBinaryTempFile tmpDir =
   fmap (bitraverse absFileFromPathRep pure)
     . FIO.openBinaryTempFile (toPathRep tmpDir)
+{-# INLINEABLE openBinaryTempFile #-}
 
 -- | `System.File.OsPath.openTempFileWithDefaultPermissions`, on `Path`s.
 --
@@ -248,6 +252,7 @@ openTempFileWithDefaultPermissions ::
 openTempFileWithDefaultPermissions tmpDir =
   fmap (bitraverse absFileFromPathRep pure)
     . FIO.openTempFileWithDefaultPermissions (toPathRep tmpDir)
+{-# INLINEABLE openTempFileWithDefaultPermissions #-}
 
 -- | `System.File.OsPath.openBinaryTempFileWithDefaultPermissions`, on `Path`s.
 --
@@ -263,4 +268,5 @@ openBinaryTempFileWithDefaultPermissions ::
 openBinaryTempFileWithDefaultPermissions tmpDir =
   fmap (bitraverse absFileFromPathRep pure)
     . FIO.openBinaryTempFileWithDefaultPermissions (toPathRep tmpDir)
+{-# INLINEABLE openBinaryTempFileWithDefaultPermissions #-}
 #endif

@@ -1,6 +1,9 @@
 {-# LANGUAGE Safe #-}
 -- __NB__: Because of the nested @`Show` (`MP.Token` rep)@ constraints.
 {-# LANGUAGE UndecidableInstances #-}
+-- WAIT: This is a workaround until sellout/no-recursion#58 is in a release
+--       (likely 0.4.1 or later).
+{-# OPTIONS_GHC -fplugin-opt=NoRecursion:ignore-decls:$s$fExceptionInternalFailure #-}
 
 -- |
 -- Copyright: 2026 Greg Pfeil
@@ -53,6 +56,7 @@ import "base" Data.Kind qualified as Kind
 import "base" Data.Ord (Ord)
 import "base" Data.String (String)
 import "base" Data.Typeable (Typeable)
+import "base" Data.Void (Void)
 import "base" GHC.Generics (Generic)
 import "base" System.IO (FilePath)
 import "base" Text.Show (Show)
@@ -106,6 +110,11 @@ deriving stock instance
 instance
   (Show rep, Typeable rep, Show (MP.Token rep), Show e, Typeable e) =>
   Exception (InternalFailure rep e)
+  where
+  -- TODO: Would be good to specialize on `OsPath` here, but that requires
+  --       pulling in the @filepath@ package, which we’d rather defer to
+  --       @pathway-compat-filepath@.
+  {-# SPECIALIZE instance Exception (InternalFailure FilePath Void) #-}
 
 -- | Print a `Path` in the `Format.local` format, for the underlying library.
 --
@@ -121,6 +130,7 @@ fromPathRep ::
   FilePath ->
   Either (MP.ParseErrorBundle FilePath e) (Anchored String)
 fromPathRep = fmap anchor . MP.parse (Parser.path Format.local) ""
+{-# INLINEABLE fromPathRep #-}
 
 -- | Parse a path from the underlying library, and pass it to a handler that
 --   checks it has the expected type.
@@ -150,6 +160,7 @@ absFileFromPathRep =
         RelFile path -> badType (Rel False) File $ unanchor path
         ReparentedDir path -> badType (Rel True) Dir $ unanchor path
         ReparentedFile path -> badType (Rel True) File $ unanchor path
+{-# INLINEABLE absFileFromPathRep #-}
 
 -- | Parse a file path with no leading @../@ from the underlying library,
 --   failing with `IncorrectResultType` if it’s some other type of path.
@@ -170,3 +181,4 @@ fileFromPathRep =
         RelFile path -> pure $ pure path
         ReparentedDir path -> badType (Rel True) Dir $ unanchor path
         ReparentedFile path -> badType (Rel True) File $ unanchor path
+{-# INLINEABLE fileFromPathRep #-}

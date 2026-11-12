@@ -205,6 +205,7 @@ relPathFromPathRep =
         RelFile path -> pure $ pure path
         ReparentedDir path -> badType (Rel True) Dir $ unanchor path
         ReparentedFile path -> badType (Rel True) File $ unanchor path
+{-# INLINEABLE relPathFromPathRep #-}
 
 repDirFromPathRep ::
   (Ord e) =>
@@ -266,6 +267,7 @@ mixedPathFromPathRep =
         RelFile path -> pure $ pure path
         ReparentedDir path -> pure $ Left path
         ReparentedFile path -> badType (Rel True) File $ unanchor path
+{-# INLINEABLE mixedPathFromPathRep #-}
 
 -- * Above here needs to be moved
 
@@ -375,6 +377,7 @@ listDirectory base =
       )
     <=< Dir.listDirectory
     $ toPathRep base
+{-# INLINEABLE listDirectory #-}
 
 -- | `System.Directory.getDirectoryContents`, on `Path`s.
 --
@@ -406,6 +409,7 @@ getDirectoryContents base =
       )
     <=< Dir.getDirectoryContents
     $ toPathRep base
+{-# INLINEABLE getDirectoryContents #-}
 
 -- | `System.Directory.getCurrentDirectory`, on `Path`s.
 --
@@ -417,6 +421,7 @@ getCurrentDirectory ::
   (Ord e) =>
   IO (Either (InternalFailure FilePath e) (Path 'Abs 'Dir String))
 getCurrentDirectory = absDirFromPathRep <$> Dir.getCurrentDirectory
+{-# INLINEABLE getCurrentDirectory #-}
 
 -- | Don’t use this. Ideally, you should avoid relying on a dynamically scoped
 --   “current directory” (as the pathway-system library encourages), but if you
@@ -442,6 +447,7 @@ withCurrentDirectory = Dir.withCurrentDirectory . toPathRep
 getHomeDirectory ::
   (Ord e) => IO (Either (InternalFailure FilePath e) (Path 'Abs 'Dir String))
 getHomeDirectory = absDirFromPathRep <$> Dir.getHomeDirectory
+{-# INLINEABLE getHomeDirectory #-}
 
 overAbsDir ::
   (Ord e, Pathy rel typ) =>
@@ -459,6 +465,7 @@ getXdgDirectory ::
   Path ('Rel 'False) 'Dir String ->
   IO (Either (InternalFailure FilePath e) (Path 'Abs 'Dir String))
 getXdgDirectory = overAbsDir . Dir.getXdgDirectory
+{-# INLINEABLE getXdgDirectory #-}
 
 -- | `System.Directory.getXdgDirectoryList`, on `Path`s.
 --
@@ -480,6 +487,7 @@ getAppUserDataDirectory ::
   Path ('Rel 'False) 'Dir String ->
   IO (Either (InternalFailure FilePath e) (Path 'Abs 'Dir String))
 getAppUserDataDirectory = overAbsDir Dir.getAppUserDataDirectory
+{-# INLINEABLE getAppUserDataDirectory #-}
 
 -- | Prefer `XDG.UserDirectory.Common.documents`.
 --
@@ -487,6 +495,7 @@ getAppUserDataDirectory = overAbsDir Dir.getAppUserDataDirectory
 getUserDocumentsDirectory ::
   (Ord e) => IO (Either (InternalFailure FilePath e) (Path 'Abs 'Dir String))
 getUserDocumentsDirectory = absDirFromPathRep <$> Dir.getUserDocumentsDirectory
+{-# INLINEABLE getUserDocumentsDirectory #-}
 
 -- | Prefer `XDG.BaseDirectory.runtimeDir`.
 --
@@ -494,6 +503,7 @@ getUserDocumentsDirectory = absDirFromPathRep <$> Dir.getUserDocumentsDirectory
 getTemporaryDirectory ::
   (Ord e) => IO (Either (InternalFailure FilePath e) (Path 'Abs 'Dir String))
 getTemporaryDirectory = absDirFromPathRep <$> Dir.getTemporaryDirectory
+{-# INLINEABLE getTemporaryDirectory #-}
 
 #if MIN_VERSION_directory(1, 3, 10)
 -- | `System.Directory.getExecSearchPath`, on `Path`s.
@@ -609,6 +619,7 @@ findExecutable ::
   Path ('Rel 'True) 'File String ->
   IO (Maybe (Either (InternalFailure FilePath e) (Path 'Abs 'File String)))
 findExecutable = findExecutables' Dir.findExecutable
+{-# INLINEABLE findExecutable #-}
 
 -- | `System.Directory.findExecutables`, on `Path`s.
 --
@@ -621,6 +632,7 @@ findExecutables ::
   Path ('Rel 'True) 'File String ->
   IO [Either (InternalFailure FilePath e) (Path 'Abs 'File String)]
 findExecutables = findExecutables' Dir.findExecutables
+{-# INLINEABLE findExecutables #-}
 
 findFiles' ::
   (Ord e, Functor f) =>
@@ -648,6 +660,7 @@ findExecutablesInDirectories ::
   --   to which search directory.
   IO [Either (InternalFailure FilePath e) (Path 'Abs 'File String)]
 findExecutablesInDirectories = findFiles' Dir.findExecutablesInDirectories
+{-# INLINEABLE findExecutablesInDirectories #-}
 
 -- |
 --
@@ -663,6 +676,7 @@ findFile ::
   Path ('Rel 'True) 'File String ->
   IO (Maybe (Either (InternalFailure FilePath e) (Path 'Abs 'File String)))
 findFile = findFiles' Dir.findFile
+{-# INLINEABLE findFile #-}
 
 -- | `System.Directory.findFiles`, on `Path`s.
 --
@@ -681,6 +695,7 @@ findFiles ::
   --   to which search directory.
   IO [Either (InternalFailure FilePath e) (Path 'Abs 'File String)]
 findFiles = findFiles' Dir.findFiles
+{-# INLINEABLE findFiles #-}
 
 -- |
 --
@@ -703,6 +718,7 @@ findFilesWith' op pred dirs =
   fmap (absFileFromPathRep <$>)
     . op (either throwIO pred . absFileFromPathRep @Void) (toPathRep <$> dirs)
     . toPathRep
+{-# INLINEABLE findFilesWith' #-}
 
 -- | `System.Directory.findFileWith`, on `Path`s.
 --

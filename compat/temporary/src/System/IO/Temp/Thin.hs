@@ -154,6 +154,7 @@ openNewBinaryFile dir =
   fmap (bitraverse absFileFromPathRep pure)
     . Temp.openNewBinaryFile (toPathRep dir)
     . escapeTemplate
+{-# INLINEABLE openNewBinaryFile #-}
 
 -- | `System.IO.Temp.createTempDirectory`, on `Path`s.
 --
@@ -183,6 +184,7 @@ createTempDirectory dir =
   fmap absDirFromPathRep
     . Temp.createTempDirectory (toPathRep dir)
     . escapeTemplate
+{-# INLINEABLE createTempDirectory #-}
 
 #if MIN_VERSION_temporary(1, 1, 0)
 -- | `System.IO.Temp.withSystemTempFile`, on `Path`s.
@@ -240,6 +242,7 @@ writeTempFile ::
 writeTempFile dir template =
   fmap absFileFromPathRep
     . Temp.writeTempFile (toPathRep dir) (escapeTemplate template)
+{-# INLINEABLE writeTempFile #-}
 
 -- | `System.IO.Temp.writeSystemTempFile`, on `Path`s.
 --
@@ -274,6 +277,7 @@ emptyTempFile ::
   IO (Either (InternalFailure FilePath void) (Path 'Abs 'File String))
 emptyTempFile dir =
   fmap absFileFromPathRep . Temp.emptyTempFile (toPathRep dir) . escapeTemplate
+{-# INLINEABLE emptyTempFile #-}
 
 -- | `System.IO.Temp.emptySystemTempFile`, on `Path`s.
 --
@@ -289,6 +293,7 @@ emptySystemTempFile ::
   IO (Either (InternalFailure FilePath void) (Path 'Abs 'File String))
 emptySystemTempFile =
   fmap absFileFromPathRep . Temp.emptySystemTempFile . escapeTemplate
+{-# INLINEABLE emptySystemTempFile #-}
 
 -- | `System.IO.Temp.getCanonicalTemporaryDirectory`, on `Path`s.
 --

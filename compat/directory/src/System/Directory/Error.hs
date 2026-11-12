@@ -324,6 +324,7 @@ tryWithIF ::
   IO (Either (InternalFailure rep Void) a) ->
   IO (Either (V l) a)
 tryWithIF recover = fmap (first toVariant =<<) . tryJust recover
+{-# INLINEABLE tryWithIF #-}
 
 -- | The errors raised by renaming a file or directory.
 --
