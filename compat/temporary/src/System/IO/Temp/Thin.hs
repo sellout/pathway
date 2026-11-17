@@ -165,12 +165,15 @@ openNewBinaryFile dir =
 --   be useful to have these cases not throw an exception, with a bit of
 --   environment set up, but later.
 --
--- >>> try @SomeException $ Temp.createTempDirectory "/tmp" "/home/me/dir"
--- Left /home/me/dir...: ...: does not exist (...)
--- >>> try @SomeException $ Temp.createTempDirectory "/home/me/tmp" "../dir"
--- Left /home/me/tmp.../dir...: ...: does not exist (...)
+-- >>> try @SomeException $ Temp.createTempDirectory "/tmp" "/this-really-shouldnt-exist/dir"
+-- Left /this-really-shouldnt-exist/dir...: ...: does not exist (...)
+-- >>> try @SomeException $ Temp.createTempDirectory "/this-really-shouldnt-exist/tmp" "../dir"
+-- Left /this-really-shouldnt-exist/tmp.../dir...: ...: does not exist (...)
 -- >>> try @SomeException $ Temp.createTempDirectory "/tmp" "some/dir"
 -- Left /tmp...some/dir...: ...: does not exist (...)
+--
+-- __NOTE__: The @...@ in place @/@ in the last example is because on Windows
+--           it’s @\\@.
 --
 -- @since 99999
 createTempDirectory ::
