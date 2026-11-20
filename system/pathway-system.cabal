@@ -18,6 +18,8 @@ license-files:
   LICENSE.proprietary
 category: FilePath, Filesystem
 build-type: Custom
+extra-source-files:
+  henforcer.toml
 extra-doc-files:
   CHANGELOG.md
   README.md
