@@ -57,12 +57,28 @@ source-repository this
 
 custom-setup
   setup-depends:
-    -- TODO: Due to haskell/cabal#3751, `Cabal` has to be specified even though
+    -- WAIT: Due to haskell/cabal#3751, `Cabal` has to be specified even though
     --       there’s no direct dependency. Its lower bound needs to be at least
     --       as high as `cabal-version` at the top of this file, and Hackage
     --       requires it to have _some_ upper bound. (Since there’s no direct
     --       dependency, it doesn’t use PVP bounds.)
-    Cabal >= 3.0 && < 99,
+    --
+    -- WAIT: Cabal 3.10 through 3.10.2 can’t load a plugin named in
+    --       `ghc-options` while registering a package, so they’re excluded.
+    --       See haskell/cabal#9375, fixed by haskell/cabal#9384.
+    --
+    --       Excluding them, rather than flooring at 3.10.3, leaves older
+    --       compilers free to use a `Cabal` they can actually compile,
+    --       including the one they ship. The exclusion earns its keep under
+    --       --prefer-oldest, where it lifts GHC 9.6 and 9.8 off
+    --       `cabal-install`’s own per-compiler floor of 3.10 and up to
+    --       3.10.3. Note that nothing here pins a version: a setup goal takes
+    --       the newest `Cabal` allowed, not the installed one.
+    --
+    -- NOTE: Only registering the package into the store exercises this, which
+    --       is to say consuming it as a dependency. Building it on its own
+    --       cannot, so a green build without the exclusion means nothing.
+    Cabal (>= 3.0 && < 3.10) || (>= 3.10.3 && < 99),
     base ^>= {4.14.0, 4.15.0, 4.16.0, 4.17.0, 4.18.0, 4.19.0, 4.20.0, 4.21.0, 4.22.0},
     cabal-doctest ^>= {1.0.0},
 
