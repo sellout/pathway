@@ -68,9 +68,10 @@ textLitE :: String -> TH.Exp
 textLitE = TH.AppE (TH.VarE 'fromString) . TH.LitE . TH.StringL
 
 deconstructNat :: Natural -> TH.Exp
-deconstructNat 0 = TH.AppTypeE (TH.ConE 'Proxy) (TH.ConT ''Natural)
-deconstructNat n =
-  TH.SigE (TH.LitE . TH.IntegerL $ fromIntegral n) $ TH.ConT ''Natural
+deconstructNat =
+  ($ TH.ConT ''Natural) . \case
+    0 -> TH.SigE (TH.ConE 'Proxy) . TH.AppT (TH.ConT ''Proxy)
+    n -> TH.SigE (TH.LitE . TH.IntegerL $ fromIntegral n)
 
 -- | While this deconstructs `AnyPath`, the resulting `TH.Exp` represents a
 --   specific @`IsString` rep => forall rel typ. `Path` rel typ rep@ type.
