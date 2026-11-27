@@ -108,8 +108,13 @@ pathQuoter format =
 -- >>> [posix|/usr/bin/env|] :: Path 'Abs 'File String
 -- Path {parents = (), directories = List (embed (Both "bin" (embed (Both "usr" (embed Neither))))), filename = Identity "env"}
 --
--- >>> [posix|.be/|] :: Path ('Rel 'False) ' Dir String
+-- A relative literal expands to a `Proxy` carrying the count of leading ‘..\/’
+-- components, which shouldn’t require @TypeApplications@.
+--
+-- >>> :seti -XNoTypeApplications
+-- >>> [posix|.be/|] :: Path ('Rel 'False) 'Dir String
 -- Path {parents = Proxy, directories = List (embed (Both ".be" (embed Neither))), filename = Const ()}
+-- >>> :seti -XTypeApplications
 --
 -- @since 99999
 posix :: TH.QuasiQuoter
