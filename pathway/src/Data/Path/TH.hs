@@ -68,9 +68,10 @@ textLitE :: String -> TH.Exp
 textLitE = TH.AppE (TH.VarE 'fromString) . TH.LitE . TH.StringL
 
 deconstructNat :: Natural -> TH.Exp
-deconstructNat 0 = TH.AppTypeE (TH.ConE 'Proxy) (TH.ConT ''Natural)
-deconstructNat n =
-  TH.SigE (TH.LitE . TH.IntegerL $ fromIntegral n) $ TH.ConT ''Natural
+deconstructNat =
+  ($ TH.ConT ''Natural) . \case
+    0 -> TH.SigE (TH.ConE 'Proxy) . TH.AppT (TH.ConT ''Proxy)
+    n -> TH.SigE (TH.LitE . TH.IntegerL $ fromIntegral n)
 
 -- | While this deconstructs `AnyPath`, the resulting `TH.Exp` represents a
 --   specific @`IsString` rep => forall rel typ. `Path` rel typ rep@ type.
@@ -108,8 +109,13 @@ pathQuoter format =
 -- >>> [posix|/usr/bin/env|] :: Path 'Abs 'File String
 -- Path {parents = (), directories = List (embed (Both "bin" (embed (Both "usr" (embed Neither))))), filename = Identity "env"}
 --
--- >>> [posix|.be/|] :: Path ('Rel 'False) ' Dir String
+-- A relative literal expands to a `Proxy` carrying the count of leading ‘..\/’
+-- components, which shouldn’t require @TypeApplications@.
+--
+-- >>> :seti -XNoTypeApplications
+-- >>> [posix|.be/|] :: Path ('Rel 'False) 'Dir String
 -- Path {parents = Proxy, directories = List (embed (Both ".be" (embed Neither))), filename = Const ()}
+-- >>> :seti -XTypeApplications
 --
 -- @since 99999
 posix :: TH.QuasiQuoter
